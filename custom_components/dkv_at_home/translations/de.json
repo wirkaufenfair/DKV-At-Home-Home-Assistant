@@ -3,7 +3,7 @@
     "step": {
       "auth": {
         "title": "DKV@Home Anmeldung",
-        "description": "1) Öffne im Browser: https://my.dkv-mobility.com\n2) Browser-Entwicklertools öffnen (F12) -> Netzwerk/Network.\n3) Nach dem Login den Request mit `/openid-connect/token` suchen.\n4) Die komplette Response als JSON kopieren und hier einfügen.\n5) Alles Weitere passiert automatisch.",
+        "description": "1) Öffne im Browser: {dkv_portal_url}\n2) Browser-Entwicklertools öffnen (F12) -> Netzwerk/Network.\n3) Nach dem Login den Request mit \"{token_endpoint_hint}\" suchen.\n4) Die komplette Response als JSON kopieren und hier einfügen.\n5) Alles Weitere passiert automatisch.",
         "data": {
           "token_json": "Token-JSON"
         }
