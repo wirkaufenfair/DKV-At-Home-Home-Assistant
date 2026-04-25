@@ -119,4 +119,8 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             step_id="auth",
             data_schema=schema,
             errors=errors,
+            description_placeholders={
+                "dkv_portal_url": DKV_PORTAL_LOGIN_URL,
+                "token_endpoint_hint": "/openid-connect/token",
+            },
         )
