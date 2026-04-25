@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "auth": {
+        "title": "DKV Mobility Anmeldung",
+        "description": "1) Öffne im Browser: https://my.dkv-mobility.com\n2) Browser-Entwicklertools öffnen (F12) -> Netzwerk/Network.\n3) Nach dem Login den Request mit `/openid-connect/token` suchen.\n4) Die komplette Response als JSON kopieren und hier einfügen.\n5) Alles Weitere passiert automatisch.",
+        "data": {
+          "token_json": "Token-JSON"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Token ungültig oder abgelaufen. Bitte neue Token-JSON einfügen.",
+      "invalid_token_json": "Keine gültige Token-JSON erkannt. Bitte die komplette JSON-Response vom Token-Request einfügen.",
+      "unknown": "Unbekannter Fehler. Bitte die HA-Logs prüfen."
+    },
+    "abort": {
+      "already_configured": "DKV Mobility ist bereits konfiguriert."
+    }
+  }
+}
