@@ -1,4 +1,4 @@
-"""Config flow for DKV Mobility integration."""
+"""Config flow for DKV@Home integration."""
 
 # pyright: reportMissingImports=false, reportCallIssue=false
 # pylint: disable=import-error
@@ -67,7 +67,7 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
     config_entries.ConfigFlow,
     domain=DOMAIN,
 ):
-    """Handle the DKV Mobility config flow."""
+    """Handle the DKV@Home config flow."""
 
     VERSION = 1
 
@@ -109,7 +109,7 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
                     self._abort_if_unique_id_configured()
                     return self.async_create_entry(
                         title=(
-                            "DKV Mobility "
+                            "DKV@Home "
                             f"({entry_data['preferred_username']})"
                         ),
                         data=entry_data,

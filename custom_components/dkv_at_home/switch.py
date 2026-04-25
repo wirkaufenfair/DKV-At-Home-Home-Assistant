@@ -1,4 +1,4 @@
-"""Switch platform for DKV Mobility (wallbox remote start)."""
+"""Switch platform for DKV@Home (wallbox remote start)."""
 
 # pylint: disable=import-error
 
@@ -22,7 +22,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up DKV Mobility switch from a config entry."""
+    """Set up DKV@Home switch from a config entry."""
     data = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
         [
@@ -38,7 +38,7 @@ async def async_setup_entry(
 
 
 class DkvChargingSwitch(CoordinatorEntity, SwitchEntity):
-    """Switch that starts a DKV Mobility charging session.
+    """Switch that starts a DKV@Home charging session.
 
     State is derived from ``activeSessionId`` on the charge point:
     - **On**  – a session is confirmed and active.
@@ -64,11 +64,11 @@ class DkvChargingSwitch(CoordinatorEntity, SwitchEntity):
         self._persist_tokens = persist_tokens
         self._entry = entry
         username = entry.data["preferred_username"]
-        self._attr_unique_id = f"dkv_mobility_{username}"
+        self._attr_unique_id = f"dkv_at_home_{username}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, username)},
-            "name": "DKV Wallbox",
-            "manufacturer": "DKV Mobility",
+            "name": "DKV@Home Wallbox",
+            "manufacturer": "DKV@Home",
             "model": "At-Home Charger",
         }
 
@@ -98,7 +98,7 @@ class DkvChargingSwitch(CoordinatorEntity, SwitchEntity):
     # Commands
     # ------------------------------------------------------------------
 
-    async def async_turn_on(self, **kwargs) -> None:
+    async def async_turn_on(self, **_kwargs) -> None:
         """Start a charging session."""
         try:
             session_id: str | None = await self.hass.async_add_executor_job(
@@ -120,10 +120,13 @@ class DkvChargingSwitch(CoordinatorEntity, SwitchEntity):
                 "Wallbox hat ihn nicht innerhalb des Zeitlimits bestätigt."
             )
 
-        _LOGGER.info("DKV Wallbox gestartet – activeSessionId: %s", session_id)
+        _LOGGER.info(
+            "DKV@Home Wallbox gestartet – activeSessionId: %s",
+            session_id,
+        )
         await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self, **kwargs) -> None:
+    async def async_turn_off(self, **_kwargs) -> None:
         """Stop is not supported via the DKV API."""
         raise HomeAssistantError(
             "Stoppen wird von der DKV API nicht unterstützt. "
