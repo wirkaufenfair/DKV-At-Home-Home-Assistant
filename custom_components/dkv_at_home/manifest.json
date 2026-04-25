@@ -4,8 +4,8 @@
   "codeowners": ["@wirkaufenfair"],
   "config_flow": true,
   "documentation": "https://github.com/wirkaufenfair/DKV-At-Home-Home-Assistant",
-  "issue_tracker": "https://github.com/wirkaufenfair/DKV-At-Home-Home-Assistant/issues",
   "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/wirkaufenfair/DKV-At-Home-Home-Assistant/issues",
   "loggers": ["custom_components.dkv_at_home"],
   "requirements": ["requests>=2.28.0"],
   "version": "1.0.2"
