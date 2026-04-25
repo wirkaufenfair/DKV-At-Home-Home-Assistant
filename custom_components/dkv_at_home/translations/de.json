@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "auth": {
-        "title": "DKV Mobility Anmeldung",
+        "title": "DKV@Home Anmeldung",
         "description": "1) Öffne im Browser: https://my.dkv-mobility.com\n2) Browser-Entwicklertools öffnen (F12) -> Netzwerk/Network.\n3) Nach dem Login den Request mit `/openid-connect/token` suchen.\n4) Die komplette Response als JSON kopieren und hier einfügen.\n5) Alles Weitere passiert automatisch.",
         "data": {
           "token_json": "Token-JSON"
@@ -15,7 +15,7 @@
       "unknown": "Unbekannter Fehler. Bitte die HA-Logs prüfen."
     },
     "abort": {
-      "already_configured": "DKV Mobility ist bereits konfiguriert."
+      "already_configured": "DKV@Home ist bereits konfiguriert."
     }
   }
 }

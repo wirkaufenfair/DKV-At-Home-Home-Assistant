@@ -1,4 +1,4 @@
-"""DKV Mobility Home Assistant integration."""
+"""DKV@Home Home Assistant integration."""
 
 # pylint: disable=import-error
 
@@ -21,7 +21,7 @@ PLATFORMS = ["switch"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up DKV Mobility from a config entry."""
+    """Set up DKV@Home from a config entry."""
     client = DkvApiClient(
         refresh_token=entry.data["refresh_token"],
         app_token=entry.data["preferred_username"],

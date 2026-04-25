@@ -1,4 +1,4 @@
-"""DKV Mobility API client."""
+"""DKV@Home API client."""
 
 import base64
 import hashlib
@@ -34,7 +34,7 @@ class DkvApiError(Exception):
 
 
 class DkvApiClient:
-    """Synchronous HTTP client for the DKV Mobility at-home API.
+    """Synchronous HTTP client for the DKV@Home at-home API.
 
     Designed to be called inside ``hass.async_add_executor_job``.
     After any successful call the caller should persist the updated

@@ -1,7 +1,7 @@
 {
-  "domain": "dkv_mobility",
-  "name": "DKV Mobility",
-  "version": "1.0.1",
+  "domain": "dkv_at_home",
+  "name": "DKV@Home",
+  "version": "1.0.2",
   "codeowners": [],
   "config_flow": true,
   "documentation": "",

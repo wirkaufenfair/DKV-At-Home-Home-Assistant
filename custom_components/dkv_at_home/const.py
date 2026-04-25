@@ -1,6 +1,6 @@
-"""Constants for DKV Mobility integration."""
+"""Constants for DKV@Home integration."""
 
-DOMAIN = "dkv_mobility"
+DOMAIN = "dkv_at_home"
 CLIENT_ID = "dkv-portal"
 TOKEN_URL = (
     "https://my.dkv-mobility.com/auth/realms/dkv/"
