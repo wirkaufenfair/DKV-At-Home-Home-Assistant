@@ -7,7 +7,7 @@ import secrets
 import time
 from urllib.parse import urlencode
 
-import requests
+import requests  # pylint: disable=import-error  # pyright: ignore[reportMissingImports, reportMissingModuleSource]
 
 from .const import (
     BASE_URL,
