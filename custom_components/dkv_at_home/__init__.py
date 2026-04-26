@@ -7,12 +7,15 @@ from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry  # type: ignore[import]
 from homeassistant.core import HomeAssistant  # type: ignore[import]
+from homeassistant.exceptions import (  # type: ignore[import]
+    ConfigEntryAuthFailed,
+)
 from homeassistant.helpers.update_coordinator import (  # type: ignore[import]
     DataUpdateCoordinator,
     UpdateFailed,
 )
 
-from .api import DkvApiClient, DkvApiError
+from .api import DkvApiClient, DkvApiError, DkvAuthError
 from .const import DOMAIN, POLL_INTERVAL_SECONDS
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,6 +46,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             result = await hass.async_add_executor_job(client.fetch_status)
             _persist_tokens()
             return result
+        except DkvAuthError as err:
+            raise ConfigEntryAuthFailed(str(err)) from err
         except DkvApiError as err:
             raise UpdateFailed(str(err)) from err
         except Exception as err:
