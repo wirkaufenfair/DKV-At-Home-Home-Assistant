@@ -71,9 +71,68 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        """Initialize flow state."""
+        self._reauth_entry: config_entries.ConfigEntry | None = None
+
     async def async_step_user(self, _user_input: dict | None = None):
         """Start setup flow."""
         return await self.async_step_auth()
+
+    async def async_step_reauth(self, _entry_data: dict):
+        """Start reauthentication flow when tokens are no longer valid."""
+        self._reauth_entry = self.hass.config_entries.async_get_entry(
+            self.context["entry_id"]
+        )
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self,
+        user_input: dict | None = None,
+    ):
+        """Handle token update for an existing config entry."""
+        errors: dict[str, str] = {}
+
+        schema = vol.Schema(
+            {
+                vol.Required("token_json"): str,
+            }
+        )
+
+        if user_input is not None:
+            input_text = user_input["token_json"]
+            refresh_token, access_token = _extract_tokens_from_text(input_text)
+
+            if not refresh_token:
+                errors["base"] = "invalid_token_json"
+            else:
+                try:
+                    entry_data = await _build_entry_from_tokens(
+                        self.hass,
+                        refresh_token=refresh_token,
+                        access_token=access_token,
+                    )
+                except DkvApiError:
+                    errors["base"] = "cannot_connect"
+                except (ValueError, TypeError):
+                    errors["base"] = "unknown"
+                else:
+                    if self._reauth_entry is None:
+                        return self.async_abort(reason="unknown")
+                    return self.async_update_reload_and_abort(
+                        self._reauth_entry,
+                        data_updates=entry_data,
+                    )
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={
+                "dkv_portal_url": DKV_PORTAL_LOGIN_URL,
+                "token_endpoint_hint": "/openid-connect/token",
+            },
+        )
 
     async def async_step_auth(self, user_input: dict | None = None):
         """Create config entry from token JSON."""

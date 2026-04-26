@@ -1,13 +1,17 @@
 """DKV@Home API client."""
 
+# pyright: reportMissingImports=false, reportMissingModuleSource=false
+
 import base64
 import hashlib
+import json
 import logging
 import secrets
 import time
+from datetime import datetime, timezone
 from urllib.parse import urlencode
 
-import requests  # pylint: disable=import-error  # pyright: ignore[reportMissingImports, reportMissingModuleSource]
+import requests  # pylint: disable=import-error
 
 from .const import (
     BASE_URL,
@@ -28,9 +32,15 @@ USERINFO_URL = (
 
 _LOGGER = logging.getLogger(__name__)
 
+REFRESH_LEEWAY_SECONDS = 120
+
 
 class DkvApiError(Exception):
     """Raised when the DKV API returns an unexpected response."""
+
+
+class DkvAuthError(DkvApiError):
+    """Raised when authentication/authorization is no longer valid."""
 
 
 class DkvApiClient:
@@ -54,6 +64,66 @@ class DkvApiClient:
         self.client_id = client_id
         self.access_token = access_token
 
+    @staticmethod
+    def _decode_jwt_exp(token: str | None) -> int | None:
+        """Decode ``exp`` claim from a JWT without verifying signature."""
+        if not token:
+            return None
+
+        parts = token.split(".")
+        if len(parts) != 3:
+            return None
+
+        payload = parts[1]
+        payload += "=" * (-len(payload) % 4)
+
+        try:
+            decoded = base64.urlsafe_b64decode(payload.encode("ascii"))
+            data = json.loads(decoded.decode("utf-8"))
+        except (
+            ValueError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+            TypeError,
+        ):
+            return None
+
+        exp = data.get("exp")
+        if isinstance(exp, int):
+            return exp
+        return None
+
+    def _log_token_expiry(self, token_name: str, token: str | None) -> None:
+        """Log token expiry time in debug mode when JWT exp is available."""
+        exp = self._decode_jwt_exp(token)
+        if exp is None:
+            _LOGGER.debug("%s: keine JWT-exp Angabe erkennbar", token_name)
+            return
+
+        expires_at = datetime.fromtimestamp(exp, tz=timezone.utc)
+        seconds_left = exp - int(time.time())
+        _LOGGER.debug(
+            "%s läuft ab um %s (in %ss)",
+            token_name,
+            expires_at.isoformat(),
+            seconds_left,
+        )
+
+    def _ensure_access_token(self) -> None:
+        """Refresh access token only when missing or close to expiry."""
+        if not self.access_token:
+            self._refresh()
+            return
+
+        exp = self._decode_jwt_exp(self.access_token)
+        if exp is None:
+            # Unknown token shape: keep current token and avoid forced refresh.
+            return
+
+        now = int(time.time())
+        if exp - now <= REFRESH_LEEWAY_SECONDS:
+            self._refresh()
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -70,6 +140,11 @@ class DkvApiClient:
             timeout=30,
         )
         if r.status_code != 200:
+            if r.status_code == 400 and "invalid_grant" in r.text:
+                raise DkvAuthError(
+                    "DKV-Anmeldung abgelaufen oder ungültig "
+                    "(invalid_grant). Bitte Integration neu verbinden."
+                )
             raise DkvApiError(
                 "Token-Refresh fehlgeschlagen: "
                 f"HTTP {r.status_code} – {r.text}"
@@ -78,6 +153,8 @@ class DkvApiClient:
         self.access_token = result["access_token"]
         self.refresh_token = result["refresh_token"]
         _LOGGER.debug("DKV access token erneuert")
+        self._log_token_expiry("access_token", self.access_token)
+        self._log_token_expiry("refresh_token", self.refresh_token)
 
     def _headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.access_token}"}
@@ -88,6 +165,23 @@ class DkvApiClient:
             headers=self._headers(),
             timeout=30,
         )
+        if r.status_code == 401:
+            self._refresh()
+            r = requests.get(
+                f"{BASE_URL}/overview/v3/charge-points",
+                headers=self._headers(),
+                timeout=30,
+            )
+            if r.status_code == 401:
+                raise DkvAuthError(
+                    "Nicht autorisiert (401). Bitte Integration neu "
+                    "verbinden."
+                )
+        if r.status_code >= 500:
+            raise DkvApiError(
+                "DKV-Backend derzeit nicht erreichbar "
+                f"(HTTP {r.status_code}). Bitte später erneut versuchen."
+            )
         r.raise_for_status()
         data = r.json()
         points = data if isinstance(data, list) else data.get(
@@ -105,6 +199,23 @@ class DkvApiClient:
             headers=self._headers(),
             timeout=30,
         )
+        if r.status_code == 401:
+            self._refresh()
+            r = requests.get(
+                f"{BASE_URL}/cards/service-card",
+                headers=self._headers(),
+                timeout=30,
+            )
+            if r.status_code == 401:
+                raise DkvAuthError(
+                    "Nicht autorisiert (401). Bitte Integration neu "
+                    "verbinden."
+                )
+        if r.status_code >= 500:
+            raise DkvApiError(
+                "DKV-Backend derzeit nicht erreichbar "
+                f"(HTTP {r.status_code}). Bitte später erneut versuchen."
+            )
         r.raise_for_status()
         data = r.json()
         cards = (
@@ -182,6 +293,8 @@ class DkvApiClient:
         result = r.json()
         self.access_token = result["access_token"]
         self.refresh_token = result["refresh_token"]
+        self._log_token_expiry("access_token", self.access_token)
+        self._log_token_expiry("refresh_token", self.refresh_token)
 
     def fetch_preferred_username(self) -> str:
         """Fetch ``preferred_username`` from the OIDC userinfo endpoint."""
@@ -216,7 +329,7 @@ class DkvApiClient:
 
         Intended to be called from the DataUpdateCoordinator.
         """
-        self._refresh()
+        self._ensure_access_token()
         return self._get_charge_point()
 
     def validate(self) -> None:
@@ -233,7 +346,7 @@ class DkvApiClient:
         or ``None`` if the wallbox did not confirm within the timeout.
         Raises ``DkvApiError`` on hard failures.
         """
-        self._refresh()
+        self._ensure_access_token()
 
         cp = self._get_charge_point()
         hw = cp.get("hardwareInfo", {})

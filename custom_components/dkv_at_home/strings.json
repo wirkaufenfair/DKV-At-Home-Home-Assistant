@@ -7,6 +7,13 @@
         "data": {
           "token_json": "Token-JSON"
         }
+      },
+      "reauth_confirm": {
+        "title": "DKV@Home erneut verbinden",
+        "description": "Dein DKV-Token ist abgelaufen oder ungültig.\n\n1) Öffne im Browser: {dkv_portal_url}\n2) Browser-Entwicklertools öffnen (F12) -> Netzwerk/Network.\n3) Nach dem Login den Request mit \"{token_endpoint_hint}\" suchen.\n4) Die komplette Response als JSON kopieren und hier einfügen.",
+        "data": {
+          "token_json": "Token-JSON"
+        }
       }
     },
     "error": {

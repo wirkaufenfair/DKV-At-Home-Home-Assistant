@@ -7,6 +7,13 @@
         "data": {
           "token_json": "Token JSON"
         }
+      },
+      "reauth_confirm": {
+        "title": "Reconnect DKV@Home",
+        "description": "Your DKV token has expired or is invalid.\n\n1) Open in your browser: {dkv_portal_url}\n2) Open browser devtools (F12) -> Network.\n3) After login, find the request containing \"{token_endpoint_hint}\".\n4) Copy the full JSON response and paste it here.",
+        "data": {
+          "token_json": "Token JSON"
+        }
       }
     },
     "error": {
