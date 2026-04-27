@@ -43,6 +43,13 @@ class DkvAuthError(DkvApiError):
     """Raised when authentication/authorization is no longer valid."""
 
 
+class DkvTransientError(DkvApiError):
+    """Raised for temporary backend errors (e.g. HTTP 5xx).
+
+    These errors may resolve on their own without user intervention.
+    """
+
+
 class DkvApiClient:
     """Synchronous HTTP client for the DKV@Home at-home API.
 
@@ -178,7 +185,7 @@ class DkvApiClient:
                     "verbinden."
                 )
         if r.status_code >= 500:
-            raise DkvApiError(
+            raise DkvTransientError(
                 "DKV-Backend derzeit nicht erreichbar "
                 f"(HTTP {r.status_code}). Bitte später erneut versuchen."
             )
@@ -212,7 +219,7 @@ class DkvApiClient:
                     "verbinden."
                 )
         if r.status_code >= 500:
-            raise DkvApiError(
+            raise DkvTransientError(
                 "DKV-Backend derzeit nicht erreichbar "
                 f"(HTTP {r.status_code}). Bitte später erneut versuchen."
             )
