@@ -15,7 +15,7 @@ from homeassistant.helpers.update_coordinator import (  # type: ignore[import]
     UpdateFailed,
 )
 
-from .api import DkvApiClient, DkvApiError, DkvAuthError
+from .api import DkvApiClient, DkvApiError, DkvAuthError, DkvTransientError
 from .const import DOMAIN, POLL_INTERVAL_SECONDS
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,14 +44,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def async_update_data() -> dict:
         try:
             result = await hass.async_add_executor_job(client.fetch_status)
-            _persist_tokens()
             return result
         except DkvAuthError as err:
             raise ConfigEntryAuthFailed(str(err)) from err
+        except DkvTransientError as err:
+            # Temporary backend outage – keep last known state and log only
+            # a warning so the error log is not flooded during downtime.
+            _LOGGER.warning(
+                "DKV-Backend vorübergehend nicht erreichbar: %s", err
+            )
+            if coordinator.data is not None:
+                return coordinator.data
+            raise UpdateFailed(str(err)) from err
         except DkvApiError as err:
             raise UpdateFailed(str(err)) from err
         except Exception as err:
             raise UpdateFailed(f"Unerwarteter Fehler: {err}") from err
+        finally:
+            # Always persist tokens so that a newly-rotated refresh_token
+            # is saved even when the subsequent API call fails.  Without
+            # this, a HA restart after a failed poll would reload the
+            # already-consumed (old) refresh token, causing invalid_grant.
+            _persist_tokens()
 
     coordinator = DataUpdateCoordinator(
         hass,
