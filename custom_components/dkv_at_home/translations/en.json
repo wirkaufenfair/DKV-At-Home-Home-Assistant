@@ -3,14 +3,14 @@
     "step": {
       "auth": {
         "title": "DKV@Home Sign in",
-        "description": "Sign in once – with an offline token your session will no longer expire every few hours.\n\n1) Open the following login link:\n{auth_url}\n\n2) On the DKV login page (before signing in), press F12 → open the Network tab.\n\n3) Sign in. The browser will immediately redirect to the DKV dashboard – this is expected.\n\n4) In the Network tab, find the request whose URL starts with \"https://my.dkv-mobility.com/\" and contains \"?state=\". Right-click → Copy → Copy URL.\n\n5) Paste the copied URL here.",
+        "description": "Sign in once – with an offline token your session will no longer expire every few hours.\n\n1) Open the following login link:\n{auth_url}\n\n2) On the DKV login page (before signing in), press F12 → open the Network tab.\n\n3) Sign in. The browser will immediately redirect to the DKV dashboard – this is expected.\n\n4) In the Network tab, find the request whose URL starts with \"https://my.dkv-mobility.com/dashboard?state=\". Right-click → Copy → Copy URL.\n\n5) Paste the copied URL here.",
         "data": {
           "token_input": "Redirect URL"
         }
       },
       "reauth_confirm": {
         "title": "Reconnect DKV@Home",
-        "description": "Your DKV session has expired or is no longer valid.\n\n1) Open the following login link:\n{auth_url}\n\n2) On the DKV login page (before signing in), press F12 → open the Network tab.\n\n3) Sign in. The browser will immediately redirect to the DKV dashboard – this is expected.\n\n4) In the Network tab, find the request whose URL starts with \"https://my.dkv-mobility.com/\" and contains \"?state=\". Right-click → Copy → Copy URL.\n\n5) Paste the copied URL here.",
+        "description": "Your DKV session has expired or is no longer valid.\n\n1) Open the following login link:\n{auth_url}\n\n2) On the DKV login page (before signing in), press F12 → open the Network tab.\n\n3) Sign in. The browser will immediately redirect to the DKV dashboard – this is expected.\n\n4) In the Network tab, find the request whose URL starts with \"https://my.dkv-mobility.com/dashboard?state=\". Right-click → Copy → Copy URL.\n\n5) Paste the copied URL here.",
         "data": {
           "token_input": "Redirect URL"
         }
@@ -18,7 +18,7 @@
     },
     "error": {
       "cannot_connect": "Connection failed. Please sign in again and paste the new redirect URL.",
-      "invalid_input": "Invalid input. Please paste the full redirect URL (https://my.dkv-mobility.com/… containing ?state=…).",
+      "invalid_input": "Invalid input. Please paste the full redirect URL (starting with https://my.dkv-mobility.com/dashboard?state=…).",
       "invalid_redirect_url": "No authorization code found in the URL. Please paste the full redirect URL.",
       "unknown": "Unknown error. Check the HA logs for details."
     },

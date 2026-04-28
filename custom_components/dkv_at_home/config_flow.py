@@ -14,10 +14,10 @@ from homeassistant.core import HomeAssistant  # type: ignore[import]
 from .api import DkvApiClient, DkvApiError
 from .const import CLIENT_ID, DOMAIN
 
-# Redirect URI used for PKCE flow. DKV's Keycloak portal client accepts
-# its own origin; after login the browser lands on the DKV portal home
-# page with ?code=…&state=… in the address bar.
-_PKCE_REDIRECT_URI = "https://my.dkv-mobility.com/"
+# Redirect URI used for PKCE flow. Keycloak's dkv-portal client always
+# redirects to /dashboard after login, regardless of the redirect_uri
+# parameter – so we register /dashboard here to match the token exchange.
+_PKCE_REDIRECT_URI = "https://my.dkv-mobility.com/dashboard"
 
 
 async def _build_entry_from_tokens(
