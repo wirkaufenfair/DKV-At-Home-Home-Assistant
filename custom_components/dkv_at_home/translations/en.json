@@ -3,22 +3,25 @@
     "step": {
       "auth": {
         "title": "DKV@Home Sign in",
-        "description": "1) Open in your browser: {dkv_portal_url}\n2) Open browser devtools (F12) -> Network.\n3) After login, find the request containing \"{token_endpoint_hint}\".\n4) Copy the full JSON response and paste it here.\n5) Everything else happens automatically.",
+        "description": "Sign in once – with an offline token your session will no longer expire every few hours.\n\n1) Open browser devtools (F12) → Network tab.\n\n2) Open the following link in a new tab:\n{auth_url}\n\n3) Sign in. The browser will immediately redirect to the DKV dashboard – this is expected.\n\n4) In the Network tab, find a request containing \"?code=\". Right-click it → Copy → Copy URL.\n\n5) Paste the copied URL here.",
         "data": {
-          "token_json": "Token JSON"
+          "token_input": "Redirect URL or token JSON"
         }
       },
       "reauth_confirm": {
         "title": "Reconnect DKV@Home",
-        "description": "Your DKV token has expired or is invalid.\n\n1) Open in your browser: {dkv_portal_url}\n2) Open browser devtools (F12) -> Network.\n3) After login, find the request containing \"{token_endpoint_hint}\".\n4) Copy the full JSON response and paste it here.",
+        "description": "Your DKV session has expired or is no longer valid.\n\n1) Open browser devtools (F12) → Network tab.\n\n2) Open the following link in a new tab:\n{auth_url}\n\n3) Sign in. The browser will immediately redirect to the DKV dashboard – this is expected.\n\n4) In the Network tab, find a request containing \"?code=\". Right-click it → Copy → Copy URL.\n\n5) Paste the copied URL here.",
         "data": {
-          "token_json": "Token JSON"
+          "token_input": "Redirect URL or token JSON"
         }
       }
     },
     "error": {
-      "cannot_connect": "Token is invalid or expired. Please paste a fresh token JSON.",
-      "invalid_token_json": "No valid token JSON detected. Paste the full JSON response from the token request.",
+      "cannot_connect": "Connection failed. Please sign in again and paste the new redirect URL.",
+      "invalid_token_json": "No valid token JSON detected. Paste the full JSON response.",
+      "invalid_input": "Invalid input. Please paste the redirect URL (containing ?code=…) or a token JSON.",
+      "invalid_redirect_url": "No authorization code found in the URL. Please paste the full redirect URL.",
+      "state_mismatch": "Security check failed (state mismatch). Please restart the sign-in process.",
       "unknown": "Unknown error. Check the HA logs for details."
     },
     "abort": {

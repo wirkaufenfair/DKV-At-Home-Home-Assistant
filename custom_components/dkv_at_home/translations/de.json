@@ -3,22 +3,25 @@
     "step": {
       "auth": {
         "title": "DKV@Home Anmeldung",
-        "description": "1) Öffne im Browser: {dkv_portal_url}\n2) Browser-Entwicklertools öffnen (F12) -> Netzwerk/Network.\n3) Nach dem Login den Request mit \"{token_endpoint_hint}\" suchen.\n4) Die komplette Response als JSON kopieren und hier einfügen.\n5) Alles Weitere passiert automatisch.",
+        "description": "Melde dich einmalig an – mit dem Offline-Token läuft die Anmeldung dauerhaft nicht mehr ab.\n\n1) Browser-Entwicklertools öffnen (F12) → Netzwerk-Tab.\n\n2) Öffne folgenden Link in einem neuen Tab:\n{auth_url}\n\n3) Melde dich an. Der Browser leitet direkt zum Dashboard weiter – das ist normal.\n\n4) Im Netzwerk-Tab nach einer Anfrage mit \"?code=\" suchen. Rechtsklick auf die Anfrage → URL kopieren.\n\n5) Die kopierte URL hier einfügen.",
         "data": {
-          "token_json": "Token-JSON"
+          "token_input": "Weiterleitungs-URL oder Token-JSON"
         }
       },
       "reauth_confirm": {
         "title": "DKV@Home erneut verbinden",
-        "description": "Dein DKV-Token ist abgelaufen oder ungültig.\n\n1) Öffne im Browser: {dkv_portal_url}\n2) Browser-Entwicklertools öffnen (F12) -> Netzwerk/Network.\n3) Nach dem Login den Request mit \"{token_endpoint_hint}\" suchen.\n4) Die komplette Response als JSON kopieren und hier einfügen.",
+        "description": "Die DKV-Anmeldung ist abgelaufen oder ungültig.\n\n1) Browser-Entwicklertools öffnen (F12) → Netzwerk-Tab.\n\n2) Öffne folgenden Link in einem neuen Tab:\n{auth_url}\n\n3) Melde dich an. Der Browser leitet direkt zum Dashboard weiter – das ist normal.\n\n4) Im Netzwerk-Tab nach einer Anfrage mit \"?code=\" suchen. Rechtsklick auf die Anfrage → URL kopieren.\n\n5) Die kopierte URL hier einfügen.",
         "data": {
-          "token_json": "Token-JSON"
+          "token_input": "Weiterleitungs-URL oder Token-JSON"
         }
       }
     },
     "error": {
-      "cannot_connect": "Token ungültig oder abgelaufen. Bitte neue Token-JSON einfügen.",
-      "invalid_token_json": "Keine gültige Token-JSON erkannt. Bitte die komplette JSON-Response vom Token-Request einfügen.",
+      "cannot_connect": "Verbindung fehlgeschlagen. Bitte erneut anmelden und die neue Weiterleitungs-URL einfügen.",
+      "invalid_token_json": "Keine gültige Token-JSON erkannt. Bitte die komplette JSON-Response einfügen.",
+      "invalid_input": "Ungültige Eingabe. Bitte die Weiterleitungs-URL (mit ?code=…) oder ein Token-JSON einfügen.",
+      "invalid_redirect_url": "Kein Autorisierungs-Code in der URL gefunden. Bitte die vollständige Weiterleitungs-URL einfügen.",
+      "state_mismatch": "Sicherheitsprüfung fehlgeschlagen (state). Bitte den Anmeldevorgang neu starten.",
       "unknown": "Unbekannter Fehler. Bitte die HA-Logs prüfen."
     },
     "abort": {
