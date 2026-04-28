@@ -148,7 +148,7 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
     async def _exchange_pkce_code(
         self,
         code: str,
-        _returned_state: str | None,
+        returned_state: str | None,
         redirect_uri: str = _PKCE_REDIRECT_URI,
     ) -> tuple[dict | None, dict]:
         """Exchange an authorization code for tokens.
@@ -159,6 +159,24 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
         if verifier is None:
             _LOGGER.error("PKCE-Verifier fehlt – neuer Anlauf nötig")
             return None, {"base": "unknown"}
+
+        # Validate that the returned state matches the one we sent.
+        # A mismatch means the user opened an old/wrong auth URL instead
+        # of the link currently shown in the HA form.
+        if (
+            returned_state
+            and self._pkce_state
+            and returned_state != self._pkce_state
+        ):
+            _LOGGER.error(
+                "State-Mismatch: erwartet=%s, erhalten=%s – "
+                "Bitte den Anmeldelink AUS DEM FORMULAR klicken, "
+                "keine alte oder gespeicherte URL verwenden!",
+                self._pkce_state,
+                returned_state,
+            )
+            return None, {"base": "wrong_auth_url"}
+
         _LOGGER.debug(
             "PKCE Code-Austausch: redirect_uri=%s code_prefix=%s",
             redirect_uri,
@@ -185,11 +203,11 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             return entry_data, {}
         except DkvApiError as exc:
             _LOGGER.error("PKCE Code-Austausch fehlgeschlagen: %s", exc)
-            self._pkce_verifier = None  # force new PKCE pair on retry
+            # Keep the same PKCE pair so the user can retry with the same
+            # auth URL. Resetting would force a new pair and a new login.
             return None, {"base": "cannot_connect"}
         except (ValueError, TypeError) as exc:
             _LOGGER.error("Unerwarteter Fehler beim Code-Austausch: %s", exc)
-            self._pkce_verifier = None
             return None, {"base": "unknown"}
 
     async def _process_input(self, text: str) -> tuple[dict | None, dict]:

@@ -18,6 +18,7 @@
     },
     "error": {
       "cannot_connect": "Connection failed. Make sure the dashboard URL was blocked in DevTools BEFORE opening the login link.",
+      "wrong_auth_url": "Wrong login link used. Please click the link FROM THE FORM below – do not use a saved or previously copied URL from your browser!",
       "invalid_input": "Invalid input. Please paste the full redirect URL (with ?code=…) or a refresh token (starts with 'eyJ').",
       "invalid_redirect_url": "No authorization code found in the URL. Please paste the full redirect URL.",
       "unknown": "Unknown error. Check the HA logs for details."
