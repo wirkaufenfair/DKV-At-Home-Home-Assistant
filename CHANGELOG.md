@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.16] - 2026-04-28
+
+### Fixed
+
+- **State-Validierung im PKCE-Flow**: Wenn der Benutzer eine alte oder
+  gespeicherte Anmelde-URL (aus dem Browser-Verlauf) statt des aktuellen
+  Links aus dem HA-Formular verwendet, wird jetzt ein klarer Fehler
+  angezeigt: „Falscher Anmeldelink verwendet“. Zuvor führte dies zu einem
+  kryptischen „PKCE verification failed: Code mismatch“.
+- **PKCE-Verifier wird bei Fehler nicht mehr zurückgesetzt**: Nach einem
+  fehlgeschlagenen Code-Austausch bleibt das PKCE-Paar erhalten, sodass
+  der Benutzer mit demselben Anmelde-Link erneut versuchen kann (statt
+  einen komplett neuen Link zu erhalten).
+
 ## [1.0.15] - 2026-04-28
 
 ### Changed
