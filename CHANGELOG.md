@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.18] - 2026-04-28
+
+### Fixed
+
+- **State-Validierung entfernt** – Keycloak transformiert den State-Parameter
+  intern und gibt einen anderen State zurück als der Client gesendet hat.
+  Der State-Check aus v1.0.16/v1.0.17 hat daher jeden gültigen Login mit
+  „State-Mismatch" abgebrochen. Der State-Check wird dauerhaft entfernt;
+  die Sicherheit des PKCE-Flows wird ausschließlich durch den
+  `code_verifier` / `code_challenge` (RFC 7636) gewährleistet – wie
+  bereits in v1.0.9 festgelegt.
+
 ## [1.0.17] - 2026-04-28
 
 ### Fixed
