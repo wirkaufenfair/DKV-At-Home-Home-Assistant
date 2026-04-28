@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.20] - 2026-04-28
+
+### Fixed
+
+- **UTF-8 BOM aus JSON-Dateien entfernt**: `strings.json`, `de.json` und
+  `en.json` enthielten ein UTF-8 BOM (`EF BB BF`), das Python/HA beim Laden
+  der Übersetzungen mit „unexpected character: line 1 column 1" ablehnt.
+
 ## [1.0.19] - 2026-04-28
 
 ### Fixed
