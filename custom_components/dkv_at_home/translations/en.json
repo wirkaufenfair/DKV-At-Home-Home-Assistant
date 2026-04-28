@@ -3,21 +3,21 @@
     "step": {
       "auth": {
         "title": "DKV@Home Sign in",
-        "description": "**Important:** Temporarily disable JavaScript for the DKV site so the login code is not consumed by the DKV web app.\n\n**Chrome:** Open https://my.dkv-mobility.com, click the lock icon in the address bar → Site settings → JavaScript → Block.\n\n**Firefox:** Address bar: `about:config` → `javascript.enabled` → `false`.\n\n1) Open the following login link (JavaScript is now disabled):\n{auth_url}\n\n2) Enter your username and password on the Keycloak login page and sign in.\n\n3) The browser will redirect – the dashboard page will not load correctly (no JS). This is expected.\n\n4) Copy the full URL from the address bar (it contains ?code=…).\n\n5) Paste the copied URL here.\n\n6) Re-enable JavaScript for my.dkv-mobility.com afterwards.",
+        "description": "The DKV website processes the login code server-side – it must be intercepted BEFORE reaching the DKV server.\n\n1) Press F12 → Network tab → Ctrl+Shift+P → type \"block\" → select \"Show network request blocking\".\n\n2) Click \"+\" → enter https://my.dkv-mobility.com/dashboard* → press Enter.\n\n3) Open the following login link:\n{auth_url}\n\n4) Sign in. The browser will show an error page (\"blocked\") – this is correct! The code has NOT been consumed.\n\n5) Copy the URL from the address bar (contains ?code=…) and paste it here.\n\n6) Remove the block: DevTools → \"Network request blocking\" → trash icon.",
         "data": {
           "token_input": "Redirect URL (with ?code=…)"
         }
       },
       "reauth_confirm": {
         "title": "Reconnect DKV@Home",
-        "description": "**Important:** Temporarily disable JavaScript for the DKV site so the login code is not consumed by the DKV web app.\n\n**Chrome:** Open https://my.dkv-mobility.com, click the lock icon in the address bar → Site settings → JavaScript → Block.\n\n**Firefox:** Address bar: `about:config` → `javascript.enabled` → `false`.\n\n1) Open the following login link (JavaScript is now disabled):\n{auth_url}\n\n2) Enter your username and password on the Keycloak login page and sign in.\n\n3) The browser will redirect – the dashboard page will not load correctly (no JS). This is expected.\n\n4) Copy the full URL from the address bar (it contains ?code=…).\n\n5) Paste the copied URL here.\n\n6) Re-enable JavaScript for my.dkv-mobility.com afterwards.",
+        "description": "The DKV website processes the login code server-side – it must be intercepted BEFORE reaching the DKV server.\n\n1) Press F12 → Network tab → Ctrl+Shift+P → type \"block\" → select \"Show network request blocking\".\n\n2) Click \"+\" → enter https://my.dkv-mobility.com/dashboard* → press Enter.\n\n3) Open the following login link:\n{auth_url}\n\n4) Sign in. The browser will show an error page (\"blocked\") – this is correct! The code has NOT been consumed.\n\n5) Copy the URL from the address bar (contains ?code=…) and paste it here.\n\n6) Remove the block: DevTools → \"Network request blocking\" → trash icon.",
         "data": {
           "token_input": "Redirect URL (with ?code=…)"
         }
       }
     },
     "error": {
-      "cannot_connect": "Connection failed. Please disable JavaScript, sign in again, and paste the new URL.",
+      "cannot_connect": "Connection failed. Make sure the dashboard URL was blocked in DevTools BEFORE opening the login link.",
       "invalid_input": "Invalid input. Please paste the full redirect URL (with ?code=…) or a refresh token (starts with 'eyJ').",
       "invalid_redirect_url": "No authorization code found in the URL. Please paste the full redirect URL.",
       "unknown": "Unknown error. Check the HA logs for details."

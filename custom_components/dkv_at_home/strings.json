@@ -3,21 +3,21 @@
     "step": {
       "auth": {
         "title": "DKV@Home Anmeldung",
-        "description": "**Wichtig:** JavaScript für die DKV-Seite kurz deaktivieren, damit der Anmeldecode nicht von der DKV-App verbraucht wird.\n\n**Chrome:** Öffne https://my.dkv-mobility.com, klicke auf das Schloss-Symbol in der Adressleiste → Website-Einstellungen → JavaScript → Blockieren.\n\n**Firefox:** Adressleiste: `about:config` → `javascript.enabled` → `false`.\n\n1) Den folgenden Login-Link öffnen (JavaScript ist jetzt deaktiviert):\n{auth_url}\n\n2) Auf der Keycloak-Anmeldeseite Benutzername und Passwort eingeben und anmelden.\n\n3) Der Browser leitet weiter – die Dashboard-Seite wird nicht korrekt laden (kein JS). Das ist richtig.\n\n4) Die vollständige URL aus der Adressleiste kopieren (enthält ?code=…).\n\n5) Die kopierte URL hier einfügen.\n\n6) Danach JavaScript für my.dkv-mobility.com wieder aktivieren.",
+        "description": "Die DKV-Website verarbeitet den Anmeldecode serverseitig \u2013 er muss abgefangen werden, bevor er den DKV-Server erreicht.\n\n1) F12 dr\u00fccken \u2192 Netzwerk-Tab \u2192 Strg+Shift+P \u2192 \"block\" tippen \u2192 \"Netzwerkanfragen blockieren anzeigen\" w\u00e4hlen.\n\n2) Im Panel auf \u2019+\u2019 klicken \u2192 https://my.dkv-mobility.com/dashboard* eingeben \u2192 Enter.\n\n3) Den folgenden Login-Link \u00f6ffnen:\n{auth_url}\n\n4) Anmelden. Der Browser zeigt eine Fehlerseite (\"blockiert\") \u2013 das ist korrekt! Der Code wurde NICHT verbraucht.\n\n5) Die URL aus der Adressleiste (enth\u00e4lt ?code=\u2026) kopieren und hier einf\u00fcgen.\n\n6) Blockierung entfernen: DevTools \u2192 \"Netzwerkanfragen blockieren\" \u2192 Papierkorb-Symbol.",
         "data": {
-          "token_input": "Weiterleitungs-URL (mit ?code=…)"
+          "token_input": "Weiterleitungs-URL (mit ?code=\u2026)"
         }
       },
       "reauth_confirm": {
         "title": "DKV@Home erneut verbinden",
-        "description": "**Wichtig:** JavaScript für die DKV-Seite kurz deaktivieren, damit der Anmeldecode nicht von der DKV-App verbraucht wird.\n\n**Chrome:** Öffne https://my.dkv-mobility.com, klicke auf das Schloss-Symbol in der Adressleiste → Website-Einstellungen → JavaScript → Blockieren.\n\n**Firefox:** Adressleiste: `about:config` → `javascript.enabled` → `false`.\n\n1) Den folgenden Login-Link öffnen (JavaScript ist jetzt deaktiviert):\n{auth_url}\n\n2) Auf der Keycloak-Anmeldeseite Benutzername und Passwort eingeben und anmelden.\n\n3) Der Browser leitet weiter – die Dashboard-Seite wird nicht korrekt laden (kein JS). Das ist richtig.\n\n4) Die vollständige URL aus der Adressleiste kopieren (enthält ?code=…).\n\n5) Die kopierte URL hier einfügen.\n\n6) Danach JavaScript für my.dkv-mobility.com wieder aktivieren.",
+        "description": "Die DKV-Website verarbeitet den Anmeldecode serverseitig \u2013 er muss abgefangen werden, bevor er den DKV-Server erreicht.\n\n1) F12 dr\u00fccken \u2192 Netzwerk-Tab \u2192 Strg+Shift+P \u2192 \"block\" tippen \u2192 \"Netzwerkanfragen blockieren anzeigen\" w\u00e4hlen.\n\n2) Im Panel auf \u2019+\u2019 klicken \u2192 https://my.dkv-mobility.com/dashboard* eingeben \u2192 Enter.\n\n3) Den folgenden Login-Link \u00f6ffnen:\n{auth_url}\n\n4) Anmelden. Der Browser zeigt eine Fehlerseite (\"blockiert\") \u2013 das ist korrekt! Der Code wurde NICHT verbraucht.\n\n5) Die URL aus der Adressleiste (enth\u00e4lt ?code=\u2026) kopieren und hier einf\u00fcgen.\n\n6) Blockierung entfernen: DevTools \u2192 \"Netzwerkanfragen blockieren\" \u2192 Papierkorb-Symbol.",
         "data": {
-          "token_input": "Weiterleitungs-URL (mit ?code=…)"
+          "token_input": "Weiterleitungs-URL (mit ?code=\u2026)"
         }
       }
     },
     "error": {
-      "cannot_connect": "Verbindung fehlgeschlagen. Bitte JavaScript deaktivieren, neu anmelden und die neue URL einfügen.",
+      "cannot_connect": "Verbindung fehlgeschlagen. Bitte sicherstellen, dass die Dashboard-URL in DevTools blockiert war, bevor der Login-Link geöffnet wurde.",
       "invalid_input": "Ungültige Eingabe. Bitte die vollständige Weiterleitungs-URL (mit ?code=…) oder den Refresh-Token (beginnt mit 'eyJ') einfügen.",
       "invalid_redirect_url": "Kein Autorisierungs-Code in der URL gefunden. Bitte die vollständige Weiterleitungs-URL einfügen.",
       "unknown": "Unbekannter Fehler. Bitte die HA-Logs prüfen."
