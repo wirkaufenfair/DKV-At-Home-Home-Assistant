@@ -4,6 +4,8 @@
 # pylint: disable=import-error
 
 import json
+import secrets as _secrets
+from urllib.parse import parse_qs, urlparse
 
 import voluptuous as vol  # type: ignore[import]
 
@@ -13,7 +15,10 @@ from homeassistant.core import HomeAssistant  # type: ignore[import]
 from .api import DkvApiClient, DkvApiError
 from .const import CLIENT_ID, DOMAIN
 
-DKV_PORTAL_LOGIN_URL = "https://my.dkv-mobility.com"
+# Redirect URI used for PKCE flow. DKV's Keycloak portal client accepts
+# its own origin; after login the browser lands on the DKV portal home
+# page with ?code=…&state=… in the address bar.
+_PKCE_REDIRECT_URI = "https://my.dkv-mobility.com/"
 
 
 async def _build_entry_from_tokens(
@@ -45,22 +50,44 @@ async def _build_entry_from_tokens(
     }
 
 
-def _extract_tokens_from_text(text: str) -> tuple[str | None, str | None]:
-    """Extract refresh/access token from JSON text or return (None, None)."""
+def _parse_user_input(text: str) -> dict:
+    """Detect whether the user pasted a redirect URL, bare code, or token JSON.
+
+    Returns a dict with key ``mode`` set to one of:
+    - ``"pkce_url"``  – full redirect URL containing ``?code=…``
+    - ``"pkce_code"`` – bare authorization code string
+    - ``"json"``      – legacy token JSON blob
+    - ``"invalid"``   – unrecognised input
+    """
     raw = (text or "").strip()
-    if not raw.startswith("{"):
-        return None, None
 
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        return None, None
+    if raw.startswith("{"):
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return {"mode": "invalid"}
+        refresh_token = data.get("refresh_token")
+        if not refresh_token:
+            return {"mode": "invalid"}
+        return {
+            "mode": "json",
+            "refresh_token": refresh_token,
+            "access_token": data.get("access_token"),
+        }
 
-    refresh_token = data.get("refresh_token")
-    access_token = data.get("access_token")
-    if not refresh_token:
-        return None, None
-    return refresh_token, access_token
+    if raw.startswith("http"):
+        parsed = urlparse(raw)
+        params = parse_qs(parsed.query)
+        code = params.get("code", [None])[0]
+        state = params.get("state", [None])[0]
+        if not code:
+            return {"mode": "invalid"}
+        return {"mode": "pkce_url", "code": code, "state": state}
+
+    if raw:
+        return {"mode": "pkce_code", "code": raw}
+
+    return {"mode": "invalid"}
 
 
 class DkvMobilityConfigFlow(  # type: ignore[call-arg]
@@ -74,6 +101,96 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
     def __init__(self) -> None:
         """Initialize flow state."""
         self._reauth_entry: config_entries.ConfigEntry | None = None
+        self._pkce_verifier: str | None = None
+        self._pkce_state: str | None = None
+        self._pkce_auth_url: str | None = None
+
+    # ------------------------------------------------------------------
+    # PKCE helper
+    # ------------------------------------------------------------------
+
+    def _ensure_pkce(self) -> None:
+        """Generate a fresh PKCE pair if one is not already prepared."""
+        if self._pkce_verifier is not None:
+            return
+        verifier, challenge = DkvApiClient.generate_pkce_pair()
+        self._pkce_verifier = verifier
+        self._pkce_state = _secrets.token_urlsafe(16)
+        self._pkce_auth_url = DkvApiClient.build_authorize_url(
+            state=self._pkce_state,
+            code_challenge=challenge,
+            redirect_uri=_PKCE_REDIRECT_URI,
+        )
+
+    async def _exchange_pkce_code(
+        self,
+        code: str,
+        returned_state: str | None,
+    ) -> tuple[dict | None, dict]:
+        """Exchange an authorization code for tokens.
+
+        Returns ``(entry_data, errors)``.
+        """
+        if returned_state and returned_state != self._pkce_state:
+            self._pkce_verifier = None  # force new PKCE pair on retry
+            return None, {"base": "state_mismatch"}
+
+        verifier = self._pkce_verifier
+        try:
+            client = DkvApiClient(
+                refresh_token="",
+                app_token="",
+                client_id=CLIENT_ID,
+            )
+            await self.hass.async_add_executor_job(
+                lambda: client.exchange_code(
+                    code=code,
+                    redirect_uri=_PKCE_REDIRECT_URI,
+                    code_verifier=verifier,
+                )
+            )
+            entry_data = await _build_entry_from_tokens(
+                self.hass,
+                refresh_token=client.refresh_token,
+                access_token=client.access_token,
+            )
+            return entry_data, {}
+        except DkvApiError:
+            self._pkce_verifier = None  # force new PKCE pair on retry
+            return None, {"base": "cannot_connect"}
+        except (ValueError, TypeError):
+            self._pkce_verifier = None
+            return None, {"base": "unknown"}
+
+    async def _process_input(self, text: str) -> tuple[dict | None, dict]:
+        """Dispatch parsed input to the right auth path."""
+        parsed = _parse_user_input(text)
+        mode = parsed["mode"]
+
+        if mode == "invalid":
+            return None, {"base": "invalid_input"}
+
+        if mode == "json":
+            try:
+                entry_data = await _build_entry_from_tokens(
+                    self.hass,
+                    refresh_token=parsed["refresh_token"],
+                    access_token=parsed.get("access_token"),
+                )
+                return entry_data, {}
+            except DkvApiError:
+                return None, {"base": "cannot_connect"}
+            except (ValueError, TypeError):
+                return None, {"base": "unknown"}
+
+        # PKCE modes
+        code = parsed["code"]
+        state = parsed.get("state")
+        return await self._exchange_pkce_code(code, state)
+
+    # ------------------------------------------------------------------
+    # Flow steps
+    # ------------------------------------------------------------------
 
     async def async_step_user(self, _user_input: dict | None = None):
         """Start setup flow."""
@@ -91,95 +208,53 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
         user_input: dict | None = None,
     ):
         """Handle token update for an existing config entry."""
+        self._ensure_pkce()
         errors: dict[str, str] = {}
 
-        schema = vol.Schema(
-            {
-                vol.Required("token_json"): str,
-            }
-        )
-
         if user_input is not None:
-            input_text = user_input["token_json"]
-            refresh_token, access_token = _extract_tokens_from_text(input_text)
-
-            if not refresh_token:
-                errors["base"] = "invalid_token_json"
-            else:
-                try:
-                    entry_data = await _build_entry_from_tokens(
-                        self.hass,
-                        refresh_token=refresh_token,
-                        access_token=access_token,
-                    )
-                except DkvApiError:
-                    errors["base"] = "cannot_connect"
-                except (ValueError, TypeError):
-                    errors["base"] = "unknown"
-                else:
-                    if self._reauth_entry is None:
-                        return self.async_abort(reason="unknown")
-                    return self.async_update_reload_and_abort(
-                        self._reauth_entry,
-                        data_updates=entry_data,
-                    )
+            entry_data, errors = await self._process_input(
+                user_input.get("token_input", "")
+            )
+            if not errors:
+                if self._reauth_entry is None:
+                    return self.async_abort(reason="unknown")
+                return self.async_update_reload_and_abort(
+                    self._reauth_entry,
+                    data_updates=entry_data,
+                )
 
         return self.async_show_form(
             step_id="reauth_confirm",
-            data_schema=schema,
+            data_schema=vol.Schema({vol.Required("token_input"): str}),
             errors=errors,
-            description_placeholders={
-                "dkv_portal_url": DKV_PORTAL_LOGIN_URL,
-                "token_endpoint_hint": "/openid-connect/token",
-            },
+            description_placeholders={"auth_url": self._pkce_auth_url},
         )
 
     async def async_step_auth(self, user_input: dict | None = None):
-        """Create config entry from token JSON."""
+        """Create config entry via PKCE OAuth or legacy token JSON."""
+        self._ensure_pkce()
         errors: dict[str, str] = {}
 
-        schema = vol.Schema(
-            {
-                vol.Required("token_json"): str,
-            }
-        )
-
         if user_input is not None:
-            input_text = user_input["token_json"]
-            refresh_token, access_token = _extract_tokens_from_text(input_text)
-
-            if not refresh_token:
-                errors["base"] = "invalid_token_json"
-            else:
-                try:
-                    entry_data = await _build_entry_from_tokens(
-                        self.hass,
-                        refresh_token=refresh_token,
-                        access_token=access_token,
-                    )
-                except DkvApiError:
-                    errors["base"] = "cannot_connect"
-                except (ValueError, TypeError):
-                    errors["base"] = "unknown"
-                else:
-                    await self.async_set_unique_id(
-                        entry_data["preferred_username"]
-                    )
-                    self._abort_if_unique_id_configured()
-                    return self.async_create_entry(
-                        title=(
-                            "DKV@Home "
-                            f"({entry_data['preferred_username']})"
-                        ),
-                        data=entry_data,
-                    )
+            entry_data, errors = await self._process_input(
+                user_input.get("token_input", "")
+            )
+            if not errors:
+                await self.async_set_unique_id(
+                    entry_data["preferred_username"]
+                )
+                self._abort_if_unique_id_configured()
+                return self.async_create_entry(
+                    title=(
+                        "DKV@Home "
+                        f"({entry_data['preferred_username']})"
+                    ),
+                    data=entry_data,
+                )
 
         return self.async_show_form(
             step_id="auth",
-            data_schema=schema,
+            data_schema=vol.Schema({vol.Required("token_input"): str}),
             errors=errors,
-            description_placeholders={
-                "dkv_portal_url": DKV_PORTAL_LOGIN_URL,
-                "token_endpoint_hint": "/openid-connect/token",
-            },
+            description_placeholders={"auth_url": self._pkce_auth_url},
         )

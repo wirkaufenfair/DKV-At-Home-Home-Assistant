@@ -265,7 +265,7 @@ class DkvApiClient:
             "response_type": "code",
             "client_id": CLIENT_ID,
             "redirect_uri": redirect_uri,
-            "scope": "openid email profile",
+            "scope": "openid email profile offline_access",
             "state": state,
             "code_challenge": code_challenge,
             "code_challenge_method": "S256",
