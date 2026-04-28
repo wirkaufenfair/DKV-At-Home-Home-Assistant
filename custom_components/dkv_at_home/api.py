@@ -100,6 +100,46 @@ class DkvApiClient:
             return exp
         return None
 
+    @staticmethod
+    def _decode_jwt_claims(token: str | None) -> dict:
+        """Decode JWT payload claims without verifying signature."""
+        if not token:
+            return {}
+        parts = token.split(".")
+        if len(parts) != 3:
+            return {}
+        payload = parts[1]
+        payload += "=" * (-len(payload) % 4)
+        try:
+            decoded = base64.urlsafe_b64decode(payload.encode("ascii"))
+            return json.loads(decoded.decode("utf-8"))
+        except (
+            ValueError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+            TypeError,
+        ):
+            return {}
+
+    def _log_token_type(self, token_name: str, token: str | None) -> None:
+        """Log the token type (Offline vs regular) for diagnostics."""
+        claims = self._decode_jwt_claims(token)
+        typ = claims.get("typ", "unknown")
+        exp = claims.get("exp")
+        _LOGGER.info(
+            "%s Typ: %s%s",
+            token_name,
+            typ,
+            (
+                ", läuft ab: "
+                + datetime.fromtimestamp(
+                    exp, tz=timezone.utc
+                ).isoformat()
+                if isinstance(exp, int)
+                else " (kein exp-Claim)"
+            ),
+        )
+
     def _log_token_expiry(self, token_name: str, token: str | None) -> None:
         """Log token expiry time in debug mode when JWT exp is available."""
         exp = self._decode_jwt_exp(token)
@@ -160,6 +200,9 @@ class DkvApiClient:
         self.access_token = result["access_token"]
         self.refresh_token = result["refresh_token"]
         _LOGGER.debug("DKV access token erneuert")
+        self._log_token_type(
+            "refresh_token (nach Refresh)", self.refresh_token
+        )
         self._log_token_expiry("access_token", self.access_token)
         self._log_token_expiry("refresh_token", self.refresh_token)
 
@@ -311,6 +354,9 @@ class DkvApiClient:
         result = r.json()
         self.access_token = result["access_token"]
         self.refresh_token = result["refresh_token"]
+        self._log_token_type(
+            "refresh_token (Code-Exchange)", self.refresh_token
+        )
         self._log_token_expiry("access_token", self.access_token)
         self._log_token_expiry("refresh_token", self.refresh_token)
 
