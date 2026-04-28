@@ -7,29 +7,22 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [1.0.16] - 2026-04-28
 
+### Changed
+
+- **Anleitungstext vereinfacht**: Klarerer Hinweis auf "Request conditions"-Tab
+  in Chrome DevTools (statt Strg+Shift+P). Deutliche Warnung dass der Login-Link
+  immer direkt aus dem HA-Formular ge"ffnet werden muss.
+
 ### Fixed
 
 - **State-Validierung im PKCE-Flow**: Wenn der Benutzer eine alte oder
   gespeicherte Anmelde-URL (aus dem Browser-Verlauf) statt des aktuellen
   Links aus dem HA-Formular verwendet, wird jetzt ein klarer Fehler
-  angezeigt: „Falscher Anmeldelink verwendet“. Zuvor führte dies zu einem
-  kryptischen „PKCE verification failed: Code mismatch“.
-- **PKCE-Verifier wird bei Fehler nicht mehr zurückgesetzt**: Nach einem
+  angezeigt: "Falscher Anmeldelink verwendet" (statt kryptischem
+  "PKCE verification failed: Code mismatch").
+- **PKCE-Verifier wird bei Fehler nicht mehr zur"ckgesetzt**: Nach einem
   fehlgeschlagenen Code-Austausch bleibt das PKCE-Paar erhalten, sodass
-  der Benutzer mit demselben Anmelde-Link erneut versuchen kann (statt
-  einen komplett neuen Link zu erhalten).
-
-## [1.0.16] - 2026-04-28
-
-### Changed
-
-- **Anleitungstext vereinfacht**: Klarerer Hinweis auf "Request conditions"-Tab
-  in Chrome DevTools (statt Strg+Shift+P). Deutliche Warnung dass der Login-Link
-  immer direkt aus dem HA-Formular geöffnet werden muss.
-- **State-Validierung**: Klare Fehlermeldung wenn eine alte/gespeicherte Anmelde-URL
-  verwendet wird (statt kryptischem "PKCE Code mismatch").
-- **PKCE-Verifier bleibt nach Fehler erhalten** (kein Zurücksetzen mehr).
-
+  der Benutzer mit demselben Anmelde-Link erneut versuchen kann.
 ## [1.0.15] - 2026-04-28
 
 ### Changed
