@@ -3,14 +3,14 @@
     "step": {
       "auth": {
         "title": "DKV@Home Anmeldung",
-        "description": "Die DKV-Website verarbeitet den Code serverseitig – er muss abgefangen werden, BEVOR er den DKV-Server erreicht.\n\n1) F12 drücken → Netzwerk-Tab → Strg+Shift+P → \"block\" tippen → \"Netzwerkanfragen blockieren anzeigen\" wählen.\n\n2) Im Panel auf \"+\" klicken → https://my.dkv-mobility.com/dashboard* eingeben → Enter.\n\n3) Den folgenden Login-Link öffnen:\n{auth_url}\n\n4) Anmelden. Der Browser zeigt eine Fehlerseite (\"blockiert\") – das ist korrekt! Der Code wurde NICHT verbraucht.\n\n5) Die URL aus der Adressleiste (enthält ?code=…) kopieren und hier einfügen.\n\n6) Blockierung entfernen: DevTools → \"Netzwerkanfragen blockieren\" → Papierkorb-Symbol.",
+        "description": "⚠️ Wichtig: Den Login-Link IMMER direkt aus diesem Formular öffnen – nie eine gespeicherte oder aus dem Browser-Verlauf kopierte URL verwenden!\n\nBlockregel einrichten (nur beim ersten Mal):\n1) F12 → Netzwerk-Tab → unten \"Request conditions\"-Tab öffnen (falls nicht sichtbar: auf \"+\" neben Console klicken → \"Network request blocking\").\n2) \"Enable blocking and throttling\" anhaken → \"+\" klicken → https://my.dkv-mobility.com/dashboard* eingeben → Enter.\n\nAnmelden:\n3) Den folgenden Link direkt anklicken:\n{auth_url}\n4) Anmelden. Der Browser zeigt eine Fehlerseite – das ist richtig!\n5) Die URL aus der Adressleiste (enthält ?code=…) kopieren und oben einfügen.\n\nDanach: DevTools → Request conditions → Haken bei \"Enable blocking\" entfernen.",
         "data": {
           "token_input": "Weiterleitungs-URL (mit ?code=…)"
         }
       },
       "reauth_confirm": {
         "title": "DKV@Home erneut verbinden",
-        "description": "Die DKV-Website verarbeitet den Code serverseitig – er muss abgefangen werden, BEVOR er den DKV-Server erreicht.\n\n1) F12 drücken → Netzwerk-Tab → Strg+Shift+P → \"block\" tippen → \"Netzwerkanfragen blockieren anzeigen\" wählen.\n\n2) Im Panel auf \"+\" klicken → https://my.dkv-mobility.com/dashboard* eingeben → Enter.\n\n3) Den folgenden Login-Link öffnen:\n{auth_url}\n\n4) Anmelden. Der Browser zeigt eine Fehlerseite (\"blockiert\") – das ist korrekt! Der Code wurde NICHT verbraucht.\n\n5) Die URL aus der Adressleiste (enthält ?code=…) kopieren und hier einfügen.\n\n6) Blockierung entfernen: DevTools → \"Netzwerkanfragen blockieren\" → Papierkorb-Symbol.",
+        "description": "⚠️ Wichtig: Den Login-Link IMMER direkt aus diesem Formular öffnen – nie eine gespeicherte oder aus dem Browser-Verlauf kopierte URL verwenden!\n\nBlockregel einrichten (nur beim ersten Mal):\n1) F12 → Netzwerk-Tab → unten \"Request conditions\"-Tab öffnen (falls nicht sichtbar: auf \"+\" neben Console klicken → \"Network request blocking\").\n2) \"Enable blocking and throttling\" anhaken → \"+\" klicken → https://my.dkv-mobility.com/dashboard* eingeben → Enter.\n\nAnmelden:\n3) Den folgenden Link direkt anklicken:\n{auth_url}\n4) Anmelden. Der Browser zeigt eine Fehlerseite – das ist richtig!\n5) Die URL aus der Adressleiste (enthält ?code=…) kopieren und oben einfügen.\n\nDanach: DevTools → Request conditions → Haken bei \"Enable blocking\" entfernen.",
         "data": {
           "token_input": "Weiterleitungs-URL (mit ?code=…)"
         }

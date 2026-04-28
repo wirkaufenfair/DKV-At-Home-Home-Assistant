@@ -19,6 +19,17 @@ and this project follows [Semantic Versioning](https://semver.org/).
   der Benutzer mit demselben Anmelde-Link erneut versuchen kann (statt
   einen komplett neuen Link zu erhalten).
 
+## [1.0.16] - 2026-04-28
+
+### Changed
+
+- **Anleitungstext vereinfacht**: Klarerer Hinweis auf "Request conditions"-Tab
+  in Chrome DevTools (statt Strg+Shift+P). Deutliche Warnung dass der Login-Link
+  immer direkt aus dem HA-Formular geöffnet werden muss.
+- **State-Validierung**: Klare Fehlermeldung wenn eine alte/gespeicherte Anmelde-URL
+  verwendet wird (statt kryptischem "PKCE Code mismatch").
+- **PKCE-Verifier bleibt nach Fehler erhalten** (kein Zurücksetzen mehr).
+
 ## [1.0.15] - 2026-04-28
 
 ### Changed

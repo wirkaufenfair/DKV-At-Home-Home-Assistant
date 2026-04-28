@@ -3,14 +3,14 @@
     "step": {
       "auth": {
         "title": "DKV@Home Sign in",
-        "description": "The DKV website processes the login code server-side – it must be intercepted BEFORE reaching the DKV server.\n\n1) Press F12 → Network tab → Ctrl+Shift+P → type \"block\" → select \"Show network request blocking\".\n\n2) Click \"+\" → enter https://my.dkv-mobility.com/dashboard* → press Enter.\n\n3) Open the following login link:\n{auth_url}\n\n4) Sign in. The browser will show an error page (\"blocked\") – this is correct! The code has NOT been consumed.\n\n5) Copy the URL from the address bar (contains ?code=…) and paste it here.\n\n6) Remove the block: DevTools → \"Network request blocking\" → trash icon.",
+        "description": "⚠️ Important: ALWAYS open the login link directly from this form – never use a saved or browser-history URL!\n\nSet up block rule (first time only):\n1) F12 → Network tab → open \"Request conditions\" tab at the bottom (if not visible: click \"+\" next to Console → \"Network request blocking\").\n2) Check \"Enable blocking and throttling\" → click \"+\" → enter https://my.dkv-mobility.com/dashboard* → Enter.\n\nSign in:\n3) Click the following link directly:\n{auth_url}\n4) Sign in. The browser will show an error page – that is correct!\n5) Copy the URL from the address bar (contains ?code=…) and paste it above.\n\nAfterwards: DevTools → Request conditions → uncheck \"Enable blocking\".",
         "data": {
           "token_input": "Redirect URL (with ?code=…)"
         }
       },
       "reauth_confirm": {
         "title": "Reconnect DKV@Home",
-        "description": "The DKV website processes the login code server-side – it must be intercepted BEFORE reaching the DKV server.\n\n1) Press F12 → Network tab → Ctrl+Shift+P → type \"block\" → select \"Show network request blocking\".\n\n2) Click \"+\" → enter https://my.dkv-mobility.com/dashboard* → press Enter.\n\n3) Open the following login link:\n{auth_url}\n\n4) Sign in. The browser will show an error page (\"blocked\") – this is correct! The code has NOT been consumed.\n\n5) Copy the URL from the address bar (contains ?code=…) and paste it here.\n\n6) Remove the block: DevTools → \"Network request blocking\" → trash icon.",
+        "description": "⚠️ Important: ALWAYS open the login link directly from this form – never use a saved or browser-history URL!\n\nSet up block rule (first time only):\n1) F12 → Network tab → open \"Request conditions\" tab at the bottom (if not visible: click \"+\" next to Console → \"Network request blocking\").\n2) Check \"Enable blocking and throttling\" → click \"+\" → enter https://my.dkv-mobility.com/dashboard* → Enter.\n\nSign in:\n3) Click the following link directly:\n{auth_url}\n4) Sign in. The browser will show an error page – that is correct!\n5) Copy the URL from the address bar (contains ?code=…) and paste it above.\n\nAfterwards: DevTools → Request conditions → uncheck \"Enable blocking\".",
         "data": {
           "token_input": "Redirect URL (with ?code=…)"
         }
