@@ -50,7 +50,7 @@ async def _build_entry_from_tokens(
 
 
 def _parse_user_input(text: str) -> dict:
-    """Detect whether the user pasted a redirect URL or bare authorization code.
+    """Detect whether the user pasted a redirect URL or bare code.
 
     Returns a dict with key ``mode`` set to one of:
     - ``"pkce_url"``  – full redirect URL containing ``?code=…``
@@ -66,7 +66,14 @@ def _parse_user_input(text: str) -> dict:
         state = params.get("state", [None])[0]
         if not code:
             return {"mode": "invalid"}
-        return {"mode": "pkce_url", "code": code, "state": state}
+        # Rebuild redirect_uri as Keycloak saw it (no query string)
+        redirect_uri = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+        return {
+            "mode": "pkce_url",
+            "code": code,
+            "state": state,
+            "redirect_uri": redirect_uri,
+        }
 
     if raw:
         return {"mode": "pkce_code", "code": raw}
@@ -109,13 +116,16 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
     async def _exchange_pkce_code(
         self,
         code: str,
-        returned_state: str | None,  # noqa: ARG002 – state check omitted; PKCE verifier provides sufficient security
+        _returned_state: str | None,
+        redirect_uri: str = _PKCE_REDIRECT_URI,
     ) -> tuple[dict | None, dict]:
         """Exchange an authorization code for tokens.
 
         Returns ``(entry_data, errors)``.
         """
         verifier = self._pkce_verifier
+        if verifier is None:
+            return None, {"base": "unknown"}
         try:
             client = DkvApiClient(
                 refresh_token="",
@@ -125,7 +135,7 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             await self.hass.async_add_executor_job(
                 lambda: client.exchange_code(
                     code=code,
-                    redirect_uri=_PKCE_REDIRECT_URI,
+                    redirect_uri=redirect_uri,
                     code_verifier=verifier,
                 )
             )
@@ -152,7 +162,8 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
 
         code = parsed["code"]
         state = parsed.get("state")
-        return await self._exchange_pkce_code(code, state)
+        redirect_uri = parsed.get("redirect_uri", _PKCE_REDIRECT_URI)
+        return await self._exchange_pkce_code(code, state, redirect_uri)
 
     # ------------------------------------------------------------------
     # Flow steps
@@ -181,7 +192,7 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             entry_data, errors = await self._process_input(
                 user_input.get("token_input", "")
             )
-            if not errors:
+            if not errors and entry_data is not None:
                 if self._reauth_entry is None:
                     return self.async_abort(reason="unknown")
                 return self.async_update_reload_and_abort(
@@ -205,7 +216,7 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             entry_data, errors = await self._process_input(
                 user_input.get("token_input", "")
             )
-            if not errors:
+            if not errors and entry_data is not None:
                 await self.async_set_unique_id(
                     entry_data["preferred_username"]
                 )
