@@ -280,6 +280,12 @@ class DkvApiClient:
         code_verifier: str,
     ) -> None:
         """Exchange authorization code for refresh/access token (in-place)."""
+        _LOGGER.debug(
+            "Token-Austausch: client_id=%s redirect_uri=%s code_prefix=%s",
+            self.client_id,
+            redirect_uri,
+            code[:8] if code else "NONE",
+        )
         r = requests.post(
             TOKEN_URL,
             data={
@@ -292,6 +298,11 @@ class DkvApiClient:
             timeout=30,
         )
         if r.status_code != 200:
+            _LOGGER.error(
+                "Code-Austausch fehlgeschlagen: HTTP %s – %s",
+                r.status_code,
+                r.text,
+            )
             raise DkvApiError(
                 "Code-Austausch fehlgeschlagen: "
                 f"HTTP {r.status_code} – {r.text}"

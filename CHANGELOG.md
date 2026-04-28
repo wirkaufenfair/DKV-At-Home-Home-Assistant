@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.12] - 2026-04-28
+
+### Added
+
+- Detaillierte Fehler-Logs beim PKCE Token-Exchange: Keycloak-Antwort (HTTP-Status
+  und Body) wird jetzt in HA-Logs (Ebene ERROR) ausgegeben, damit der genaue
+  Ablehnungsgrund sichtbar ist (z. B. `invalid_grant`, `redirect_uri mismatch`).
+- Debug-Log vor dem Token-Exchange zeigt `client_id`, `redirect_uri` und den
+  Anfang des Codes – hilft bei der Diagnose von Konfigurationsproblemen.
+
+### Fixed
+
+- `_LOGGER` in `config_flow.py` fehlte; Fehler wurden kommentarlos verschluckt.
+
 ## [1.0.11] - 2026-04-28
 
 ### Fixed

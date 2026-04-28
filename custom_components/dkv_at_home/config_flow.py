@@ -3,6 +3,7 @@
 # pyright: reportMissingImports=false, reportCallIssue=false
 # pylint: disable=import-error
 
+import logging
 import secrets as _secrets
 from urllib.parse import parse_qs, urlparse
 
@@ -13,6 +14,8 @@ from homeassistant.core import HomeAssistant  # type: ignore[import]
 
 from .api import DkvApiClient, DkvApiError
 from .const import CLIENT_ID, DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 # Redirect URI used for PKCE flow. Keycloak's dkv-portal client always
 # redirects to /dashboard after login, regardless of the redirect_uri
@@ -125,7 +128,13 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
         """
         verifier = self._pkce_verifier
         if verifier is None:
+            _LOGGER.error("PKCE-Verifier fehlt – neuer Anlauf nötig")
             return None, {"base": "unknown"}
+        _LOGGER.debug(
+            "PKCE Code-Austausch: redirect_uri=%s code_prefix=%s",
+            redirect_uri,
+            code[:8] if code else "NONE",
+        )
         try:
             client = DkvApiClient(
                 refresh_token="",
@@ -145,10 +154,12 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
                 access_token=client.access_token,
             )
             return entry_data, {}
-        except DkvApiError:
+        except DkvApiError as exc:
+            _LOGGER.error("PKCE Code-Austausch fehlgeschlagen: %s", exc)
             self._pkce_verifier = None  # force new PKCE pair on retry
             return None, {"base": "cannot_connect"}
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as exc:
+            _LOGGER.error("Unerwarteter Fehler beim Code-Austausch: %s", exc)
             self._pkce_verifier = None
             return None, {"base": "unknown"}
 
