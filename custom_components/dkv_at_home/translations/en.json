@@ -3,23 +3,23 @@
     "step": {
       "auth": {
         "title": "DKV@Home Sign in",
-        "description": "Sign in once – the offline token does not expire.\n\n1) Press F12 → open the Network tab.\n\n2) Open the following login link:\n{auth_url}\n\n3) Sign in. The browser will redirect to the dashboard.\n\n4) In the Network tab, filter for \"token\" and click the POST request to the Keycloak token endpoint.\n\n5) Open the Response tab → copy the value of \"refresh_token\" (starts with \"eyJ\").\n\n6) Paste the copied value here.",
+        "description": "**Important:** Temporarily disable JavaScript for the DKV site so the login code is not consumed by the DKV web app.\n\n**Chrome:** Open https://my.dkv-mobility.com, click the lock icon in the address bar → Site settings → JavaScript → Block.\n\n**Firefox:** Address bar: `about:config` → `javascript.enabled` → `false`.\n\n1) Open the following login link (JavaScript is now disabled):\n{auth_url}\n\n2) Enter your username and password on the Keycloak login page and sign in.\n\n3) The browser will redirect – the dashboard page will not load correctly (no JS). This is expected.\n\n4) Copy the full URL from the address bar (it contains ?code=…).\n\n5) Paste the copied URL here.\n\n6) Re-enable JavaScript for my.dkv-mobility.com afterwards.",
         "data": {
-          "token_input": "Refresh Token"
+          "token_input": "Redirect URL (with ?code=…)"
         }
       },
       "reauth_confirm": {
         "title": "Reconnect DKV@Home",
-        "description": "Your DKV session has expired or is no longer valid.\n\n1) Press F12 → open the Network tab.\n\n2) Open the following login link:\n{auth_url}\n\n3) Sign in. The browser will redirect to the dashboard.\n\n4) In the Network tab, filter for \"token\" and click the POST request to the Keycloak token endpoint.\n\n5) Open the Response tab → copy the value of \"refresh_token\" (starts with \"eyJ\").\n\n6) Paste the copied value here.",
+        "description": "**Important:** Temporarily disable JavaScript for the DKV site so the login code is not consumed by the DKV web app.\n\n**Chrome:** Open https://my.dkv-mobility.com, click the lock icon in the address bar → Site settings → JavaScript → Block.\n\n**Firefox:** Address bar: `about:config` → `javascript.enabled` → `false`.\n\n1) Open the following login link (JavaScript is now disabled):\n{auth_url}\n\n2) Enter your username and password on the Keycloak login page and sign in.\n\n3) The browser will redirect – the dashboard page will not load correctly (no JS). This is expected.\n\n4) Copy the full URL from the address bar (it contains ?code=…).\n\n5) Paste the copied URL here.\n\n6) Re-enable JavaScript for my.dkv-mobility.com afterwards.",
         "data": {
-          "token_input": "Refresh Token"
+          "token_input": "Redirect URL (with ?code=…)"
         }
       }
     },
     "error": {
-      "cannot_connect": "Connection failed. Please copy the refresh token again from the Network tab and paste it here.",
-      "invalid_input": "Invalid input. Please paste the refresh token from the Network tab (starts with 'eyJ').",
-      "invalid_redirect_url": "No authorization code found in the URL. Please paste the refresh token from the Network tab.",
+      "cannot_connect": "Connection failed. Please disable JavaScript, sign in again, and paste the new URL.",
+      "invalid_input": "Invalid input. Please paste the full redirect URL (with ?code=…) or a refresh token (starts with 'eyJ').",
+      "invalid_redirect_url": "No authorization code found in the URL. Please paste the full redirect URL.",
       "unknown": "Unknown error. Check the HA logs for details."
     },
     "abort": {

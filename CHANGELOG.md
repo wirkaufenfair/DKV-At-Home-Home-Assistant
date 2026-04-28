@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.14] - 2026-04-28
+
+### Changed
+
+- **Authentifizierung: JavaScript-Blockierung als Pflichtschritt** – Die DKV-WebApp
+  verbraucht den Authorization-Code sofort beim Laden der Seite und rotiert den
+  Refresh-Token. Keycloak's Replay-Detection invalidiert dadurch die gesamte
+  Session. Lösung: JavaScript für `my.dkv-mobility.com` vor dem Login kurz
+  deaktivieren (Chrome: Schloss-Symbol → Website-Einstellungen → JavaScript →
+  Blockieren), dann die URL aus der Adressleiste kopieren.
+- Anleitungstexte für Chrome und Firefox aktualisiert.
+
+### Added
+
+- Token-Typ (`Offline` vs. `Refresh`) wird nach Code-Exchange und Token-Refresh
+  ins HA-Log geschrieben (Level INFO) zur Diagnose von Ablaufproblemen.
+
 ## [1.0.13] - 2026-04-28
 
 ### Changed

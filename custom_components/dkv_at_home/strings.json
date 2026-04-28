@@ -3,23 +3,23 @@
     "step": {
       "auth": {
         "title": "DKV@Home Anmeldung",
-        "description": "Melde dich einmalig an – der Offline-Token läuft danach nicht mehr ab.\n\n1) F12 drücken → Netzwerk-Tab öffnen.\n\n2) Den folgenden Login-Link öffnen:\n{auth_url}\n\n3) Anmelden. Der Browser leitet zum Dashboard weiter.\n\n4) Im Netzwerk-Tab nach \"token\" filtern → den POST-Request zum Keycloak-Token-Endpunkt anklicken.\n\n5) Im Tab \"Antwort\" (Response) den Wert von \"refresh_token\" kopieren (beginnt mit \"eyJ\").\n\n6) Den kopierten Wert hier einfügen.",
+        "description": "**Wichtig:** JavaScript für die DKV-Seite kurz deaktivieren, damit der Anmeldecode nicht von der DKV-App verbraucht wird.\n\n**Chrome:** Öffne https://my.dkv-mobility.com, klicke auf das Schloss-Symbol in der Adressleiste → Website-Einstellungen → JavaScript → Blockieren.\n\n**Firefox:** Adressleiste: `about:config` → `javascript.enabled` → `false`.\n\n1) Den folgenden Login-Link öffnen (JavaScript ist jetzt deaktiviert):\n{auth_url}\n\n2) Auf der Keycloak-Anmeldeseite Benutzername und Passwort eingeben und anmelden.\n\n3) Der Browser leitet weiter – die Dashboard-Seite wird nicht korrekt laden (kein JS). Das ist richtig.\n\n4) Die vollständige URL aus der Adressleiste kopieren (enthält ?code=…).\n\n5) Die kopierte URL hier einfügen.\n\n6) Danach JavaScript für my.dkv-mobility.com wieder aktivieren.",
         "data": {
-          "token_input": "Refresh-Token"
+          "token_input": "Weiterleitungs-URL (mit ?code=…)"
         }
       },
       "reauth_confirm": {
         "title": "DKV@Home erneut verbinden",
-        "description": "Die DKV-Anmeldung ist abgelaufen oder ungültig.\n\n1) F12 drücken → Netzwerk-Tab öffnen.\n\n2) Den folgenden Login-Link öffnen:\n{auth_url}\n\n3) Anmelden. Der Browser leitet zum Dashboard weiter.\n\n4) Im Netzwerk-Tab nach \"token\" filtern → den POST-Request zum Keycloak-Token-Endpunkt anklicken.\n\n5) Im Tab \"Antwort\" (Response) den Wert von \"refresh_token\" kopieren (beginnt mit \"eyJ\").\n\n6) Den kopierten Wert hier einfügen.",
+        "description": "**Wichtig:** JavaScript für die DKV-Seite kurz deaktivieren, damit der Anmeldecode nicht von der DKV-App verbraucht wird.\n\n**Chrome:** Öffne https://my.dkv-mobility.com, klicke auf das Schloss-Symbol in der Adressleiste → Website-Einstellungen → JavaScript → Blockieren.\n\n**Firefox:** Adressleiste: `about:config` → `javascript.enabled` → `false`.\n\n1) Den folgenden Login-Link öffnen (JavaScript ist jetzt deaktiviert):\n{auth_url}\n\n2) Auf der Keycloak-Anmeldeseite Benutzername und Passwort eingeben und anmelden.\n\n3) Der Browser leitet weiter – die Dashboard-Seite wird nicht korrekt laden (kein JS). Das ist richtig.\n\n4) Die vollständige URL aus der Adressleiste kopieren (enthält ?code=…).\n\n5) Die kopierte URL hier einfügen.\n\n6) Danach JavaScript für my.dkv-mobility.com wieder aktivieren.",
         "data": {
-          "token_input": "Refresh-Token"
+          "token_input": "Weiterleitungs-URL (mit ?code=…)"
         }
       }
     },
     "error": {
-      "cannot_connect": "Verbindung fehlgeschlagen. Bitte den Refresh-Token erneut aus dem Netzwerk-Tab kopieren und einfügen.",
-      "invalid_input": "Ungültige Eingabe. Bitte den Refresh-Token aus dem Netzwerk-Tab einfügen (beginnt mit 'eyJ').",
-      "invalid_redirect_url": "Kein Autorisierungs-Code in der URL gefunden. Bitte den Refresh-Token aus dem Netzwerk-Tab einfügen.",
+      "cannot_connect": "Verbindung fehlgeschlagen. Bitte JavaScript deaktivieren, neu anmelden und die neue URL einfügen.",
+      "invalid_input": "Ungültige Eingabe. Bitte die vollständige Weiterleitungs-URL (mit ?code=…) oder den Refresh-Token (beginnt mit 'eyJ') einfügen.",
+      "invalid_redirect_url": "Kein Autorisierungs-Code in der URL gefunden. Bitte die vollständige Weiterleitungs-URL einfügen.",
       "unknown": "Unbekannter Fehler. Bitte die HA-Logs prüfen."
     },
     "abort": {
