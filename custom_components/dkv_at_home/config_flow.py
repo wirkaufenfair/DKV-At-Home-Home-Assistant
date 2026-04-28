@@ -199,9 +199,19 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             )
             return entry_data, {}
         except DkvApiError as exc:
-            _LOGGER.error("PKCE Code-Austausch fehlgeschlagen: %s", exc)
-            # Keep the same PKCE pair so the user can retry with the same
-            # auth URL. Resetting would force a new pair and a new login.
+            exc_str = str(exc)
+            _LOGGER.error("PKCE Code-Austausch fehlgeschlagen: %s", exc_str)
+            # If Keycloak rejected the code (invalid_grant), the code is
+            # permanently dead – it was either consumed by the DKV SSR or
+            # belongs to a different PKCE session. Reset the pair so the
+            # form immediately shows a fresh auth URL.
+            if "invalid_grant" in exc_str:
+                self._pkce_verifier = None
+                self._pkce_state = None
+                self._pkce_auth_url = None
+                return None, {"base": "code_expired"}
+            # For transient errors (network, 5xx) keep the pair so the
+            # user can retry without logging in again.
             return None, {"base": "cannot_connect"}
         except (ValueError, TypeError) as exc:
             _LOGGER.error("Unerwarteter Fehler beim Code-Austausch: %s", exc)
