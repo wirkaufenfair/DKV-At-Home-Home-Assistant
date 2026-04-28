@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.11] - 2026-04-28
+
+### Fixed
+
+- `_PKCE_REDIRECT_URI` auf `https://my.dkv-mobility.com/dashboard` korrigiert
+  – Keycloak leitet immer zu `/dashboard` weiter, unabhängig vom gesendeten
+  `redirect_uri`-Parameter. Authorize-Request und Token-Exchange müssen
+  übereinstimmen, sonst schmä ht Keycloak den Code-Exchange.
+- Anleitungstext und Fehlermeldungen auf `…/dashboard?state=…` aktualisiert.
+
 ## [1.0.10] - 2026-04-28
 
 ### Fixed
