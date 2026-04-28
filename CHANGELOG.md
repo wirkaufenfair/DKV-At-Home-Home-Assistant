@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.17] - 2026-04-28
+
+### Fixed
+
+- **PKCE-Paar wird bei falschem Anmeldelink zurückgesetzt**: Wenn der
+  State-Wert in der eingefügten URL nicht zur aktuellen HA-Sitzung passt
+  (z. B. weil der Benutzer einen Link aus einer früheren Sitzung verwendet
+  hat), wird das PKCE-Paar jetzt zurückgesetzt und ein neuer Anmeldelink
+  generiert. So kann der Benutzer sofort den neuen Link aus dem Formular
+  klicken, ohne die Seite neu laden zu müssen.
+
+### Changed
+
+- **Fehlermeldung `wrong_auth_url` präzisiert**: Der Hinweis lautet jetzt
+  „Veralteter Anmeldelink – ein neuer Link wurde generiert. Bitte jetzt
+  den Link AUS DEM FORMULAR unten klicken und sich neu anmelden!", damit
+  klar ist, dass ein frischer Link bereitsteht.
+
 ## [1.0.16] - 2026-04-28
 
 ### Changed
@@ -23,6 +41,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - **PKCE-Verifier wird bei Fehler nicht mehr zur"ckgesetzt**: Nach einem
   fehlgeschlagenen Code-Austausch bleibt das PKCE-Paar erhalten, sodass
   der Benutzer mit demselben Anmelde-Link erneut versuchen kann.
+
 ## [1.0.15] - 2026-04-28
 
 ### Changed

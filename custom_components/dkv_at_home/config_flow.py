@@ -175,6 +175,13 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
                 self._pkce_state,
                 returned_state,
             )
+            # The submitted URL belongs to a different PKCE session whose
+            # code_verifier is no longer available, so it cannot be
+            # exchanged. Reset the pair so the form generates a fresh
+            # auth URL and the user can start a clean login.
+            self._pkce_verifier = None
+            self._pkce_state = None
+            self._pkce_auth_url = None
             return None, {"base": "wrong_auth_url"}
 
         _LOGGER.debug(

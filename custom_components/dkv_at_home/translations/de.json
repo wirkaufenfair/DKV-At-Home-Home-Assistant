@@ -18,7 +18,7 @@
     },
     "error": {
       "cannot_connect": "Verbindung fehlgeschlagen. Bitte sicherstellen, dass die Dashboard-URL in DevTools blockiert war, bevor der Login-Link geöffnet wurde.",
-      "wrong_auth_url": "Falscher Anmeldelink verwendet. Bitte den Link AUS DEM FORMULAR unten klicken – keine gespeicherte oder kopierte URL aus dem Browser verwenden!",
+      "wrong_auth_url": "Veralteter Anmeldelink \u2013 ein neuer Link wurde generiert. Bitte jetzt den Link AUS DEM FORMULAR unten klicken und sich neu anmelden!",
       "invalid_input": "Ungültige Eingabe. Bitte die vollständige Weiterleitungs-URL (mit ?code=…) oder den Refresh-Token (beginnt mit 'eyJ') einfügen.",
       "invalid_redirect_url": "Kein Autorisierungs-Code in der URL gefunden. Bitte die vollständige Weiterleitungs-URL einfügen.",
       "unknown": "Unbekannter Fehler. Bitte die HA-Logs prüfen."
