@@ -3,14 +3,14 @@
     "step": {
       "auth": {
         "title": "DKV@Home Anmeldung",
-        "description": "Melde dich einmalig an – mit dem Offline-Token läuft die Anmeldung dauerhaft nicht mehr ab.\n\n1) Browser-Entwicklertools öffnen (F12) → Netzwerk-Tab.\n\n2) Öffne folgenden Link in einem neuen Tab:\n{auth_url}\n\n3) Melde dich an. Der Browser leitet direkt zum Dashboard weiter – das ist normal.\n\n4) Im Netzwerk-Tab nach einer Anfrage mit \"?code=\" suchen. Rechtsklick auf die Anfrage → URL kopieren.\n\n5) Die kopierte URL hier einfügen.",
+        "description": "Melde dich einmalig an – mit dem Offline-Token läuft die Anmeldung dauerhaft nicht mehr ab.\n\n1) Öffne den folgenden Login-Link:\n{auth_url}\n\n2) Auf der DKV-Anmeldeseite (vor dem Einloggen) F12 drücken → Netzwerk-Tab öffnen.\n\n3) Melde dich an. Der Browser leitet direkt zum Dashboard weiter – das ist normal.\n\n4) Im Netzwerk-Tab die Anfrage suchen, deren URL mit \"https://my.dkv-mobility.com/?state=\" beginnt. Rechtsklick → URL kopieren.\n\n5) Die kopierte URL hier einfügen.",
         "data": {
           "token_input": "Weiterleitungs-URL oder Token-JSON"
         }
       },
       "reauth_confirm": {
         "title": "DKV@Home erneut verbinden",
-        "description": "Die DKV-Anmeldung ist abgelaufen oder ungültig.\n\n1) Browser-Entwicklertools öffnen (F12) → Netzwerk-Tab.\n\n2) Öffne folgenden Link in einem neuen Tab:\n{auth_url}\n\n3) Melde dich an. Der Browser leitet direkt zum Dashboard weiter – das ist normal.\n\n4) Im Netzwerk-Tab nach einer Anfrage mit \"?code=\" suchen. Rechtsklick auf die Anfrage → URL kopieren.\n\n5) Die kopierte URL hier einfügen.",
+        "description": "Die DKV-Anmeldung ist abgelaufen oder ungültig.\n\n1) Öffne den folgenden Login-Link:\n{auth_url}\n\n2) Auf der DKV-Anmeldeseite (vor dem Einloggen) F12 drücken → Netzwerk-Tab öffnen.\n\n3) Melde dich an. Der Browser leitet direkt zum Dashboard weiter – das ist normal.\n\n4) Im Netzwerk-Tab die Anfrage suchen, deren URL mit \"https://my.dkv-mobility.com/?state=\" beginnt. Rechtsklick → URL kopieren.\n\n5) Die kopierte URL hier einfügen."
         "data": {
           "token_input": "Weiterleitungs-URL oder Token-JSON"
         }

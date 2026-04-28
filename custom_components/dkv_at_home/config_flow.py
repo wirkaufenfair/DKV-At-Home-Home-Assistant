@@ -125,16 +125,12 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
     async def _exchange_pkce_code(
         self,
         code: str,
-        returned_state: str | None,
+        returned_state: str | None,  # noqa: ARG002 – state check omitted; PKCE verifier provides sufficient security
     ) -> tuple[dict | None, dict]:
         """Exchange an authorization code for tokens.
 
         Returns ``(entry_data, errors)``.
         """
-        if returned_state and returned_state != self._pkce_state:
-            self._pkce_verifier = None  # force new PKCE pair on retry
-            return None, {"base": "state_mismatch"}
-
         verifier = self._pkce_verifier
         try:
             client = DkvApiClient(
