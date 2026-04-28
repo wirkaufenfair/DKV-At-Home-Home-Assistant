@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.15] - 2026-04-28
+
+### Changed
+
+- **Authentifizierung: DevTools-Anfragen-Blockierung** – Die DKV-Website
+  verarbeitet den Anmeldecode **serverseitig** (SSR/Next.js). Auch JavaScript
+  deaktivieren hilft nicht, weil der Server den Code vor der Seitenlieferung
+  verarbeitet. Lösung: Den Dashboard-Request im Browser blockieren (DevTools
+  → Strg+Shift+P → "block" → Muster `https://my.dkv-mobility.com/dashboard*`),
+  bevor der Login-Link geöffnet wird. Der Browser zeigt dann eine Fehlerseite,
+  aber die Adressleiste enthält die URL mit dem unverbrauchten `?code=`.
+- Anleitungstexte für Chrome (Strg+Shift+P) aktualisiert.
+
 ## [1.0.14] - 2026-04-28
 
 ### Changed
