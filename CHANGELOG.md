@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.13] - 2026-04-28
+
+### Changed
+
+- **Authentifizierung komplett umgestellt**: Statt die Weiterleitungs-URL zu
+  kopieren (die von der DKV-Webapp sofort verbraucht wird), kopiert der Benutzer
+  jetzt den `refresh_token` direkt aus dem Netzwerk-Tab der Browser-DevTools.
+  Das ist zuverlässig und hat kein Timing-Problem.
+- Anleitungstext und Fehlermeldungen auf den neuen Ablauf aktualisiert.
+- Eingabefeld erkennt automatisch: Refresh-Token (beginnt mit `eyJ`),
+  Weiterleitungs-URL (beginnt mit `https://`) oder Code-String.
+
+### Fixed
+
+- "Code not valid" (`invalid_grant`): Die DKV-SPA verbraucht den
+  Autorisierungs-Code beim Laden der Seite – HA kam immer zu spät.
+
 ## [1.0.12] - 2026-04-28
 
 ### Added

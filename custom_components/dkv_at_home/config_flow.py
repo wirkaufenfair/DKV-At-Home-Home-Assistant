@@ -78,6 +78,11 @@ def _parse_user_input(text: str) -> dict:
             "redirect_uri": redirect_uri,
         }
 
+    # Keycloak offline-token is a JWT – starts with "eyJ" (base64 of '{"')
+    # and has exactly two dots separating header, payload and signature.
+    if raw.startswith("eyJ") and raw.count(".") >= 2:
+        return {"mode": "refresh_token", "token": raw}
+
     if raw:
         return {"mode": "pkce_code", "code": raw}
 
@@ -115,6 +120,30 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             code_challenge=challenge,
             redirect_uri=_PKCE_REDIRECT_URI,
         )
+
+    async def _validate_refresh_token(
+        self,
+        refresh_token: str,
+    ) -> tuple[dict | None, dict]:
+        """Validate a refresh token pasted directly from the browser.
+
+        Returns ``(entry_data, errors)``.
+        """
+        _LOGGER.debug(
+            "Validiere Refresh-Token (Prefix: %s…)", refresh_token[:12]
+        )
+        try:
+            entry_data = await _build_entry_from_tokens(
+                self.hass,
+                refresh_token=refresh_token,
+            )
+            return entry_data, {}
+        except DkvApiError as exc:
+            _LOGGER.error("Refresh-Token ungültig: %s", exc)
+            return None, {"base": "cannot_connect"}
+        except (ValueError, TypeError) as exc:
+            _LOGGER.error("Fehler bei Refresh-Token-Validierung: %s", exc)
+            return None, {"base": "unknown"}
 
     async def _exchange_pkce_code(
         self,
@@ -170,6 +199,9 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
 
         if mode == "invalid":
             return None, {"base": "invalid_input"}
+
+        if mode == "refresh_token":
+            return await self._validate_refresh_token(parsed["token"])
 
         code = parsed["code"]
         state = parsed.get("state")

@@ -3,23 +3,23 @@
     "step": {
       "auth": {
         "title": "DKV@Home Anmeldung",
-        "description": "Melde dich einmalig an – mit dem Offline-Token läuft die Anmeldung dauerhaft nicht mehr ab.\n\n1) Öffne den folgenden Login-Link:\n{auth_url}\n\n2) Auf der DKV-Anmeldeseite (vor dem Einloggen) F12 drücken → Netzwerk-Tab öffnen.\n\n3) Melde dich an. Der Browser leitet direkt zum Dashboard weiter – das ist normal.\n\n4) Im Netzwerk-Tab die Anfrage suchen, deren URL mit \"https://my.dkv-mobility.com/dashboard?state=\" beginnt. Rechtsklick → URL kopieren.\n\n5) Die kopierte URL hier einfügen.",
+        "description": "Melde dich einmalig an – der Offline-Token läuft danach nicht mehr ab.\n\n1) F12 drücken → Netzwerk-Tab öffnen.\n\n2) Den folgenden Login-Link öffnen:\n{auth_url}\n\n3) Anmelden. Der Browser leitet zum Dashboard weiter.\n\n4) Im Netzwerk-Tab nach \"token\" filtern → den POST-Request zum Keycloak-Token-Endpunkt anklicken.\n\n5) Im Tab \"Antwort\" (Response) den Wert von \"refresh_token\" kopieren (beginnt mit \"eyJ\").\n\n6) Den kopierten Wert hier einfügen.",
         "data": {
-          "token_input": "Weiterleitungs-URL"
+          "token_input": "Refresh-Token"
         }
       },
       "reauth_confirm": {
         "title": "DKV@Home erneut verbinden",
-        "description": "Die DKV-Anmeldung ist abgelaufen oder ungültig.\n\n1) Öffne den folgenden Login-Link:\n{auth_url}\n\n2) Auf der DKV-Anmeldeseite (vor dem Einloggen) F12 drücken → Netzwerk-Tab öffnen.\n\n3) Melde dich an. Der Browser leitet direkt zum Dashboard weiter – das ist normal.\n\n4) Im Netzwerk-Tab die Anfrage suchen, deren URL mit \"https://my.dkv-mobility.com/dashboard?state=\" beginnt. Rechtsklick → URL kopieren.\n\n5) Die kopierte URL hier einfügen.",
+        "description": "Die DKV-Anmeldung ist abgelaufen oder ungültig.\n\n1) F12 drücken → Netzwerk-Tab öffnen.\n\n2) Den folgenden Login-Link öffnen:\n{auth_url}\n\n3) Anmelden. Der Browser leitet zum Dashboard weiter.\n\n4) Im Netzwerk-Tab nach \"token\" filtern → den POST-Request zum Keycloak-Token-Endpunkt anklicken.\n\n5) Im Tab \"Antwort\" (Response) den Wert von \"refresh_token\" kopieren (beginnt mit \"eyJ\").\n\n6) Den kopierten Wert hier einfügen.",
         "data": {
-          "token_input": "Weiterleitungs-URL"
+          "token_input": "Refresh-Token"
         }
       }
     },
     "error": {
-      "cannot_connect": "Verbindung fehlgeschlagen. Bitte erneut anmelden und die neue Weiterleitungs-URL einfügen.",
-      "invalid_input": "Ungültige Eingabe. Bitte die vollständige Weiterleitungs-URL (beginnend mit https://my.dkv-mobility.com/dashboard?state=…) einfügen.",
-      "invalid_redirect_url": "Kein Autorisierungs-Code in der URL gefunden. Bitte die vollständige Weiterleitungs-URL einfügen.",
+      "cannot_connect": "Verbindung fehlgeschlagen. Bitte den Refresh-Token erneut aus dem Netzwerk-Tab kopieren und einfügen.",
+      "invalid_input": "Ungültige Eingabe. Bitte den Refresh-Token aus dem Netzwerk-Tab einfügen (beginnt mit 'eyJ').",
+      "invalid_redirect_url": "Kein Autorisierungs-Code in der URL gefunden. Bitte den Refresh-Token aus dem Netzwerk-Tab einfügen.",
       "unknown": "Unbekannter Fehler. Bitte die HA-Logs prüfen."
     },
     "abort": {
