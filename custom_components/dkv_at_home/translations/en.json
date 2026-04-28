@@ -1,25 +1,26 @@
-{
+﻿{
   "config": {
     "step": {
       "auth": {
         "title": "DKV@Home Sign in",
-        "description": "⚠️ Important: ALWAYS open the login link directly from this form – never use a saved or browser-history URL!\n\nSet up block rule (first time only):\n1) F12 → Network tab → open \"Request conditions\" tab at the bottom (if not visible: click \"+\" next to Console → \"Network request blocking\").\n2) Check \"Enable blocking and throttling\" → click \"+\" → enter https://my.dkv-mobility.com/dashboard* → Enter.\n\nSign in:\n3) Click the following link directly:\n{auth_url}\n4) Sign in. The browser will show an error page – that is correct!\n5) Copy the URL from the address bar (contains ?code=…) and paste it above.\n\nAfterwards: DevTools → Request conditions → uncheck \"Enable blocking\".",
+        "description": "",
         "data": {
-          "token_input": "Redirect URL (with ?code=…)"
+          "token_input": "Redirect URL (with ?code=\u2026)"
         }
       },
       "reauth_confirm": {
         "title": "Reconnect DKV@Home",
-        "description": "⚠️ Important: ALWAYS open the login link directly from this form – never use a saved or browser-history URL!\n\nSet up block rule (first time only):\n1) F12 → Network tab → open \"Request conditions\" tab at the bottom (if not visible: click \"+\" next to Console → \"Network request blocking\").\n2) Check \"Enable blocking and throttling\" → click \"+\" → enter https://my.dkv-mobility.com/dashboard* → Enter.\n\nSign in:\n3) Click the following link directly:\n{auth_url}\n4) Sign in. The browser will show an error page – that is correct!\n5) Copy the URL from the address bar (contains ?code=…) and paste it above.\n\nAfterwards: DevTools → Request conditions → uncheck \"Enable blocking\".",
+        "description": "",
         "data": {
-          "token_input": "Redirect URL (with ?code=…)"
+          "token_input": "Redirect URL (with ?code=\u2026)"
         }
       }
     },
     "error": {
       "cannot_connect": "Connection failed. Make sure the dashboard URL was blocked in DevTools BEFORE opening the login link.",
+      "code_expired": "Code expired or already used \u2013 a new login link has been generated. Please click the new link FROM THE FORM and sign in again!",
       "wrong_auth_url": "Outdated login link \u2013 a new link has been generated. Please click the link FROM THE FORM below and sign in again!",
-      "invalid_input": "Invalid input. Please paste the full redirect URL (with ?code=…) or a refresh token (starts with 'eyJ').",
+      "invalid_input": "Invalid input. Please paste the full redirect URL (with ?code=\u2026) or a refresh token (starts with 'eyJ').",
       "invalid_redirect_url": "No authorization code found in the URL. Please paste the full redirect URL.",
       "unknown": "Unknown error. Check the HA logs for details."
     },

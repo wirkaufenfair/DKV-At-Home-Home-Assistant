@@ -1,27 +1,28 @@
-{
+﻿{
   "config": {
     "step": {
       "auth": {
         "title": "DKV@Home Anmeldung",
-        "description": "⚠️ Wichtig: Den Login-Link IMMER direkt aus diesem Formular öffnen – nie eine gespeicherte oder aus dem Browser-Verlauf kopierte URL verwenden!\n\nBlockregel einrichten (nur beim ersten Mal):\n1) F12 → Netzwerk-Tab → unten \"Request conditions\"-Tab öffnen (falls nicht sichtbar: auf \"+\" neben Console klicken → \"Network request blocking\").\n2) \"Enable blocking and throttling\" anhaken → \"+\" klicken → https://my.dkv-mobility.com/dashboard* eingeben → Enter.\n\nAnmelden:\n3) Den folgenden Link direkt anklicken:\n{auth_url}\n4) Anmelden. Der Browser zeigt eine Fehlerseite – das ist richtig!\n5) Die URL aus der Adressleiste (enthält ?code=…) kopieren und oben einfügen.\n\nDanach: DevTools → Request conditions → Haken bei \"Enable blocking\" entfernen.",
+        "description": "",
         "data": {
-          "token_input": "Weiterleitungs-URL (mit ?code=…)"
+          "token_input": "Weiterleitungs-URL (mit ?code=\u2026)"
         }
       },
       "reauth_confirm": {
         "title": "DKV@Home erneut verbinden",
-        "description": "⚠️ Wichtig: Den Login-Link IMMER direkt aus diesem Formular öffnen – nie eine gespeicherte oder aus dem Browser-Verlauf kopierte URL verwenden!\n\nBlockregel einrichten (nur beim ersten Mal):\n1) F12 → Netzwerk-Tab → unten \"Request conditions\"-Tab öffnen (falls nicht sichtbar: auf \"+\" neben Console klicken → \"Network request blocking\").\n2) \"Enable blocking and throttling\" anhaken → \"+\" klicken → https://my.dkv-mobility.com/dashboard* eingeben → Enter.\n\nAnmelden:\n3) Den folgenden Link direkt anklicken:\n{auth_url}\n4) Anmelden. Der Browser zeigt eine Fehlerseite – das ist richtig!\n5) Die URL aus der Adressleiste (enthält ?code=…) kopieren und oben einfügen.\n\nDanach: DevTools → Request conditions → Haken bei \"Enable blocking\" entfernen.",
+        "description": "",
         "data": {
-          "token_input": "Weiterleitungs-URL (mit ?code=…)"
+          "token_input": "Weiterleitungs-URL (mit ?code=\u2026)"
         }
       }
     },
     "error": {
-      "cannot_connect": "Verbindung fehlgeschlagen. Bitte sicherstellen, dass die Dashboard-URL in DevTools blockiert war, bevor der Login-Link geöffnet wurde.",
+      "cannot_connect": "Verbindung fehlgeschlagen. Bitte sicherstellen, dass die Dashboard-URL in DevTools blockiert war, bevor der Login-Link ge\u00f6ffnet wurde.",
+      "code_expired": "Code abgelaufen oder bereits verwendet \u2013 ein neuer Anmeldelink wurde generiert. Bitte den neuen Link AUS DEM FORMULAR klicken und sich neu anmelden!",
       "wrong_auth_url": "Veralteter Anmeldelink \u2013 ein neuer Link wurde generiert. Bitte jetzt den Link AUS DEM FORMULAR unten klicken und sich neu anmelden!",
-      "invalid_input": "Ungültige Eingabe. Bitte die vollständige Weiterleitungs-URL (mit ?code=…) oder den Refresh-Token (beginnt mit 'eyJ') einfügen.",
-      "invalid_redirect_url": "Kein Autorisierungs-Code in der URL gefunden. Bitte die vollständige Weiterleitungs-URL einfügen.",
-      "unknown": "Unbekannter Fehler. Bitte die HA-Logs prüfen."
+      "invalid_input": "Ung\u00fcltige Eingabe. Bitte die vollst\u00e4ndige Weiterleitungs-URL (mit ?code=\u2026) oder den Refresh-Token (beginnt mit 'eyJ') einf\u00fcgen.",
+      "invalid_redirect_url": "Kein Autorisierungs-Code in der URL gefunden. Bitte die vollst\u00e4ndige Weiterleitungs-URL einf\u00fcgen.",
+      "unknown": "Unbekannter Fehler. Bitte die HA-Logs pr\u00fcfen."
     },
     "abort": {
       "already_configured": "DKV@Home ist bereits konfiguriert."

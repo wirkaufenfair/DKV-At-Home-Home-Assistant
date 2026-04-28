@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.19] - 2026-04-28
+
+### Fixed
+
+- **`invalid_grant`-Fehler setzen PKCE-Paar zurück**: Wenn Keycloak den
+  Code-Austausch mit `invalid_grant` ablehnt (Code bereits vom DKV-Server
+  verbraucht, Code gehört zu einer anderen PKCE-Sitzung, o. ä.), wird das
+  PKCE-Paar jetzt sofort zurückgesetzt und ein neuer Anmeldelink generiert.
+  So kann der Benutzer direkt den neuen Link klicken, ohne die Seite neu
+  laden oder die Integration neu starten zu müssen.
+- **Neuer Fehlercode `code_expired`**: Klare Fehlermeldung statt des
+  generischen „Verbindung fehlgeschlagen": „Code abgelaufen oder bereits
+  verwendet – ein neuer Anmeldelink wurde generiert."
+
 ## [1.0.18] - 2026-04-28
 
 ### Fixed
