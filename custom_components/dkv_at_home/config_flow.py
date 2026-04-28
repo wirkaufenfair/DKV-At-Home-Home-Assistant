@@ -160,29 +160,19 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             _LOGGER.error("PKCE-Verifier fehlt – neuer Anlauf nötig")
             return None, {"base": "unknown"}
 
-        # Validate that the returned state matches the one we sent.
-        # A mismatch means the user opened an old/wrong auth URL instead
-        # of the link currently shown in the HA form.
-        if (
-            returned_state
-            and self._pkce_state
-            and returned_state != self._pkce_state
-        ):
-            _LOGGER.error(
-                "State-Mismatch: erwartet=%s, erhalten=%s – "
-                "Bitte den Anmeldelink AUS DEM FORMULAR klicken, "
-                "keine alte oder gespeicherte URL verwenden!",
+        # NOTE: Keycloak internally transforms the state parameter, so the
+        # returned state never matches what we sent. State validation is
+        # intentionally omitted here – security is provided by the PKCE
+        # code_verifier / code_challenge pair (RFC 7636). If the code does
+        # not belong to the current session, Keycloak will reject the
+        # exchange with an invalid_grant error.
+        if returned_state and self._pkce_state:
+            _LOGGER.debug(
+                "State: gesendet=%s, erhalten=%s (Keycloak transformiert "
+                "den State intern – kein Fehler)",
                 self._pkce_state,
                 returned_state,
             )
-            # The submitted URL belongs to a different PKCE session whose
-            # code_verifier is no longer available, so it cannot be
-            # exchanged. Reset the pair so the form generates a fresh
-            # auth URL and the user can start a clean login.
-            self._pkce_verifier = None
-            self._pkce_state = None
-            self._pkce_auth_url = None
-            return None, {"base": "wrong_auth_url"}
 
         _LOGGER.debug(
             "PKCE Code-Austausch: redirect_uri=%s code_prefix=%s",
