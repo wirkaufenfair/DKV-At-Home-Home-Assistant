@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.9] - 2026-04-28
+
+### Fixed
+
+- Removed Keycloak state-parameter check – Keycloak transforms the state value
+  internally, causing a false "state mismatch" error. PKCE `code_verifier`
+  provides equivalent security.
+- Removed legacy token-JSON input path – short-lived tokens were the root cause
+  of the recurring `invalid_grant` errors. Only the PKCE offline-token flow is
+  now accepted.
+- Fixed JSON syntax error in `reauth_confirm` step definition.
+- Setup instructions clarified: F12 / Network tab must be opened on the DKV
+  login page *before* clicking the login button.
+- Field label and error messages updated to reflect redirect-URL-only input.
+
 ## [1.0.8] - 2026-04-28
 
 ### Added
