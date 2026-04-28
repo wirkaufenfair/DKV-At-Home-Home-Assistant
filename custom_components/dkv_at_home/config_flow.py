@@ -3,7 +3,6 @@
 # pyright: reportMissingImports=false, reportCallIssue=false
 # pylint: disable=import-error
 
-import json
 import secrets as _secrets
 from urllib.parse import parse_qs, urlparse
 
@@ -51,29 +50,14 @@ async def _build_entry_from_tokens(
 
 
 def _parse_user_input(text: str) -> dict:
-    """Detect whether the user pasted a redirect URL, bare code, or token JSON.
+    """Detect whether the user pasted a redirect URL or bare authorization code.
 
     Returns a dict with key ``mode`` set to one of:
     - ``"pkce_url"``  – full redirect URL containing ``?code=…``
     - ``"pkce_code"`` – bare authorization code string
-    - ``"json"``      – legacy token JSON blob
     - ``"invalid"``   – unrecognised input
     """
     raw = (text or "").strip()
-
-    if raw.startswith("{"):
-        try:
-            data = json.loads(raw)
-        except json.JSONDecodeError:
-            return {"mode": "invalid"}
-        refresh_token = data.get("refresh_token")
-        if not refresh_token:
-            return {"mode": "invalid"}
-        return {
-            "mode": "json",
-            "refresh_token": refresh_token,
-            "access_token": data.get("access_token"),
-        }
 
     if raw.startswith("http"):
         parsed = urlparse(raw)
@@ -166,20 +150,6 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
         if mode == "invalid":
             return None, {"base": "invalid_input"}
 
-        if mode == "json":
-            try:
-                entry_data = await _build_entry_from_tokens(
-                    self.hass,
-                    refresh_token=parsed["refresh_token"],
-                    access_token=parsed.get("access_token"),
-                )
-                return entry_data, {}
-            except DkvApiError:
-                return None, {"base": "cannot_connect"}
-            except (ValueError, TypeError):
-                return None, {"base": "unknown"}
-
-        # PKCE modes
         code = parsed["code"]
         state = parsed.get("state")
         return await self._exchange_pkce_code(code, state)
