@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.10] - 2026-04-28
+
+### Fixed
+
+- Redirect-URI wird nun dynamisch aus der eingefügten URL extrahiert – Keycloak
+  leitet je nach Konfiguration zu `/dashboard` statt `/` weiter, was zuvor
+  zu einem `cannot_connect`-Fehler beim Token-Exchange führte.
+- Anleitungstext korrigiert: Netzwerk-Tab-Suche nach URL die
+  `my.dkv-mobility.com/` enthält *und* `?state=` – nicht mehr hartkodiert
+  auf `/?state=`.
+- Flake8 E501 behoben (Zeile 53 zu lang).
+
 ## [1.0.9] - 2026-04-28
 
 ### Fixed
