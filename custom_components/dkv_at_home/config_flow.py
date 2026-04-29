@@ -17,8 +17,10 @@ from .const import CLIENT_ID, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-# Redirect URI: Keycloak's dkv-portal client always redirects to /dashboard.
-_REDIRECT_URI = "https://my.dkv-mobility.com/dashboard"
+# Redirect URI: Keycloak's static /auth/callback page does NOT consume the
+# authorization code (unlike /dashboard which is a SPA), so the code stays
+# in the address bar and can be pasted into HA without race conditions.
+_REDIRECT_URI = "https://my.dkv-mobility.com/auth/callback"
 
 
 async def _build_entry_from_tokens(
@@ -100,6 +102,7 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
         self._reauth_entry: config_entries.ConfigEntry | None = None
         self._auth_state: str | None = None
         self._auth_url: str | None = None
+        self._code_verifier: str | None = None
 
     # ------------------------------------------------------------------
     # Auth URL helper
@@ -108,38 +111,41 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
     def _ensure_auth_url(self) -> None:
         """Build a fresh login URL if one is not already prepared.
 
-        Uses a plain authorization code flow (no PKCE). The DKV Keycloak
-        realm replaces any third-party code_challenge with the portal's own
-        PKCE pair at the login-page level, which would cause a guaranteed
-        'Code mismatch' error on the token exchange.
-
-        The state and URL are persisted in ``self.context`` so they survive
-        a frontend reconnect or an HA restart that recreates the flow object.
+        Uses Authorization Code Flow with PKCE (S256). The PKCE verifier,
+        state and URL are persisted in ``self.context`` so they survive a
+        frontend reconnect or an HA restart that recreates the flow object.
         """
         # Restore from flow context first (survives object recreation).
         if self._auth_state is None and "auth_state" in self.context:
             self._auth_state = self.context["auth_state"]
             self._auth_url = self.context.get("auth_url")
+            self._code_verifier = self.context.get("code_verifier")
             _LOGGER.debug("Auth-URL aus Flow-Kontext wiederhergestellt")
 
-        if self._auth_url is not None:
+        if self._auth_url is not None and self._code_verifier is not None:
             return
 
+        verifier, challenge = DkvApiClient.generate_pkce_pair()
         self._auth_state = _secrets.token_urlsafe(16)
+        self._code_verifier = verifier
         self._auth_url = DkvApiClient.build_authorize_url(
             state=self._auth_state,
             redirect_uri=_REDIRECT_URI,
+            code_challenge=challenge,
         )
         self.context["auth_state"] = self._auth_state
         self.context["auth_url"] = self._auth_url
-        _LOGGER.debug("Neue Auth-URL generiert")
+        self.context["code_verifier"] = self._code_verifier
+        _LOGGER.debug("Neue Auth-URL mit PKCE generiert")
 
     def _reset_auth_url(self) -> None:
         """Discard the current auth URL so a fresh one is generated next."""
         self._auth_state = None
         self._auth_url = None
+        self._code_verifier = None
         self.context.pop("auth_state", None)
         self.context.pop("auth_url", None)
+        self.context.pop("code_verifier", None)
 
     async def _validate_refresh_token(
         self,
@@ -187,6 +193,14 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             redirect_uri,
             code[:8] if code else "NONE",
         )
+        verifier = self._code_verifier
+        if not verifier:
+            _LOGGER.error(
+                "PKCE code_verifier fehlt im Flow-Kontext – "
+                "neuer Anmeldelink erforderlich"
+            )
+            self._reset_auth_url()
+            return None, {"base": "code_expired"}
         try:
             client = DkvApiClient(
                 refresh_token="",
@@ -197,6 +211,7 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
                 lambda: client.exchange_code(
                     code=code,
                     redirect_uri=redirect_uri,
+                    code_verifier=verifier,
                 )
             )
             entry_data = await _build_entry_from_tokens(

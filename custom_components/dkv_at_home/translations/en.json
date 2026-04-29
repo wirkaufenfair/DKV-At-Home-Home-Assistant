@@ -3,24 +3,24 @@
     "step": {
       "auth": {
         "title": "DKV@Home Sign in",
-        "description": "Click the link below to sign in to DKV@Home:\n\n[Sign in to DKV]({auth_url})\n\nAfter login you will be redirected. Copy the full URL from the address bar (it contains `?code=\u2026`) and paste it below.\n\n> If the code has expired, a new login link will be generated automatically.",
+        "description": "1. Click the login link: [Sign in to DKV]({auth_url})\n2. Log in to DKV\n3. You will land on a Keycloak error page (“Page not found”) – this is intended!\n4. Copy the **full URL from the address bar** (Ctrl+L, then Ctrl+C)\n5. Paste the URL below\n\n> If the code has expired, a new login link will be generated automatically.",
         "data": {
-          "token_input": "Redirect URL (with ?code=\u2026)"
+          "token_input": "Redirect URL (with ?code=…)"
         }
       },
       "reauth_confirm": {
         "title": "Reconnect DKV@Home",
-        "description": "Click the link below to sign in to DKV@Home again:\n\n[Sign in to DKV]({auth_url})\n\nAfter login you will be redirected. Copy the full URL from the address bar (it contains `?code=\u2026`) and paste it below.\n\n> If the code has expired, a new login link will be generated automatically.",
+        "description": "1. Click the login link to re-authenticate: [Sign in to DKV]({auth_url})\n2. Log in to DKV\n3. You will land on a Keycloak error page (“Page not found”) – this is intended!\n4. Copy the **full URL from the address bar** (Ctrl+L, then Ctrl+C)\n5. Paste the URL below\n\n> If the code has expired, a new login link will be generated automatically.",
         "data": {
-          "token_input": "Redirect URL (with ?code=\u2026)"
+          "token_input": "Redirect URL (with ?code=…)"
         }
       }
     },
     "error": {
       "cannot_connect": "Connection failed. Please check your internet connection and try again.",
-      "code_expired": "Code expired or already used \u2013 a new login link has been generated. Please click the new link FROM THE FORM and sign in again!",
+      "code_expired": "Code expired or already used – a new login link has been generated. Please click the new link FROM THE FORM and sign in again!",
       "wrong_auth_url": "The code belongs to a different login link (wrong tab or old link). A new link has been generated. Please click the link FROM THE FORM and sign in again!",
-      "invalid_input": "Invalid input. Please paste the full redirect URL (with ?code=\u2026) or a refresh token (starts with 'eyJ').",
+      "invalid_input": "Invalid input. Please paste the full redirect URL (with ?code=…) or a refresh token (starts with 'eyJ').",
       "invalid_redirect_url": "No authorization code found in the URL. Please paste the full redirect URL.",
       "unknown": "Unknown error. Check the HA logs for details."
     },

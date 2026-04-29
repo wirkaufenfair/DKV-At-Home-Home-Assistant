@@ -3,8 +3,10 @@
 # pyright: reportMissingImports=false, reportMissingModuleSource=false
 
 import base64
+import hashlib
 import json
 import logging
+import secrets
 import time
 from datetime import datetime, timezone
 from urllib.parse import urlencode
@@ -279,24 +281,44 @@ class DkvApiClient:
         return card_id
 
     @staticmethod
+    def generate_pkce_pair() -> tuple[str, str]:
+        """Generate a PKCE (verifier, challenge) pair using S256."""
+        verifier = base64.urlsafe_b64encode(
+            secrets.token_bytes(64)
+        ).decode("ascii").rstrip("=")
+        challenge = base64.urlsafe_b64encode(
+            hashlib.sha256(verifier.encode("ascii")).digest()
+        ).decode("ascii").rstrip("=")
+        return verifier, challenge
+
+    @staticmethod
     def build_authorize_url(
         state: str,
         redirect_uri: str,
+        code_challenge: str,
     ) -> str:
         """Build OAuth authorize URL for the DKV portal client.
 
-        Uses a plain authorization code flow (no PKCE) because the DKV
-        Keycloak realm uses a custom theme whose JavaScript replaces any
-        third-party code_challenge with the portal’s own PKCE pair,
-        causing a guaranteed “Code mismatch” on the token exchange.
+        Uses Authorization Code Flow with PKCE (S256). The DKV Keycloak
+        client ``dkv-portal`` enforces PKCE; ``code_challenge`` and the
+        redirect URI ``https://my.dkv-mobility.com/auth/callback`` are
+        required. The ``/auth/callback`` page is a static Keycloak page
+        that does NOT consume the code, so we have time to exchange it.
+
+        Note: ``offline_access`` is intentionally omitted because the
+        ``dkv-portal`` client does not have it as an allowed client scope.
+        Keycloak still issues a long-lived refresh token via SSO session
+        max (typically 30 days); a fresh login is needed afterwards.
         """
         params = {
             "response_type": "code",
             "client_id": CLIENT_ID,
             "redirect_uri": redirect_uri,
-            "scope": "openid email profile offline_access",
+            "scope": "openid email profile",
             "state": state,
             "prompt": "login",
+            "code_challenge": code_challenge,
+            "code_challenge_method": "S256",
         }
         return f"{AUTH_URL}?{urlencode(params)}"
 
@@ -305,6 +327,7 @@ class DkvApiClient:
         *,
         code: str,
         redirect_uri: str,
+        code_verifier: str,
     ) -> None:
         """Exchange authorization code for refresh/access token (in-place)."""
         _LOGGER.debug(
@@ -320,6 +343,7 @@ class DkvApiClient:
                 "client_id": self.client_id,
                 "code": code,
                 "redirect_uri": redirect_uri,
+                "code_verifier": code_verifier,
             },
             timeout=30,
         )

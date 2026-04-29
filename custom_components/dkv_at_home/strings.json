@@ -3,14 +3,14 @@
     "step": {
       "auth": {
         "title": "DKV@Home Anmeldung",
-        "description": "Klicke auf den folgenden Link, um dich bei DKV@Home anzumelden:\n\n[DKV anmelden]({auth_url})\n\nNach dem Login wirst du auf eine Seite weitergeleitet. Kopiere die vollständige URL aus der Adressleiste (sie enthält \\?code=…\\) und füge sie unten ein.\n\n> Falls der Code abgelaufen ist, wird automatisch ein neuer Anmeldelink generiert.",
+        "description": "1. Klicke den Anmeldelink: [DKV anmelden]({auth_url})\n2. Bei DKV einloggen\n3. Du landest auf einer Keycloak-Fehlerseite („Seite nicht gefunden“) – das ist gewollt!\n4. Kopiere die **komplette URL aus der Adressleiste** (Strg+L, dann Strg+C)\n5. Füge die URL unten ein\n\n> Falls der Code abgelaufen ist, wird automatisch ein neuer Anmeldelink generiert.",
         "data": {
           "token_input": "Weiterleitungs-URL (mit ?code=…)"
         }
       },
       "reauth_confirm": {
         "title": "DKV@Home erneut verbinden",
-        "description": "Klicke auf den folgenden Link, um dich neu bei DKV@Home anzumelden:\n\n[DKV anmelden]({auth_url})\n\nNach dem Login wirst du auf eine Seite weitergeleitet. Kopiere die vollständige URL aus der Adressleiste (sie enthält \\?code=…\\) und füge sie unten ein.\n\n> Falls der Code abgelaufen ist, wird automatisch ein neuer Anmeldelink generiert.",
+        "description": "1. Klicke den Anmeldelink zur Neu-Anmeldung: [DKV anmelden]({auth_url})\n2. Bei DKV einloggen\n3. Du landest auf einer Keycloak-Fehlerseite („Seite nicht gefunden“) – das ist gewollt!\n4. Kopiere die **komplette URL aus der Adressleiste** (Strg+L, dann Strg+C)\n5. Füge die URL unten ein\n\n> Falls der Code abgelaufen ist, wird automatisch ein neuer Anmeldelink generiert.",
         "data": {
           "token_input": "Weiterleitungs-URL (mit ?code=…)"
         }
