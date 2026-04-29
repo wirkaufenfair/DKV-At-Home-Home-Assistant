@@ -17,10 +17,8 @@ from .const import CLIENT_ID, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-# Redirect URI used for PKCE flow. Keycloak's dkv-portal client always
-# redirects to /dashboard after login, regardless of the redirect_uri
-# parameter – so we register /dashboard here to match the token exchange.
-_PKCE_REDIRECT_URI = "https://my.dkv-mobility.com/dashboard"
+# Redirect URI: Keycloak's dkv-portal client always redirects to /dashboard.
+_REDIRECT_URI = "https://my.dkv-mobility.com/dashboard"
 
 
 async def _build_entry_from_tokens(
@@ -100,59 +98,48 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
     def __init__(self) -> None:
         """Initialize flow state."""
         self._reauth_entry: config_entries.ConfigEntry | None = None
-        self._pkce_verifier: str | None = None
-        self._pkce_state: str | None = None
-        self._pkce_auth_url: str | None = None
+        self._auth_state: str | None = None
+        self._auth_url: str | None = None
 
     # ------------------------------------------------------------------
-    # PKCE helper
+    # Auth URL helper
     # ------------------------------------------------------------------
 
-    def _ensure_pkce(self) -> None:
-        """Generate a fresh PKCE pair if one is not already prepared.
+    def _ensure_auth_url(self) -> None:
+        """Build a fresh login URL if one is not already prepared.
 
-        The pair is also persisted in ``self.context`` so it survives a
-        frontend reconnect or an HA restart that recreates the flow object
-        from the stored context dict.
+        Uses a plain authorization code flow (no PKCE). The DKV Keycloak
+        realm replaces any third-party code_challenge with the portal's own
+        PKCE pair at the login-page level, which would cause a guaranteed
+        'Code mismatch' error on the token exchange.
+
+        The state and URL are persisted in ``self.context`` so they survive
+        a frontend reconnect or an HA restart that recreates the flow object.
         """
         # Restore from flow context first (survives object recreation).
-        if self._pkce_verifier is None and "pkce_verifier" in self.context:
-            self._pkce_verifier = self.context["pkce_verifier"]
-            self._pkce_state = self.context.get("pkce_state")
-            self._pkce_auth_url = self.context.get("pkce_auth_url")
-            _LOGGER.debug(
-                "PKCE-Pair aus Flow-Kontext wiederhergestellt (verifier prefix: %s…)",
-                self._pkce_verifier[:8],
-            )
+        if self._auth_state is None and "auth_state" in self.context:
+            self._auth_state = self.context["auth_state"]
+            self._auth_url = self.context.get("auth_url")
+            _LOGGER.debug("Auth-URL aus Flow-Kontext wiederhergestellt")
 
-        if self._pkce_verifier is not None:
+        if self._auth_url is not None:
             return
 
-        verifier, challenge = DkvApiClient.generate_pkce_pair()
-        self._pkce_verifier = verifier
-        self._pkce_state = _secrets.token_urlsafe(16)
-        self._pkce_auth_url = DkvApiClient.build_authorize_url(
-            state=self._pkce_state,
-            code_challenge=challenge,
-            redirect_uri=_PKCE_REDIRECT_URI,
+        self._auth_state = _secrets.token_urlsafe(16)
+        self._auth_url = DkvApiClient.build_authorize_url(
+            state=self._auth_state,
+            redirect_uri=_REDIRECT_URI,
         )
-        # Persist so the pair survives potential flow object recreation.
-        self.context["pkce_verifier"] = self._pkce_verifier
-        self.context["pkce_state"] = self._pkce_state
-        self.context["pkce_auth_url"] = self._pkce_auth_url
-        _LOGGER.debug(
-            "Neues PKCE-Pair generiert (verifier prefix: %s…)",
-            self._pkce_verifier[:8],
-        )
+        self.context["auth_state"] = self._auth_state
+        self.context["auth_url"] = self._auth_url
+        _LOGGER.debug("Neue Auth-URL generiert")
 
-    def _reset_pkce(self) -> None:
-        """Discard the current PKCE pair so a fresh one is generated next."""
-        self._pkce_verifier = None
-        self._pkce_state = None
-        self._pkce_auth_url = None
-        self.context.pop("pkce_verifier", None)
-        self.context.pop("pkce_state", None)
-        self.context.pop("pkce_auth_url", None)
+    def _reset_auth_url(self) -> None:
+        """Discard the current auth URL so a fresh one is generated next."""
+        self._auth_state = None
+        self._auth_url = None
+        self.context.pop("auth_state", None)
+        self.context.pop("auth_url", None)
 
     async def _validate_refresh_token(
         self,
@@ -178,40 +165,27 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             _LOGGER.error("Fehler bei Refresh-Token-Validierung: %s", exc)
             return None, {"base": "unknown"}
 
-    async def _exchange_pkce_code(
+    async def _exchange_code(
         self,
         code: str,
         returned_state: str | None,
-        redirect_uri: str = _PKCE_REDIRECT_URI,
+        redirect_uri: str = _REDIRECT_URI,
     ) -> tuple[dict | None, dict]:
         """Exchange an authorization code for tokens.
 
         Returns ``(entry_data, errors)``.
         """
-        verifier = self._pkce_verifier
-        if verifier is None:
-            _LOGGER.error("PKCE-Verifier fehlt – neuer Anlauf nötig")
-            return None, {"base": "unknown"}
-
-        # NOTE: Keycloak internally transforms the state parameter, so the
-        # returned state never matches what we sent. State validation is
-        # intentionally omitted here – security is provided by the PKCE
-        # code_verifier / code_challenge pair (RFC 7636). If the code does
-        # not belong to the current session, Keycloak will reject the
-        # exchange with an invalid_grant error.
-        if returned_state and self._pkce_state:
+        if returned_state and self._auth_state:
             _LOGGER.debug(
-                "State: gesendet=%s, erhalten=%s (Keycloak transformiert "
-                "den State intern – kein Fehler)",
-                self._pkce_state,
+                "State: gesendet=%s, erhalten=%s",
+                self._auth_state,
                 returned_state,
             )
 
         _LOGGER.debug(
-            "PKCE Code-Austausch: redirect_uri=%s code_prefix=%s verifier_prefix=%s…",
+            "Code-Austausch: redirect_uri=%s code_prefix=%s",
             redirect_uri,
             code[:8] if code else "NONE",
-            verifier[:8],
         )
         try:
             client = DkvApiClient(
@@ -223,7 +197,6 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
                 lambda: client.exchange_code(
                     code=code,
                     redirect_uri=redirect_uri,
-                    code_verifier=verifier,
                 )
             )
             entry_data = await _build_entry_from_tokens(
@@ -234,20 +207,10 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             return entry_data, {}
         except DkvApiError as exc:
             exc_str = str(exc)
-            _LOGGER.error("PKCE Code-Austausch fehlgeschlagen: %s", exc_str)
-            # If Keycloak rejected the code (invalid_grant), the code is
-            # permanently dead. Reset the pair so the form shows a fresh
-            # auth URL on the next render.
+            _LOGGER.error("Code-Austausch fehlgeschlagen: %s", exc_str)
             if "invalid_grant" in exc_str:
-                self._reset_pkce()
-                # "Code mismatch" means the submitted code was issued for a
-                # *different* PKCE challenge (e.g. wrong tab/flow). Report a
-                # distinct error so the user knows to click the link again.
-                if "Code mismatch" in exc_str or "code_mismatch" in exc_str:
-                    return None, {"base": "wrong_auth_url"}
+                self._reset_auth_url()
                 return None, {"base": "code_expired"}
-            # For transient errors (network, 5xx) keep the pair so the
-            # user can retry without logging in again.
             return None, {"base": "cannot_connect"}
         except (ValueError, TypeError) as exc:
             _LOGGER.error("Unerwarteter Fehler beim Code-Austausch: %s", exc)
@@ -266,8 +229,8 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
 
         code = parsed["code"]
         state = parsed.get("state")
-        redirect_uri = parsed.get("redirect_uri", _PKCE_REDIRECT_URI)
-        return await self._exchange_pkce_code(code, state, redirect_uri)
+        redirect_uri = parsed.get("redirect_uri", _REDIRECT_URI)
+        return await self._exchange_code(code, state, redirect_uri)
 
     # ------------------------------------------------------------------
     # Flow steps
@@ -289,7 +252,7 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
         user_input: dict | None = None,
     ):
         """Handle token update for an existing config entry."""
-        self._ensure_pkce()
+        self._ensure_auth_url()
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -308,12 +271,12 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             step_id="reauth_confirm",
             data_schema=vol.Schema({vol.Required("token_input"): str}),
             errors=errors,
-            description_placeholders={"auth_url": self._pkce_auth_url},
+            description_placeholders={"auth_url": self._auth_url},
         )
 
     async def async_step_auth(self, user_input: dict | None = None):
-        """Create config entry via PKCE OAuth or legacy token JSON."""
-        self._ensure_pkce()
+        """Create config entry via authorization code or refresh token."""
+        self._ensure_auth_url()
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -337,5 +300,5 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             step_id="auth",
             data_schema=vol.Schema({vol.Required("token_input"): str}),
             errors=errors,
-            description_placeholders={"auth_url": self._pkce_auth_url},
+            description_placeholders={"auth_url": self._auth_url},
         )
