@@ -109,9 +109,25 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
     # ------------------------------------------------------------------
 
     def _ensure_pkce(self) -> None:
-        """Generate a fresh PKCE pair if one is not already prepared."""
+        """Generate a fresh PKCE pair if one is not already prepared.
+
+        The pair is also persisted in ``self.context`` so it survives a
+        frontend reconnect or an HA restart that recreates the flow object
+        from the stored context dict.
+        """
+        # Restore from flow context first (survives object recreation).
+        if self._pkce_verifier is None and "pkce_verifier" in self.context:
+            self._pkce_verifier = self.context["pkce_verifier"]
+            self._pkce_state = self.context.get("pkce_state")
+            self._pkce_auth_url = self.context.get("pkce_auth_url")
+            _LOGGER.debug(
+                "PKCE-Pair aus Flow-Kontext wiederhergestellt (verifier prefix: %s…)",
+                self._pkce_verifier[:8],
+            )
+
         if self._pkce_verifier is not None:
             return
+
         verifier, challenge = DkvApiClient.generate_pkce_pair()
         self._pkce_verifier = verifier
         self._pkce_state = _secrets.token_urlsafe(16)
@@ -120,6 +136,23 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             code_challenge=challenge,
             redirect_uri=_PKCE_REDIRECT_URI,
         )
+        # Persist so the pair survives potential flow object recreation.
+        self.context["pkce_verifier"] = self._pkce_verifier
+        self.context["pkce_state"] = self._pkce_state
+        self.context["pkce_auth_url"] = self._pkce_auth_url
+        _LOGGER.debug(
+            "Neues PKCE-Pair generiert (verifier prefix: %s…)",
+            self._pkce_verifier[:8],
+        )
+
+    def _reset_pkce(self) -> None:
+        """Discard the current PKCE pair so a fresh one is generated next."""
+        self._pkce_verifier = None
+        self._pkce_state = None
+        self._pkce_auth_url = None
+        self.context.pop("pkce_verifier", None)
+        self.context.pop("pkce_state", None)
+        self.context.pop("pkce_auth_url", None)
 
     async def _validate_refresh_token(
         self,
@@ -175,9 +208,10 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             )
 
         _LOGGER.debug(
-            "PKCE Code-Austausch: redirect_uri=%s code_prefix=%s",
+            "PKCE Code-Austausch: redirect_uri=%s code_prefix=%s verifier_prefix=%s…",
             redirect_uri,
             code[:8] if code else "NONE",
+            verifier[:8],
         )
         try:
             client = DkvApiClient(
@@ -202,13 +236,15 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             exc_str = str(exc)
             _LOGGER.error("PKCE Code-Austausch fehlgeschlagen: %s", exc_str)
             # If Keycloak rejected the code (invalid_grant), the code is
-            # permanently dead – it was either consumed by the DKV SSR or
-            # belongs to a different PKCE session. Reset the pair so the
-            # form immediately shows a fresh auth URL.
+            # permanently dead. Reset the pair so the form shows a fresh
+            # auth URL on the next render.
             if "invalid_grant" in exc_str:
-                self._pkce_verifier = None
-                self._pkce_state = None
-                self._pkce_auth_url = None
+                self._reset_pkce()
+                # "Code mismatch" means the submitted code was issued for a
+                # *different* PKCE challenge (e.g. wrong tab/flow). Report a
+                # distinct error so the user knows to click the link again.
+                if "Code mismatch" in exc_str or "code_mismatch" in exc_str:
+                    return None, {"base": "wrong_auth_url"}
                 return None, {"base": "code_expired"}
             # For transient errors (network, 5xx) keep the pair so the
             # user can retry without logging in again.
