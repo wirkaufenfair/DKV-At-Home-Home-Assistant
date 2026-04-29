@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
+## [1.0.22] - 2026-04-29
+
+### Fixed
+
+- **PKCE komplett entfernt – Root-Cause behoben**: Das DKV-Keycloak-Realm
+  verwendet ein Custom-Theme, dessen JavaScript bei der Anmeldung den
+  `code_challenge` durch den Portal-eigenen PKCE-Challenge ersetzt. Dadurch
+  war ein erfolgreicher Code-Austausch mit HA's eigenem Verifier strukturell
+  unmöglich – auch das Blockieren der Dashboard-URL in den DevTools half
+  nicht, da die Überschreibung auf Keycloak-Server-Ebene stattfindet.
+  Die Integration verwendet jetzt einen einfachen Authorization Code Flow
+  (ohne `code_challenge` / `code_verifier`). Der „Code mismatch"-Fehler
+  kann damit nicht mehr auftreten.
+- **`prompt=login` hinzugefügt**: Die Auth-URL erzwingt jetzt immer eine
+  frische Anmeldung, um SSO-Session-Interferenzen zu vermeiden.
+- **Anmeldeformular vereinfacht**: Die DevTools-Blockier-Anleitung entfällt.
+  Nutzer klicken einfach den Link, melden sich an und kopieren die URL.
+- **Fehlermeldung `cannot_connect` korrigiert**: Enthielt bisher einen
+  veralteten Hinweis auf DevTools-Blockierung.
+## [1.0.22] - 2026-04-29
+
+### Fixed
+
+- **Anleitung im Formular korrigiert**: Das DKV-Portal fängt die
+  Weiterleitungs-URL nach dem Login ab und startet einen eigenen PKCE-Flow –
+  der Code im Adressfeld gehört dadurch zum Portal-Challenge, nicht zum
+  HA-Challenge, was den „Code mismatch"-Fehler verursacht.
+  Die Beschreibung im Anmeldeformular erklärt jetzt die korrekte
+  Vorgehensweise: die Dashboard-URL **vor** dem Klick auf den Anmeldelink in
+  den Browser-Entwicklertools (DevTools → Netzwerk → *Anfrage-URL blockieren*)
+  blockieren, damit das Portal die Weiterleitung nicht abfangen kann.
 
 ## [1.0.21] - 2026-04-29
 

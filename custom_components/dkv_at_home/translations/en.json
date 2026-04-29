@@ -3,21 +3,21 @@
     "step": {
       "auth": {
         "title": "DKV@Home Sign in",
-        "description": "Click the link below to sign in to DKV@Home:\n\n[Sign in to DKV]({auth_url})\n\nAfter login you will be redirected to a page. Copy the full URL of that page (it contains `?code=\u2026`) and paste it below.",
+        "description": "Click the link below to sign in to DKV@Home:\n\n[Sign in to DKV]({auth_url})\n\nAfter login you will be redirected. Copy the full URL from the address bar (it contains `?code=\u2026`) and paste it below.\n\n> If the code has expired, a new login link will be generated automatically.",
         "data": {
           "token_input": "Redirect URL (with ?code=\u2026)"
         }
       },
       "reauth_confirm": {
         "title": "Reconnect DKV@Home",
-        "description": "Click the link below to sign in to DKV@Home again:\n\n[Sign in to DKV]({auth_url})\n\nAfter login you will be redirected to a page. Copy the full URL of that page (it contains `?code=\u2026`) and paste it below.",
+        "description": "Click the link below to sign in to DKV@Home again:\n\n[Sign in to DKV]({auth_url})\n\nAfter login you will be redirected. Copy the full URL from the address bar (it contains `?code=\u2026`) and paste it below.\n\n> If the code has expired, a new login link will be generated automatically.",
         "data": {
           "token_input": "Redirect URL (with ?code=\u2026)"
         }
       }
     },
     "error": {
-      "cannot_connect": "Connection failed. Make sure the dashboard URL was blocked in DevTools BEFORE opening the login link.",
+      "cannot_connect": "Connection failed. Please check your internet connection and try again.",
       "code_expired": "Code expired or already used \u2013 a new login link has been generated. Please click the new link FROM THE FORM and sign in again!",
       "wrong_auth_url": "The code belongs to a different login link (wrong tab or old link). A new link has been generated. Please click the link FROM THE FORM and sign in again!",
       "invalid_input": "Invalid input. Please paste the full redirect URL (with ?code=\u2026) or a refresh token (starts with 'eyJ').",

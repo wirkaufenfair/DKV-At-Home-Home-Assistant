@@ -3,10 +3,8 @@
 # pyright: reportMissingImports=false, reportMissingModuleSource=false
 
 import base64
-import hashlib
 import json
 import logging
-import secrets
 import time
 from datetime import datetime, timezone
 from urllib.parse import urlencode
@@ -281,37 +279,24 @@ class DkvApiClient:
         return card_id
 
     @staticmethod
-    def generate_pkce_pair() -> tuple[str, str]:
-        """Generate PKCE verifier/challenge for OAuth code flow."""
-        verifier = (
-            base64.urlsafe_b64encode(secrets.token_bytes(64))
-            .decode()
-            .rstrip("=")
-        )
-        challenge = (
-            base64.urlsafe_b64encode(
-                hashlib.sha256(verifier.encode()).digest()
-            )
-            .decode()
-            .rstrip("=")
-        )
-        return verifier, challenge
-
-    @staticmethod
     def build_authorize_url(
         state: str,
-        code_challenge: str,
         redirect_uri: str,
     ) -> str:
-        """Build OAuth authorize URL for the DKV portal client."""
+        """Build OAuth authorize URL for the DKV portal client.
+
+        Uses a plain authorization code flow (no PKCE) because the DKV
+        Keycloak realm uses a custom theme whose JavaScript replaces any
+        third-party code_challenge with the portal’s own PKCE pair,
+        causing a guaranteed “Code mismatch” on the token exchange.
+        """
         params = {
             "response_type": "code",
             "client_id": CLIENT_ID,
             "redirect_uri": redirect_uri,
             "scope": "openid email profile offline_access",
             "state": state,
-            "code_challenge": code_challenge,
-            "code_challenge_method": "S256",
+            "prompt": "login",
         }
         return f"{AUTH_URL}?{urlencode(params)}"
 
@@ -320,7 +305,6 @@ class DkvApiClient:
         *,
         code: str,
         redirect_uri: str,
-        code_verifier: str,
     ) -> None:
         """Exchange authorization code for refresh/access token (in-place)."""
         _LOGGER.debug(
@@ -336,7 +320,6 @@ class DkvApiClient:
                 "client_id": self.client_id,
                 "code": code,
                 "redirect_uri": redirect_uri,
-                "code_verifier": code_verifier,
             },
             timeout=30,
         )
