@@ -4,6 +4,46 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
+
+## [1.0.24] - 2026-04-29
+
+### Fixed
+
+- **Login-Flow funktioniert wieder zuverlässig**: Die Integration verwendet
+  jetzt `https://my.dkv-mobility.com/auth/callback` als Redirect-URI statt
+  `/dashboard`. Die Callback-Seite ist eine statische Keycloak-Seite ohne
+  JavaScript und **verbraucht den Authorization Code nicht** – die
+  Race-Condition aus v1.0.23 (Dashboard-SPA frisst den Single-Use-Code
+  beim Laden) entfällt damit komplett. Esc-Trick und DevTools-Blockierung
+  sind nicht mehr nötig.
+
+### Changed
+
+- **PKCE wieder aktiviert (S256)**: Der `dkv-portal`-Client erzwingt PKCE
+  zwingend (`Missing parameter: code_challenge_method`). Verifier und
+  Challenge werden pro Login-Versuch generiert; der Verifier wird im
+  `flow.context` persistiert, sodass er einen HA-Reconnect übersteht.
+- **Scope `offline_access` entfernt**: Der `dkv-portal`-Client erlaubt
+  diesen Scope nicht (`Invalid scopes`). Keycloak liefert weiterhin einen
+  langlebigen Refresh-Token über die SSO-Session-Konfiguration des Realms.
+- **Anleitung im Formular vereinfacht**: Die User landen jetzt auf einer
+  Keycloak-„Page not found"-Seite und kopieren einfach die URL – keine
+  zeitkritischen Tricks mehr.
+
+## [1.0.23] - 2026-04-29
+
+### Changed
+
+- **Anleitung im Anmeldeformular überarbeitet**: Mit v1.0.22 wurde der
+  PKCE-Mismatch-Fehler behoben, aber das DKV-Dashboard verbraucht den
+  Authorization Code beim Laden selbst (Single-Use-Code → `Code not valid`).
+  Die Beschreibung im Formular erklärt jetzt zwei Wege, den Code rechtzeitig
+  abzugreifen:
+  1. **Esc-Taste** direkt nach dem Login drücken, um das Dashboard-Laden
+     zu stoppen und die URL aus der Adressleiste zu kopieren.
+  2. **DevTools-Blockierung** der `/dashboard`-URL als Fallback, falls der
+     Esc-Trick zu spät kommt.
+
 ## [1.0.22] - 2026-04-29
 
 ### Fixed
@@ -23,18 +63,6 @@ and this project follows [Semantic Versioning](https://semver.org/).
   Nutzer klicken einfach den Link, melden sich an und kopieren die URL.
 - **Fehlermeldung `cannot_connect` korrigiert**: Enthielt bisher einen
   veralteten Hinweis auf DevTools-Blockierung.
-## [1.0.22] - 2026-04-29
-
-### Fixed
-
-- **Anleitung im Formular korrigiert**: Das DKV-Portal fängt die
-  Weiterleitungs-URL nach dem Login ab und startet einen eigenen PKCE-Flow –
-  der Code im Adressfeld gehört dadurch zum Portal-Challenge, nicht zum
-  HA-Challenge, was den „Code mismatch"-Fehler verursacht.
-  Die Beschreibung im Anmeldeformular erklärt jetzt die korrekte
-  Vorgehensweise: die Dashboard-URL **vor** dem Klick auf den Anmeldelink in
-  den Browser-Entwicklertools (DevTools → Netzwerk → *Anfrage-URL blockieren*)
-  blockieren, damit das Portal die Weiterleitung nicht abfangen kann.
 
 ## [1.0.21] - 2026-04-29
 
