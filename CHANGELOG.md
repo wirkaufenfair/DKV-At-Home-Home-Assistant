@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.21] - 2026-04-29
+
+### Fixed
+
+- **PKCE-Pair im Flow-Kontext gespeichert**: Der `code_verifier` wird jetzt
+  in `self.context` persistiert und bei jedem Aufruf von `_ensure_pkce()`
+  daraus wiederhergestellt. Damit überlebt das PKCE-Pair einen HA-Neustart
+  oder eine Neu-Initialisierung des Flow-Objekts – der „Code mismatch"-Fehler
+  (Keycloak: `PKCE verification failed: Code mismatch`) tritt nicht mehr auf.
+- **`_reset_pkce()` löscht jetzt auch den Flow-Kontext**: Der bisherige
+  manuelle Reset von `_pkce_verifier / _pkce_state / _pkce_auth_url` wurde
+  durch den neuen Helper `_reset_pkce()` ersetzt, der zusätzlich die
+  persistierten Einträge aus `self.context` entfernt.
+- **„Code mismatch" vom abgelaufenen Code unterschieden**: Wenn Keycloak
+  `invalid_grant` mit der Beschreibung „Code mismatch" zurückgibt (Code
+  gehört zu einem anderen PKCE-Challenge, z. B. falscher Tab), wird jetzt
+  der Fehler `wrong_auth_url` statt `code_expired` angezeigt.
+- **Erklärungstext im Anmeldeformular ergänzt**: Die `description`-Felder
+  in `strings.json`, `de.json` und `en.json` waren bisher leer. Es wird
+  jetzt ein klickbarer Anmeldelink sowie eine Schritt-für-Schritt-Anleitung
+  angezeigt, damit Benutzer wissen, was nach dem Login zu tun ist.
+
+### Changed
+
+- **Fehlermeldung `wrong_auth_url` präzisiert**: „Der Code gehört zu einem
+  anderen Anmeldelink (falscher Tab oder alter Link). Ein neuer Link wurde
+  generiert."
+- **Debug-Logging erweitert**: Beim Generieren und beim Austausch des PKCE-
+  Pairs wird jetzt der Verifier-Prefix geloggt, damit Mismatch-Fälle
+  einfacher diagnostiziert werden können.
+
 ## [1.0.20] - 2026-04-28
 
 ### Fixed
