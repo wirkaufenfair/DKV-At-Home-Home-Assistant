@@ -3,16 +3,16 @@
     "step": {
       "auth": {
         "title": "DKV@Home Sign in",
-        "description": "1. Click the login link: [Sign in to DKV]({auth_url})\n2. Log in to DKV\n3. You will land on a Keycloak error page (“Page not found”) – this is intended!\n4. Copy the **full URL from the address bar** (Ctrl+L, then Ctrl+C)\n5. Paste the URL below\n\n> If the code has expired, a new login link will be generated automatically.",
+        "description": "**Important first:** open the browser DevTools (F12) → **Network** tab → check **“Preserve log”**.\n\n1. Click the login link: [Sign in to DKV]({auth_url})\n2. Sign in to DKV\n3. The browser asks: “Open “com.dkv-mobility.app…”?” → **Cancel**\n4. In the Network tab click the last entry called **“auth?…”** → section **Response Headers** → copy the value of **`Location`** (starts with `com.dkv-mobility.app://oauth2redirect?code=…`)\n5. Paste the URL below\n\n> If the code has expired, a new login link is generated automatically.",
         "data": {
-          "token_input": "Redirect URL (with ?code=…)"
+          "token_input": "Redirect URL (com.dkv-mobility.app://…?code=…)"
         }
       },
       "reauth_confirm": {
         "title": "Reconnect DKV@Home",
-        "description": "1. Click the login link to re-authenticate: [Sign in to DKV]({auth_url})\n2. Log in to DKV\n3. You will land on a Keycloak error page (“Page not found”) – this is intended!\n4. Copy the **full URL from the address bar** (Ctrl+L, then Ctrl+C)\n5. Paste the URL below\n\n> If the code has expired, a new login link will be generated automatically.",
+        "description": "**Important first:** open the browser DevTools (F12) → **Network** tab → check **“Preserve log”**.\n\n1. Click the login link: [Sign in to DKV]({auth_url})\n2. Sign in to DKV\n3. The browser asks: “Open “com.dkv-mobility.app…”?” → **Cancel**\n4. In the Network tab click the last entry called **“auth?…”** → section **Response Headers** → copy the value of **`Location`** (starts with `com.dkv-mobility.app://oauth2redirect?code=…`)\n5. Paste the URL below\n\n> If the code has expired, a new login link is generated automatically.",
         "data": {
-          "token_input": "Redirect URL (with ?code=…)"
+          "token_input": "Redirect URL (com.dkv-mobility.app://…?code=…)"
         }
       }
     },

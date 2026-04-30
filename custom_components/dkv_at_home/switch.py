@@ -1,6 +1,5 @@
 """Switch platform for DKV@Home (wallbox remote start)."""
 
-# pylint: disable=import-error
 # pyright: reportMissingImports=false, reportMissingModuleSource=false
 
 import logging

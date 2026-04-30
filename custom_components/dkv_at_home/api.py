@@ -11,7 +11,7 @@ import time
 from datetime import datetime, timezone
 from urllib.parse import urlencode
 
-import requests  # pylint: disable=import-error
+import requests
 
 from .const import (
     BASE_URL,
@@ -305,16 +305,18 @@ class DkvApiClient:
         required. The ``/auth/callback`` page is a static Keycloak page
         that does NOT consume the code, so we have time to exchange it.
 
-        Note: ``offline_access`` is intentionally omitted because the
-        ``dkv-portal`` client does not have it as an allowed client scope.
-        Keycloak still issues a long-lived refresh token via SSO session
-        max (typically 30 days); a fresh login is needed afterwards.
+        The ``offline_access`` scope is requested so Keycloak issues an
+        Offline-Token (typ ``Offline``) that is not bound to the realm's
+        SSO Session Max (which is only a few hours on the DKV realm).
+        This is supported by the ``dkv-app`` client used since v1.0.25
+        (the same client the official DKV mobile app uses); the previously
+        used ``dkv-portal`` client rejected the scope.
         """
         params = {
             "response_type": "code",
             "client_id": CLIENT_ID,
             "redirect_uri": redirect_uri,
-            "scope": "openid email profile",
+            "scope": "openid email profile offline_access",
             "state": state,
             "prompt": "login",
             "code_challenge": code_challenge,

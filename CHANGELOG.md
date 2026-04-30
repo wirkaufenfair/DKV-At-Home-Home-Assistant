@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.25] - 2026-04-30
+
+### Fixed
+
+- **Refresh-Token läuft nicht mehr nach wenigen Stunden ab**: Der bisher
+  verwendete Keycloak-Client `dkv-portal` stellt nur kurzlebige Refresh-
+  Tokens aus (gebunden an die *SSO Session Max* des DKV-Realms, in der
+  Praxis nur wenige Stunden) und erlaubt den Scope `offline_access` nicht
+  (Keycloak antwortet mit HTTP 302 → `error=invalid_scope`).
+- **Wechsel auf den `dkv-app`-Client**: Die Integration verwendet jetzt
+  denselben Keycloak-Client, mit dem die offizielle DKV-Mobile-App
+  authentifiziert (verifiziert über die öffentliche
+  „Mobility.Public"-Postman-Collection von DKV). Dieser Client erlaubt
+  `offline_access` und liefert ein **Offline-Token** (typ `Offline`),
+  das nicht an die SSO-Session gebunden ist.
+
+### Changed
+
+- **Redirect-URI auf das mobile Custom-Scheme umgestellt**: Der
+  `dkv-app`-Client akzeptiert ausschließlich
+  `com.dkv-mobility.app://oauth2redirect` (mit der bisherigen Web-URL
+  `https://my.dkv-mobility.com/auth/callback` antwortet Keycloak mit
+  HTTP 400 → `Invalid parameter: redirect_uri`).
+- **Anmeldeanleitung umgeschrieben**: Da der Browser ein Custom-Scheme
+  nicht laden kann, beschreibt das Anmeldeformular jetzt den Weg über
+  die Browser-DevTools (Tab *Netzwerk* → letzten `auth?…`-Eintrag
+  öffnen → Wert von *Location* aus den Response-Headers kopieren).
+- **URL-Parser akzeptiert jeden Scheme**: `_parse_user_input` erkennt
+  jetzt auch URLs, die nicht mit `http` beginnen, solange sie `code=`
+  enthalten – damit kann die kopierte `com.dkv-mobility.app://…`-URL
+  direkt eingefügt werden.
+- Nach dem Update ist eine **einmalige Neu-Anmeldung** nötig: Der alte
+  Refresh-Token wurde für `dkv-portal` ausgestellt und ist mit dem neuen
+  `dkv-app`-Client nicht kompatibel. HA löst die Reauth automatisch aus,
+  sobald der nächste Refresh-Versuch fehlschlägt.
+- Im HA-Log (Level INFO) erscheint nach dem Code-Exchange der Token-Typ.
+  Erwartet wird `Typ: Offline` – falls dort weiterhin `Typ: Refresh` steht,
+  hat der DKV-Realm `offline_access` für `dkv-app` clientseitig deaktiviert.
+
 ## [1.0.24] - 2026-04-29
 
 ### Fixed
