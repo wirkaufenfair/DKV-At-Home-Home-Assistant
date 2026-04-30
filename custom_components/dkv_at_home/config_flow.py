@@ -1,7 +1,6 @@
 """Config flow for DKV@Home integration."""
 
 # pyright: reportMissingImports=false, reportCallIssue=false
-# pylint: disable=import-error
 
 import logging
 import secrets as _secrets
@@ -17,10 +16,14 @@ from .const import CLIENT_ID, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-# Redirect URI: Keycloak's static /auth/callback page does NOT consume the
-# authorization code (unlike /dashboard which is a SPA), so the code stays
-# in the address bar and can be pasted into HA without race conditions.
-_REDIRECT_URI = "https://my.dkv-mobility.com/auth/callback"
+# Redirect URI registered for the ``dkv-app`` Keycloak client (the same
+# client used by the official DKV mobile app, see the public Postman
+# collection). It is a custom URI scheme; desktop browsers cannot follow
+# it and will instead show a "open external app?" dialog. The user has
+# to grab the URL containing ``?code=…`` from the browser's network log
+# / address bar and paste it back into HA. We accept either the full
+# URL or just the bare ``code`` value.
+_REDIRECT_URI = "com.dkv-mobility.app://oauth2redirect"
 
 
 async def _build_entry_from_tokens(
@@ -62,7 +65,10 @@ def _parse_user_input(text: str) -> dict:
     """
     raw = (text or "").strip()
 
-    if raw.startswith("http"):
+    # Accept full redirect URLs in any scheme (https, custom app scheme, …).
+    # The dkv-app Keycloak client uses ``com.dkv-mobility.app://...`` so we
+    # cannot restrict to ``http``.
+    if "://" in raw and "code=" in raw:
         parsed = urlparse(raw)
         params = parse_qs(parsed.query)
         code = params.get("code", [None])[0]

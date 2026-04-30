@@ -1,6 +1,5 @@
 """DKV@Home Home Assistant integration."""
 
-# pylint: disable=import-error
 
 import logging
 from datetime import timedelta
