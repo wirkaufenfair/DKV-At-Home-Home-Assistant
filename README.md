@@ -78,6 +78,19 @@ Zusätzliche Attribute:
   - Timeout: **60 Sekunden**
   - Prüfintervall: **5 Sekunden**
 
+## Voraussetzung: Fahrzeug muss laden können
+
+DKV gibt den Ladevorgang nur frei, wenn die Wallbox in diesem Moment auch
+wirklich laden kann (Fahrzeug angesteckt und ladebereit). Die Freischaltung
+über diese Integration funktioniert daher nur zusammen mit einem Ladestart,
+der gleichzeitig möglich ist.
+
+Beispiel (KEBA P30 mit evcc): Damit die Freischaltung klappt, muss evcc beim
+Anstecken des Fahrzeugs zunächst einen initialen Ladevorgang zulassen
+(bei evcc „Welcome Charge"). Erst dann bestätigt die Wallbox den Start, und
+die Integration meldet die `activeSessionId`. Ohne diesen Ladestart läuft
+die Anfrage in das Bestätigungs-Timeout.
+
 ## Fehlerbehebung
 
 ### „Token ungültig oder abgelaufen“
