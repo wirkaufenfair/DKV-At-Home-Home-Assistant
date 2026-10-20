@@ -445,6 +445,19 @@ class DkvApiClient:
             {k: v for k, v in cp.items() if isinstance(v, bool)},
             {k: v for k, v in hw.items() if isinstance(v, (bool, str))},
         )
+        _LOGGER.debug(
+            "Charge-Point verschachtelt: %s",
+            {
+                k: cp.get(k)
+                for k in (
+                    "plugs",
+                    "payments",
+                    "contractsPermittedActions",
+                    "newContract",
+                    "currentMonthActiveContracts",
+                )
+            },
+        )
 
         r = requests.post(
             f"{BASE_URL}/station-management/session/start",
