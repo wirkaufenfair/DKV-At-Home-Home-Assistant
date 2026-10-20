@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.26] - 2026-10-20
+
+### Changed
+
+- **Diagnose Session-Start**: Das Backend lehnt `session/start` mit
+  HTTP 400 ab (`Cannot map null into type boolean`), es fehlt also ein
+  Boolean-Feld im Request. Zur Ermittlung loggt die Integration auf
+  DEBUG-Level die Schluessel und Boolean-Werte von Charge Point und Karte.
+
 ## [1.0.25] - 2026-04-30
 
 ### Fixed
