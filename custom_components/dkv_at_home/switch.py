@@ -45,7 +45,7 @@ class DkvChargingSwitch(CoordinatorEntity, SwitchEntity):
     - **Off** – no active session.
 
     Turning off stops the active session via the charge-assist backend
-    (experimental, see CHANGELOG v1.0.29).
+    (see CHANGELOG v1.0.29).
     """
 
     _attr_icon = "mdi:ev-station"

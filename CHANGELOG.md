@@ -9,13 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **Ladevorgang stoppen (experimentell)**: `switch.turn_off` beendet die
+- **Ladevorgang stoppen**: `switch.turn_off` beendet die
   aktive Session per `POST …/bff-stationservices/charge-assist/ca/v2.1/
   session/stop` mit `{"chargeSessionId": <activeSessionId>}`. Endpunkt und
   Parameter stammen aus dem oeffentlichen JavaScript-Bundle der
   DKV-Web-App (`ng-station-services`), die `appToken`-Angabe uebernimmt
-  den Platzhalter `{app-token}` der Web-App. Nicht mit einer laufenden
-  Session getestet.
+  den Platzhalter `{app-token}` der Web-App. Verifiziert am 2026-10-20
+  mit einer laufenden Session (Start und Stopp ueber HA).
 
 ## [1.0.28] - 2026-10-20
 
