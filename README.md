@@ -14,11 +14,11 @@ einzubinden und einen Ladevorgang per Switch zu starten.
 ## Aktueller Umfang
 
 - `switch.turn_on`: startet einen neuen Ladevorgang
-- `switch.turn_off`: beendet die aktive Session (**experimentell**, ab
-  v1.0.29). Der Aufruf nutzt den Stopp-Endpunkt der DKV-Web-App und ist
-  bislang nicht mit einer laufenden Session verifiziert. Rückmeldungen
-  (Log mit aktiviertem Debug-Level) sind willkommen. Schlägt der Stopp
-  fehl, bitte weiterhin die DKV-App oder evcc verwenden.
+- `switch.turn_off`: beendet die aktive Session (ab v1.0.29). Der Aufruf
+  nutzt den Stopp-Endpunkt der DKV-Web-App und wurde mit einer echten
+  Session an einer KEBA P30 verifiziert. Schlägt der Stopp fehl, bitte
+  weiterhin die DKV-App oder evcc verwenden und ein Issue mit Debug-Log
+  eröffnen.
 
 ## Installation
 
