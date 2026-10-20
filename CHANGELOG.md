@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.27] - 2026-10-20
+
+### Changed
+
+- **Diagnose Session-Start**: Zusaetzlich werden die verschachtelten
+  Objekte `plugs`, `payments`, `contractsPermittedActions`, `newContract`
+  und `currentMonthActiveContracts` auf DEBUG-Level geloggt.
+
 ## [1.0.26] - 2026-10-20
 
 ### Changed
