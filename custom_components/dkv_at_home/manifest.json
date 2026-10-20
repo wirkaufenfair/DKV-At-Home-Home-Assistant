@@ -8,5 +8,5 @@
   "issue_tracker": "https://github.com/wirkaufenfair/DKV-At-Home-Home-Assistant/issues",
   "loggers": ["custom_components.dkv_at_home"],
   "requirements": [],
-  "version": "1.0.28"
+  "version": "1.0.29"
 }

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.29] - 2026-10-20
+
+### Added
+
+- **Ladevorgang stoppen (experimentell)**: `switch.turn_off` beendet die
+  aktive Session per `POST …/bff-stationservices/charge-assist/ca/v2.1/
+  session/stop` mit `{"chargeSessionId": <activeSessionId>}`. Endpunkt und
+  Parameter stammen aus dem oeffentlichen JavaScript-Bundle der
+  DKV-Web-App (`ng-station-services`), die `appToken`-Angabe uebernimmt
+  den Platzhalter `{app-token}` der Web-App. Nicht mit einer laufenden
+  Session getestet.
+
 ## [1.0.28] - 2026-10-20
 
 ### Fixed

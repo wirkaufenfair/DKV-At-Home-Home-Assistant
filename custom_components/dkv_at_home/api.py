@@ -18,6 +18,8 @@ from .const import (
     CLIENT_ID,
     CONFIRM_INTERVAL_SECONDS,
     CONFIRM_TIMEOUT_SECONDS,
+    STOP_APP_TOKEN,
+    STOP_URL,
     TOKEN_URL,
 )
 
@@ -508,3 +510,59 @@ class DkvApiClient:
             CONFIRM_TIMEOUT_SECONDS,
         )
         return None
+
+    def stop(self) -> bool:
+        """Stop the active charging session.
+
+        Returns ``True`` once the charge point no longer reports an
+        ``activeSessionId`` (also when there was nothing to stop), or
+        ``False`` if the session was still active after the timeout.
+        Raises ``DkvApiError`` on hard failures.
+        """
+        self._ensure_access_token()
+
+        session_id = self._get_charge_point().get("activeSessionId")
+        if not session_id:
+            _LOGGER.debug("Stopp angefordert, aber keine aktive Session")
+            return True
+
+        r = requests.post(
+            STOP_URL,
+            params={"appToken": STOP_APP_TOKEN},
+            json={"chargeSessionId": session_id},
+            headers=self._headers(),
+            timeout=30,
+        )
+        if r.status_code not in (200, 201, 202, 204):
+            raise DkvApiError(
+                "Session-Stopp fehlgeschlagen: "
+                f"HTTP {r.status_code} – {r.text}"
+            )
+        _LOGGER.debug(
+            "Session-Stopp akzeptiert (HTTP %s), chargeSessionId=%s",
+            r.status_code,
+            session_id,
+        )
+
+        attempts = CONFIRM_TIMEOUT_SECONDS // CONFIRM_INTERVAL_SECONDS
+        for attempt in range(1, attempts + 1):
+            cp = self._get_charge_point()
+            active_id: str | None = cp.get("activeSessionId")
+            _LOGGER.debug(
+                "Stopp-Bestätigung %d/%d: status=%s activeSessionId=%s",
+                attempt,
+                attempts,
+                cp.get("status"),
+                active_id,
+            )
+            if not active_id:
+                return True
+            if attempt < attempts:
+                time.sleep(CONFIRM_INTERVAL_SECONDS)
+
+        _LOGGER.warning(
+            "Wallbox hat das Ende der Session nicht innerhalb von %ds "
+            "bestätigt",
+            CONFIRM_TIMEOUT_SECONDS,
+        )
+        return False

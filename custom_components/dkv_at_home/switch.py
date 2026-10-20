@@ -44,8 +44,8 @@ class DkvChargingSwitch(CoordinatorEntity, SwitchEntity):
     - **On**  – a session is confirmed and active.
     - **Off** – no active session.
 
-    Turning off is not supported by the DKV API; evcc or the DKV app
-    must be used to stop charging.
+    Turning off stops the active session via the charge-assist backend
+    (experimental, see CHANGELOG v1.0.29).
     """
 
     _attr_icon = "mdi:ev-station"
@@ -127,8 +127,27 @@ class DkvChargingSwitch(CoordinatorEntity, SwitchEntity):
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **_kwargs) -> None:
-        """Stop is not supported via the DKV API."""
-        raise HomeAssistantError(
-            "Stoppen wird von der DKV API nicht unterstützt. "
-            "Bitte evcc oder die DKV App verwenden."
-        )
+        """Stop the active charging session."""
+        try:
+            stopped: bool = await self.hass.async_add_executor_job(
+                self._client.stop
+            )
+        except DkvApiError as err:
+            raise HomeAssistantError(str(err)) from err
+        except Exception as err:
+            raise HomeAssistantError(
+                f"Unerwarteter Fehler beim Stoppen: {err}"
+            ) from err
+        finally:
+            # Always persist the refreshed tokens, even on failure.
+            self._persist_tokens()
+
+        if not stopped:
+            raise HomeAssistantError(
+                "Stopp wurde vom DKV-Backend angenommen, aber die Wallbox "
+                "hat das Ende der Session nicht innerhalb des Zeitlimits "
+                "bestätigt."
+            )
+
+        _LOGGER.info("DKV@Home Ladevorgang gestoppt")
+        await self.coordinator.async_request_refresh()
