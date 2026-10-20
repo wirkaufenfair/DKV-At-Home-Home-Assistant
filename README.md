@@ -13,11 +13,12 @@ einzubinden und einen Ladevorgang per Switch zu starten.
 
 ## Aktueller Umfang
 
-Derzeit ist **nur Starten** des Ladevorgangs über die API umgesetzt.
-
 - `switch.turn_on`: startet einen neuen Ladevorgang
-- `switch.turn_off`: wird von der DKV-API nicht unterstützt und wirft
-  absichtlich einen Fehlerhinweis
+- `switch.turn_off`: beendet die aktive Session (**experimentell**, ab
+  v1.0.29). Der Aufruf nutzt den Stopp-Endpunkt der DKV-Web-App und ist
+  bislang nicht mit einer laufenden Session verifiziert. Rückmeldungen
+  (Log mit aktiviertem Debug-Level) sind willkommen. Schlägt der Stopp
+  fehl, bitte weiterhin die DKV-App oder evcc verwenden.
 
 ## Installation
 
