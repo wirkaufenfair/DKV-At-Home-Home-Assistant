@@ -78,6 +78,22 @@ Zusätzliche Attribute:
   - Timeout: **60 Sekunden**
   - Prüfintervall: **5 Sekunden**
 
+## Voraussetzung: Wallbox muss sofort laden dürfen
+
+Die DKV-Freischaltung funktioniert nur, wenn die Wallbox in genau diesem
+Moment auch tatsächlich laden kann. Das ist eine Erfahrung aus dem Betrieb
+mit einer **KEBA P30** zusammen mit **evcc**, keine offizielle Angabe von DKV
+oder KEBA und kann bei anderen Wallboxen abweichen.
+
+- Wird die Wallbox beim Anstecken von evcc blockiert (Ladefreigabe aus,
+  z. B. wegen PV-Überschuss-Modus), wird der DKV-Start nicht bestätigt.
+- In evcc muss deshalb **„Laden bei Verbindung“** aktiv sein. Die Einstellung
+  gibt es sowohl an der Wallbox (Ladepunkt) als auch am Fahrzeug, je nach
+  Konfiguration reicht eine von beiden. Erst danach schaltet der Switch
+  dieser Integration den Ladevorgang bei DKV frei.
+- Mit angeschlossenem Auto und freigegebener Wallbox ist der Test
+  aussagekräftig. Ohne Auto läuft der Start in den Timeout.
+
 ## Fehlerbehebung
 
 ### „Token ungültig oder abgelaufen“
@@ -92,6 +108,8 @@ Zusätzliche Attribute:
 ### Switch startet nicht / keine Bestätigung
 
 - Prüfen, ob Wallbox online ist
+- Prüfen, ob die Wallbox gerade laden darf (siehe „Voraussetzung: Wallbox
+  muss sofort laden dürfen“)
 - Home-Assistant-Logs kontrollieren
 - Falls DKV den Start annimmt, aber die Wallbox nicht bestätigt,
   kommt nach Timeout eine entsprechende Fehlermeldung
