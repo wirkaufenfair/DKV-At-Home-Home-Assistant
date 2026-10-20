@@ -8,7 +8,7 @@ import json
 import logging
 import secrets
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlencode
 
 import requests
@@ -133,7 +133,7 @@ class DkvApiClient:
             (
                 ", läuft ab: "
                 + datetime.fromtimestamp(
-                    exp, tz=timezone.utc
+                    exp, tz=UTC
                 ).isoformat()
                 if isinstance(exp, int)
                 else " (kein exp-Claim)"
@@ -147,7 +147,7 @@ class DkvApiClient:
             _LOGGER.debug("%s: keine JWT-exp Angabe erkennbar", token_name)
             return
 
-        expires_at = datetime.fromtimestamp(exp, tz=timezone.utc)
+        expires_at = datetime.fromtimestamp(exp, tz=UTC)
         seconds_left = exp - int(time.time())
         _LOGGER.debug(
             "%s läuft ab um %s (in %ss)",
