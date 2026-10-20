@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.28] - 2026-10-20
+
+### Fixed
+
+- **Ladevorgang starten schlug mit HTTP 400 fehl** (`Cannot map null into
+  type boolean`): Das DKV-Backend verlangt im Body von
+  `station-management/session/start` jetzt zusaetzlich das Boolean-Feld
+  `isHomeCharger`. Die Integration sendet es mit `true`, wie die
+  At-Home-Web-App von DKV (ermittelt aus deren JavaScript-Bundle).
+
 ## [1.0.27] - 2026-10-20
 
 ### Changed
