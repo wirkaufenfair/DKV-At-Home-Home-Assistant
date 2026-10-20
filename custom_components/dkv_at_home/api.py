@@ -465,6 +465,7 @@ class DkvApiClient:
                 "evseUid": evse_uid,
                 "locationId": location_id,
                 "paymentMethodId": payment_method_id,
+                "isHomeCharger": True,
             },
             headers=self._headers(),
             timeout=30,
