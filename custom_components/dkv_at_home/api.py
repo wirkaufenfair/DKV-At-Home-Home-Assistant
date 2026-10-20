@@ -278,6 +278,11 @@ class DkvApiClient:
         card_id = cards[0].get("id")
         if not card_id:
             raise DkvApiError("Card-ID fehlt in der API-Antwort")
+        _LOGGER.debug(
+            "Karte: Schluessel=%s Booleans=%s",
+            sorted(cards[0]),
+            {k: v for k, v in cards[0].items() if isinstance(v, bool)},
+        )
         return card_id
 
     @staticmethod
@@ -433,6 +438,13 @@ class DkvApiClient:
             )
 
         payment_method_id = self._get_card_id()
+
+        _LOGGER.debug(
+            "Charge-Point: Schluessel=%s Booleans=%s hardwareInfo=%s",
+            sorted(cp),
+            {k: v for k, v in cp.items() if isinstance(v, bool)},
+            {k: v for k, v in hw.items() if isinstance(v, (bool, str))},
+        )
 
         r = requests.post(
             f"{BASE_URL}/station-management/session/start",
