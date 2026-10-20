@@ -7,7 +7,6 @@ import secrets as _secrets
 from urllib.parse import parse_qs, urlparse
 
 import voluptuous as vol  # type: ignore[import]
-
 from homeassistant import config_entries  # type: ignore[import]
 from homeassistant.core import HomeAssistant  # type: ignore[import]
 
