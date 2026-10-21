@@ -147,7 +147,8 @@ laden dürfen, in evcc also **„Laden bei Verbindung“** aktivieren.
 
 ### Freischaltung beim Anstecken (KEBA bleibt direkt in evcc)
 
-evcc kann bei Ereignissen ein Skript aufrufen, das die Bridge anstößt. In der
+evcc kann bei Ereignissen über einen benutzerdefinierten Benachrichtigungsdienst
+(`type: custom`) ein Skript aufrufen, das die Bridge anstößt. In der
 `evcc.yaml`:
 
 ```yaml
@@ -157,9 +158,11 @@ messaging:
       title: DKV
       msg: Fahrzeug verbunden
   services:
-    - type: script
-      cmdline: /usr/local/bin/dkv-start.sh
-      timeout: 90s
+    - type: custom
+      encoding: json
+      send:
+        source: script
+        cmd: /usr/local/bin/dkv-start.sh
 ```
 
 Das Skript `/usr/local/bin/dkv-start.sh` (ausführbar machen mit
