@@ -1,0 +1,13 @@
+services:
+  dkv-bridge:
+    build:
+      context: ..
+      dockerfile: bridge/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8099:8099"
+    volumes:
+      - ./data:/data
+    environment:
+      # DKV_BRIDGE_TOKEN: "geheim"   # optional, schuetzt POST /start und /stop
+      DKV_LOG_LEVEL: INFO
