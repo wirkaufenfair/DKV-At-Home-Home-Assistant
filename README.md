@@ -95,6 +95,11 @@ oder KEBA und kann bei anderen Wallboxen abweichen.
 - Mit angeschlossenem Auto und freigegebener Wallbox ist der Test
   aussagekräftig. Ohne Auto läuft der Start in den Timeout.
 
+## Ohne Home Assistant (evcc)
+
+Für den Betrieb ohne HA gibt es im Ordner [bridge/](bridge/README.md) einen
+eigenständigen HTTP-Dienst mit `/start`, `/stop` und `/status`.
+
 ## Fehlerbehebung
 
 ### „Token ungültig oder abgelaufen“
