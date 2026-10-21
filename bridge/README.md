@@ -38,9 +38,10 @@ DKV_DATA_DIR=/var/lib/dkv-bridge python3 /opt/dkv-bridge-src/bridge/dkv_bridge.p
 ```
 
 Danach als Dienst einrichten, damit die Bridge nach einem Neustart
-automatisch läuft. Datei `/etc/systemd/system/dkv-bridge.service`:
+automatisch läuft. Diesen Block komplett in die Konsole einfügen:
 
-```ini
+```bash
+cat > /etc/systemd/system/dkv-bridge.service <<'EOF'
 [Unit]
 Description=DKV@Home Bridge
 After=network-online.target
@@ -56,19 +57,36 @@ RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
-```
-
-```bash
+EOF
 systemctl daemon-reload
 systemctl enable --now dkv-bridge
-curl http://localhost:8099/status     # Test
-journalctl -u dkv-bridge -f           # Log
+sleep 3
+curl http://localhost:8099/status
 ```
+
+Erwartet wird JSON mit `"active": false` und `"error": null`. Bei einem
+Fehler zeigt `journalctl -u dkv-bridge -n 30` den Grund.
 
 `DKV_BIND=127.0.0.1` sorgt dafür, dass die Bridge nur von diesem Rechner
 erreichbar ist. Das ist bei Variante A ausreichend und sicher.
 
-Update später: `git -C /opt/dkv-bridge-src pull && systemctl restart dkv-bridge`.
+Test der Freischaltung: Auto anstecken, Wallbox freigeben („Laden bei
+Verbindung“ in evcc) und ausführen:
+
+```bash
+curl -X POST http://localhost:8099/start
+```
+
+Das kann bis zu 60 Sekunden dauern. Antwort `"ok": true` bedeutet, dass DKV
+die Session bestätigt hat. Mit `curl -X POST http://localhost:8099/stop`
+wird sie wieder beendet.
+
+Update später:
+
+```bash
+git -C /opt/dkv-bridge-src pull
+systemctl restart dkv-bridge
+```
 
 ## Variante B: eigener Rechner mit Docker
 
