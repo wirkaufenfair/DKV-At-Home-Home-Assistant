@@ -236,3 +236,14 @@ def test_the_readme_badges_point_to_existing_workflows():
     assert workflows
     for name in workflows:
         assert (ROOT / ".github" / "workflows" / name).is_file(), name
+
+
+def test_diagnostics_note_about_the_system_block_is_where_users_look():
+    """HA adds the list of custom integrations; say so before users share it."""
+    template = (ROOT / ".github" / "ISSUE_TEMPLATE" / "bug_report.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "custom_components" in README
+    assert "Systeminformationen" in README
+    assert "custom_components" in template
+

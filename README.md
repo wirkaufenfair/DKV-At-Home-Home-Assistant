@@ -262,7 +262,11 @@ Bitte ein [Issue](https://github.com/wirkaufenfair/DKV-At-Home-Home-Assistant/is
 eröffnen und die **Diagnose-Datei** anhängen: Einstellungen → Geräte & Dienste
 → DKV@Home → drei Punkte → **Diagnose herunterladen**. Die Datei enthält
 Versionen, den Zustand und die Struktur der DKV-Antworten (nur Schlüssel und
-Typen), aber keine Tokens, Kontonummern oder Kennungen. Für tiefergehende
+Typen), aber keine Tokens, Kontonummern oder Kennungen. Home Assistant
+ergänzt die Datei selbst um Systeminformationen (Version, Betriebssystem und
+die Liste aller installierten eigenen Integrationen, Block `custom_components`).
+Das sind keine Geheimnisse, aber persönliche Angaben. Wer sie nicht teilen
+möchte, entfernt diesen Block vor dem Anhängen. Für tiefergehende
 Fehler hilft zusätzlich das Debug-Log (Einstellungen → Geräte & Dienste →
 DKV@Home → Debug-Protokollierung aktivieren).
 

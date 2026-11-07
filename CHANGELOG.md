@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- **README und Fehlervorlage** weisen darauf hin, dass Home Assistant der
+  Diagnose-Datei Systeminformationen und die Liste der installierten eigenen
+  Integrationen hinzufuegt, und wie man diesen Block vor dem Teilen entfernt.
+
 ## [1.1.0] - 2026-11-08
 
 ### Added

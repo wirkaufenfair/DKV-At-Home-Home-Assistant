@@ -50,8 +50,10 @@ body:
       label: Diagnose-Datei
       description: >
         Einstellungen > Geräte & Dienste > DKV@Home > drei Punkte > Diagnose
-        herunterladen. Die Datei enthält keine Tokens oder Kennungen. Bitte
-        hier hineinziehen oder den Inhalt einfügen.
+        herunterladen. Die Datei enthält keine Tokens oder Kennungen. Home
+        Assistant ergänzt aber die Liste Ihrer installierten eigenen
+        Integrationen (Block custom_components); den Block bei Bedarf vorher
+        entfernen. Bitte hier hineinziehen oder den Inhalt einfügen.
 
   - type: textarea
     id: logs
