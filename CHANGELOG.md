@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.30] - 2026-11-07
+
+### Fixed
+
+- **Einrichtungsdialog**: Der Hinweis nannte den falschen Eintrag im
+  Netzwerk-Tab. Die Weiterleitung mit dem Code steht im `Location`-Header
+  der Antwort auf `POST …/login-actions/authenticate?…` (Status 302), nicht
+  beim Eintrag `auth?…`.
+- **README**: Abschnitt „Einrichtung“ beschrieb noch das alte Token-JSON-
+  Verfahren und wurde auf den tatsaechlichen Ablauf umgestellt.
+
 ## [1.0.29] - 2026-10-20
 
 ### Added
