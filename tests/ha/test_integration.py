@@ -1,5 +1,6 @@
 """Tests for setup, the charging switch and token persistence."""
 
+import logging
 from datetime import timedelta
 
 import pytest
@@ -409,3 +410,27 @@ async def test_failed_stop_is_reported_from_dkv(hass, http):
         await hass.services.async_call(
             "switch", "turn_off", {"entity_id": switch_id(hass)}, blocking=True
         )
+
+
+async def test_normal_use_logs_no_warnings_or_errors(hass, http, caplog):
+    """Setup, start and stop must not log a warning or error of ours."""
+    FakeCharger(http)
+    await setup_entry(hass, make_entry())
+    entity_id = switch_id(hass)
+
+    await hass.services.async_call(
+        "switch", "turn_on", {"entity_id": entity_id}, blocking=True
+    )
+    await let_refresh_run(hass)
+    await hass.services.async_call(
+        "switch", "turn_off", {"entity_id": entity_id}, blocking=True
+    )
+    await let_refresh_run(hass)
+
+    ours = ("custom_components.dkv_at_home", "dkv_at_home")
+    noisy = [
+        f"{r.name}: {r.getMessage()}"
+        for r in caplog.records
+        if r.levelno >= logging.WARNING and r.name.startswith(ours)
+    ]
+    assert not noisy

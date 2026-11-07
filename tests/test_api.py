@@ -1,6 +1,7 @@
 """Tests for the DKV@Home API client (no Home Assistant required)."""
 
 import base64
+import contextlib
 import hashlib
 import time
 from urllib.parse import parse_qs, urlparse
@@ -476,10 +477,8 @@ class TestConcurrentUse:
         def token_endpoint():
             # Make a second thread that is also refreshing arrive here at the
             # same time; without a lock in the client both get this far.
-            try:
+            with contextlib.suppress(threading.BrokenBarrierError):
                 meeting.wait()
-            except threading.BrokenBarrierError:
-                pass
             with lock:
                 state["uses"] += 1
                 posts = http.calls_to("POST", "openid-connect/token")
@@ -499,7 +498,7 @@ class TestConcurrentUse:
         def poll():
             try:
                 client.fetch_status()
-            except Exception as err:  # noqa: BLE001
+            except Exception as err:
                 errors.append(err)
 
         threads = [threading.Thread(target=poll) for _ in range(2)]

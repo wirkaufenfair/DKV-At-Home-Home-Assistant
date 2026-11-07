@@ -20,12 +20,12 @@ REDIRECT_URI = "com.dkv-mobility.app://oauth2redirect"
 
 def with_retry(call, attempts=3):
     """DKV occasionally resets a connection; retry before failing."""
-    for attempt in range(attempts):
+    for _ in range(attempts - 1):
         try:
             return call()
         except requests.ConnectionError:
-            if attempt == attempts - 1:
-                raise
+            continue
+    return call()
 
 
 def authorize(api_module, **replace):

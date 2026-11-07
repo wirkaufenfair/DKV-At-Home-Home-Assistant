@@ -1,0 +1,3 @@
+# Oldest Home Assistant the integration is tested against (2025.1.4).
+# Covers about 96% of installations (HA analytics, November 2026).
+pytest-homeassistant-custom-component==0.13.205
