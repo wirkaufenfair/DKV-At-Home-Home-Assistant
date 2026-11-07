@@ -21,6 +21,10 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Debug-Log**: Beim Starten und Stoppen standen Kennung des Ladepunkts,
+  Standort-Kennung, Session-Kennung und Vertragsdaten im Log, das Anwender in
+  Fehlerberichte kopieren. Jetzt stehen dort nur noch Schluessel, Wahrheitswerte
+  und Zustaende. Ein Waechter-Test prueft das kuenftig.
 - **Einrichtungsdialog**: Zwei Fehlertexte, die nirgends angezeigt wurden
   (`wrong_auth_url`, `invalid_redirect_url`), entfernt.
 - **Einrichtungsdialog**: Lehnt DKV einen eingefuegten Refresh-Token ab
