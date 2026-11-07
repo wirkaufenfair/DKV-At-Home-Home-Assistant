@@ -95,6 +95,23 @@ class TestTokenRefresh:
             client._refresh()
         assert not isinstance(err.value, api_module.DkvAuthError)
 
+    @pytest.mark.parametrize(
+        "answer",
+        [
+            FakeResponse(200, {"access_token": "a"}),  # refresh_token missing
+            FakeResponse(200, {"refresh_token": "r"}),  # access_token missing
+            FakeResponse(200, {}),
+            FakeResponse(200),  # not JSON
+        ],
+    )
+    def test_unexpected_token_answer_is_a_clear_error(
+        self, http, client, api_module, answer
+    ):
+        """If DKV renames a field we want a message, not a KeyError."""
+        http.add("POST", "openid-connect/token", answer)
+        with pytest.raises(api_module.DkvApiError, match="Token-Antwort"):
+            client._refresh()
+
     def test_no_refresh_while_token_is_valid(self, http, client):
         client._ensure_access_token()
         assert http.calls == []
@@ -262,6 +279,18 @@ class TestLogin:
         assert data["code"] == "abc"
         assert data["code_verifier"] == "verifier"
         assert data["client_id"] == consts.CLIENT_ID
+
+    @pytest.mark.parametrize(
+        "answer",
+        [FakeResponse(200, {"access_token": "a"}), FakeResponse(200, {}), FakeResponse(200)],
+    )
+    def test_exchange_code_unexpected_answer_is_a_clear_error(
+        self, http, api_module, answer
+    ):
+        http.add("POST", "openid-connect/token", answer)
+        c = api_module.DkvApiClient("", "")
+        with pytest.raises(api_module.DkvApiError, match="Token-Antwort"):
+            c.exchange_code(code="x", redirect_uri="r", code_verifier="v")
 
     def test_exchange_code_failure(self, http, api_module):
         http.add(
