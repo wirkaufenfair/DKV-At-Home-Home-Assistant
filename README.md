@@ -39,22 +39,59 @@ einzubinden und einen Ladevorgang per Switch zu starten.
 
 ## Einrichtung in Home Assistant
 
-1. **Einstellungen → Geräte & Dienste → Integration hinzufügen**
-2. Nach **DKV@Home** suchen
-3. Im Dialog das Feld **Token-JSON** ausfüllen
+Die Anmeldung läuft wie in der DKV-App. Nach dem Login springt DKV auf eine
+App-Adresse (`com.dkv-mobility.app://…`) zurück, die ein Browser nicht öffnen
+kann. Diese Adresse enthält den Anmeldecode, den die Integration braucht, und
+muss deshalb aus den Entwicklertools des Browsers kopiert werden.
 
-### Token-JSON beschaffen
+**Was Sie brauchen:** einen Computer mit **Chrome, Firefox oder Edge**. Am
+iPhone/iPad und in Safari geht das nicht oder nur sehr umständlich.
 
-1. Im Browser `https://my.dkv-mobility.com` öffnen
-2. Entwicklerwerkzeuge öffnen (`F12`) und den Tab **Netzwerk/Network**
-  auswählen
-3. Nach dem Login den Request mit
-  `/openid-connect/token` suchen
-4. Die komplette **Response als JSON** kopieren
-5. Diese JSON in Home Assistant in das Feld **Token-JSON** einfügen
+### Schritt für Schritt
 
-> Wichtig: Es muss die vollständige JSON-Response sein. Mindestens
-> `refresh_token` muss enthalten sein.
+1. In Home Assistant **Einstellungen → Geräte & Dienste → Integration
+   hinzufügen → DKV@Home** wählen. Der Dialog zeigt einen Anmeldelink und ein
+   Eingabefeld.
+
+2. In einem **neuen Tab** die Entwicklertools mit `F12` öffnen, den Tab
+   **Netzwerk** (englisch **Network**) wählen und das Häkchen bei
+   **Protokoll beibehalten** setzen (englisch **Preserve log**, in manchen
+   Browsern **Keep log**).
+
+   ![Netzwerk-Tab mit gesetztem Häkchen](docs/images/02-netzwerk.png)
+
+3. **Im selben Tab** den Anmeldelink aus dem Home-Assistant-Dialog öffnen und
+   bei DKV anmelden.
+
+   ![DKV-Anmeldung](docs/images/03-login.png)
+
+4. Nach dem Login erscheint die Frage, ob die DKV-App geöffnet werden soll,
+   oder eine leere Seite bzw. Fehlermeldung. Das ist normal. Die Frage mit
+   **Abbrechen** beantworten.
+
+5. Im Netzwerk-Tab ins Filterfeld `authen` eingeben. Es bleibt ein Eintrag
+   **`authenticate?session_code=…`** übrig (Methode `POST`, Status
+   `302 Found`; das ist die Anfrage, die beim Klick auf „Anmelden“ gesendet
+   wird, nicht der Eintrag `auth?…` davor). Diesen Eintrag anklicken, im
+   Reiter **Headers** den Bereich **Response headers** (Antwortheader)
+   **aufklappen** und den Wert von `Location` kopieren. Er beginnt mit
+   `com.dkv-mobility.app://oauth2redirect?code=…`.
+
+   ![Location-Header im Netzwerk-Tab](docs/images/04-location.png)
+
+   (Im Bild sind `state`, `session_state` und `code` geschwärzt. In Ihrem
+   Browser stehen dort lange Zeichenfolgen, die komplett kopiert werden
+   müssen.)
+
+6. Die **ganze** Adresse in das Eingabefeld des Home-Assistant-Dialogs
+   einfügen und bestätigen. Der Code gilt nur kurz, deshalb am besten sofort.
+
+Funktioniert es nicht („Code abgelaufen“ o. Ä.), erzeugt die Integration einen
+neuen Anmeldelink. Dann den Vorgang mit **dem neuen Link aus dem Dialog**
+wiederholen. Ein alter Link oder ein anderer Tab führt zum Fehler.
+
+> Statt der Adresse akzeptiert das Feld auch den reinen Anmeldecode oder einen
+> vorhandenen Refresh-Token (beginnt mit `eyJ`).
 
 ## Entität & Attribute
 
