@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- **Mindestversion** Home Assistant 2025.1.0 in `hacs.json` (getestet in der CI,
+  deckt etwa 96 % der Installationen ab). Aeltere Versionen installiert HACS
+  nicht mehr.
+
 ## [1.0.32] - 2026-11-08
 
 ### Added

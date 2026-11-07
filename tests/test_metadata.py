@@ -68,3 +68,14 @@ def test_manifest_version_matches_changelog():
 def test_domain_matches_folder_and_constant(consts):
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["domain"] == COMPONENT.name == consts.DOMAIN
+
+
+def test_hacs_minimum_matches_the_oldest_tested_home_assistant():
+    """The minimum we promise in hacs.json is the one the CI tests against."""
+    minimum = json.loads((ROOT / "hacs.json").read_text(encoding="utf-8"))["homeassistant"]
+    oldest = (ROOT / "requirements-test-ha-oldest.txt").read_text(encoding="utf-8")
+    tested = re.search(r"\((\d{4}\.\d+)\.\d+\)", oldest).group(1)
+    assert minimum.startswith(tested + "."), (minimum, tested)
+    # the CI job that runs it carries the same version in its name
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert f"oldest supported, {tested}" in ci
