@@ -137,6 +137,22 @@ oder KEBA und kann bei anderen Wallboxen abweichen.
 - Mit angeschlossenem Auto und freigegebener Wallbox ist der Test
   aussagekräftig. Ohne Auto läuft der Start in den Timeout.
 
+## Tests
+
+| Was | Wann | Befehl |
+| --- | --- | --- |
+| API-Client, Einrichtungsdialog, Schalter | bei jedem Push (CI) | `pip install -r requirements-test.txt` und `python -m pytest` |
+| Home-Assistant-Tests (`tests/ha`) | bei jedem Push (CI, Linux) | `pip install -r requirements-test-ha.txt` und `python -m pytest` |
+| Prüfung der DKV-Login-Server | täglich (CI), bei Fehler öffnet sich ein Issue | `python -m pytest -m contract` |
+| Lesende Aufrufe mit echtem Konto | von Hand vor einem Release | `python tests/live_login.py`, dann `python -m pytest -m e2e` |
+
+Die täglichen Prüfungen fragen die öffentlichen DKV-Server, ob sie noch
+akzeptieren, was die Integration sendet (Client-ID, Weiterleitung, Scopes,
+PKCE). So fällt eine Änderung bei DKV auf, bevor sie die Einrichtung bricht.
+Ob DKV beim Start einer Session neue Pflichtfelder verlangt, lässt sich nicht
+automatisch prüfen, denn dafür müsste ein echter Ladevorgang gestartet werden.
+Die Home-Assistant-Tests laufen unter Windows nicht, nur unter Linux/macOS.
+
 ## Fehlerbehebung
 
 ### „Token ungültig oder abgelaufen“
