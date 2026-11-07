@@ -15,7 +15,6 @@ from test_integration import (
     FakeCharger,
     let_refresh_run,
     make_entry,
-    next_poll,
     setup_entry,
     switch_id,
 )
@@ -172,31 +171,26 @@ async def test_a_dead_login_stops_the_attempts(hass, http):
 
 
 async def test_token_updates_do_not_reload_the_entry(hass, http):
-    """The token is written back regularly; that must not reload the entry."""
-    from helpers import make_jwt
+    """The token is written back every few minutes; that must not reload.
 
+    Home Assistant calls the update listener on every change of the entry,
+    so the listener has to ignore everything but changed options.
+    """
     FakeCharger(http)
-    http.add(
-        "POST",
-        "openid-connect/token",
-        FakeResponse(
-            200,
-            {
-                "access_token": make_jwt(4102444800),
-                "refresh_token": "refresh-NEW",
-            },
-        ),
-    )
-    entry = make_entry(access_token=None, options=OPTIONS)
+    entry = make_entry(options=OPTIONS)
     hass.states.async_set(CAR, "off")
+    await setup_entry(hass, entry)
 
     with patch.object(
         hass.config_entries, "async_reload", wraps=hass.config_entries.async_reload
     ) as reload:
-        await setup_entry(hass, entry)
-        await next_poll(hass)
+        # what _persist_tokens does after the setup: data changes, options do not
+        hass.config_entries.async_update_entry(
+            entry, data={**entry.data, "refresh_token": "rotated-later"}
+        )
+        await hass.async_block_till_done()
 
-    assert entry.data["refresh_token"] == "refresh-NEW"
+    assert entry.data["refresh_token"] == "rotated-later"
     reload.assert_not_called()
 
 
