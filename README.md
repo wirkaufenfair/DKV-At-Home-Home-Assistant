@@ -89,8 +89,8 @@ iPhone/iPad und in Safari geht das nicht oder nur sehr umständlich.
    Browser stehen dort lange Zeichenfolgen, die komplett kopiert werden
    müssen.)
 
-7. Die **ganze** Adresse in das Eingabefeld des Home-Assistant-Dialogs
-   einfügen und bestätigen. Der Code gilt nur kurz, deshalb am besten sofort.
+7. Die **ganze** Adresse in das Feld „Weiterleitungs-URL“ des
+   Home-Assistant-Dialogs einfügen und bestätigen. Der Code gilt nur kurz, deshalb am besten sofort.
 
 Funktioniert es nicht („Code abgelaufen“ o. Ä.), erzeugt die Integration einen
 neuen Anmeldelink. Dann den Vorgang mit **dem neuen Link aus dem Dialog**
@@ -111,6 +111,7 @@ Zusätzliche Attribute:
 - `charge_point_status`
 - `active_session_id`
 - `charge_point_name`
+- `remote_start_stop_capable` (Angabe von DKV, nur zur Information)
 
 ## Wie die Integration arbeitet
 
@@ -181,6 +182,15 @@ Fehler.
 **„Der eingefügte Refresh-Token ist ungültig oder abgelaufen“**
 Ein eingefügter Refresh-Token wurde von DKV abgelehnt (zu alt oder schon von
 etwas anderem verwendet). Neu anmelden und die Weiterleitungs-URL einfügen.
+
+**„Ungültige Eingabe“**
+Das Feld erwartet die vollständige Weiterleitungs-URL (mit `?code=…`), den
+reinen Code oder einen Refresh-Token (beginnt mit `eyJ`). Alles andere wird
+abgelehnt.
+
+**„Unbekannter Fehler“**
+Es ist etwas Unerwartetes passiert. Die Home-Assistant-Logs prüfen und ein
+Issue mit der Diagnose-Datei eröffnen (siehe unten).
 
 **„Verbindung fehlgeschlagen“**
 DKV war nicht erreichbar oder hat unerwartet geantwortet. Später erneut
