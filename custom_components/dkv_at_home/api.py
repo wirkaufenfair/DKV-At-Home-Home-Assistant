@@ -499,24 +499,13 @@ class DkvApiClient:
 
         payment_method_id = self._get_card_id()
 
+        # Keys and booleans only: the log is pasted into bug reports, so no
+        # ids or contract data. The structure is logged by _log_shape().
         _LOGGER.debug(
-            "Charge-Point: Schluessel=%s Booleans=%s hardwareInfo=%s",
+            "Charge-Point: Schluessel=%s Booleans=%s hardwareInfo-Booleans=%s",
             sorted(cp),
             {k: v for k, v in cp.items() if isinstance(v, bool)},
-            {k: v for k, v in hw.items() if isinstance(v, (bool, str))},
-        )
-        _LOGGER.debug(
-            "Charge-Point verschachtelt: %s",
-            {
-                k: cp.get(k)
-                for k in (
-                    "plugs",
-                    "payments",
-                    "contractsPermittedActions",
-                    "newContract",
-                    "currentMonthActiveContracts",
-                )
-            },
+            {k: v for k, v in hw.items() if isinstance(v, bool)},
         )
 
         r = requests.post(
@@ -542,8 +531,8 @@ class DkvApiClient:
             requested_id = None
 
         _LOGGER.debug(
-            "Session-Start akzeptiert, chargeSessionId=%s",
-            requested_id,
+            "Session-Start akzeptiert, chargeSessionId vorhanden=%s",
+            requested_id is not None,
         )
 
         # Poll charge point until it reports an active session.
@@ -552,11 +541,11 @@ class DkvApiClient:
             cp = self._get_charge_point()
             active_id: str | None = cp.get("activeSessionId")
             _LOGGER.debug(
-                "Start-Bestätigung %d/%d: status=%s activeSessionId=%s",
+                "Start-Bestätigung %d/%d: status=%s aktive Session=%s",
                 attempt,
                 attempts,
                 cp.get("status"),
-                active_id,
+                active_id is not None,
             )
             if active_id:
                 return active_id
@@ -597,22 +586,18 @@ class DkvApiClient:
                 "Session-Stopp fehlgeschlagen: "
                 f"HTTP {r.status_code} – {r.text}"
             )
-        _LOGGER.debug(
-            "Session-Stopp akzeptiert (HTTP %s), chargeSessionId=%s",
-            r.status_code,
-            session_id,
-        )
+        _LOGGER.debug("Session-Stopp akzeptiert (HTTP %s)", r.status_code)
 
         attempts = CONFIRM_TIMEOUT_SECONDS // CONFIRM_INTERVAL_SECONDS
         for attempt in range(1, attempts + 1):
             cp = self._get_charge_point()
             active_id: str | None = cp.get("activeSessionId")
             _LOGGER.debug(
-                "Stopp-Bestätigung %d/%d: status=%s activeSessionId=%s",
+                "Stopp-Bestätigung %d/%d: status=%s aktive Session=%s",
                 attempt,
                 attempts,
                 cp.get("status"),
-                active_id,
+                active_id is not None,
             )
             if not active_id:
                 return True
