@@ -3,14 +3,14 @@
     "step": {
       "auth": {
         "title": "DKV@Home Sign in",
-        "description": "**Important first:** open the browser DevTools (F12) → **Network** tab → check **“Preserve log”**.\n\n1. Click the login link: [Sign in to DKV]({auth_url})\n2. Sign in to DKV\n3. The browser asks: “Open “com.dkv-mobility.app…”?” → **Cancel**\n4. In the Network tab click the entry **“authenticate?…”** (POST, status 302) → section **Response Headers** → copy the value of **`Location`** (starts with `com.dkv-mobility.app://oauth2redirect?code=…`)\n5. Paste the URL below\n\n> If the code has expired, a new login link is generated automatically.",
+        "description": "**Important first:** open the browser DevTools (F12) → **Network** tab → check **“Preserve log”**.\n\n1. Click the login link: [Sign in to DKV]({auth_url})\n2. Sign in to DKV\n3. Afterwards the browser seems to do nothing, or shows a blank page or an error – that is normal. If the browser asks whether to open the DKV app → **Cancel**. Do not close the tab with the DevTools\n4. In the Network tab click the entry **“authenticate?…”** (POST, status 302) → section **Response Headers** → copy the value of **`Location`** (starts with `com.dkv-mobility.app://oauth2redirect?code=…`)\n5. Paste the URL below\n\n> If the code has expired, a new login link is generated automatically.",
         "data": {
           "token_input": "Redirect URL (com.dkv-mobility.app://…?code=…)"
         }
       },
       "reauth_confirm": {
         "title": "Reconnect DKV@Home",
-        "description": "**Important first:** open the browser DevTools (F12) → **Network** tab → check **“Preserve log”**.\n\n1. Click the login link: [Sign in to DKV]({auth_url})\n2. Sign in to DKV\n3. The browser asks: “Open “com.dkv-mobility.app…”?” → **Cancel**\n4. In the Network tab click the entry **“authenticate?…”** (POST, status 302) → section **Response Headers** → copy the value of **`Location`** (starts with `com.dkv-mobility.app://oauth2redirect?code=…`)\n5. Paste the URL below\n\n> If the code has expired, a new login link is generated automatically.",
+        "description": "**Important first:** open the browser DevTools (F12) → **Network** tab → check **“Preserve log”**.\n\n1. Click the login link: [Sign in to DKV]({auth_url})\n2. Sign in to DKV\n3. Afterwards the browser seems to do nothing, or shows a blank page or an error – that is normal. If the browser asks whether to open the DKV app → **Cancel**. Do not close the tab with the DevTools\n4. In the Network tab click the entry **“authenticate?…”** (POST, status 302) → section **Response Headers** → copy the value of **`Location`** (starts with `com.dkv-mobility.app://oauth2redirect?code=…`)\n5. Paste the URL below\n\n> If the code has expired, a new login link is generated automatically.",
         "data": {
           "token_input": "Redirect URL (com.dkv-mobility.app://…?code=…)"
         }
