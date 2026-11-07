@@ -7,6 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Diagnose-Download** (Geraeteseite > Diagnose herunterladen) fuer
+  Fehlerberichte: Versionen, Zustand und die Struktur der DKV-Antworten
+  (Schluessel und Typen), ohne Tokens, Kontonummer oder Kennungen.
+- **Attribut `remote_start_stop_capable`** am Schalter: zeigt, was DKV zum
+  Fernstart der Wallbox meldet (nur Information, es wird nichts blockiert).
+- **README**: Abschnitt Fehlerbehebung neu, passend zum aktuellen Login.
+
 ### Fixed
 
 - **Einrichtungsdialog**: Lehnt DKV einen eingefuegten Refresh-Token ab

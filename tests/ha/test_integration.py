@@ -119,6 +119,8 @@ async def test_switch_is_off_without_session(hass, http):
     assert state.state == "off"
     assert state.attributes["charge_point_status"] == "AVAILABLE"
     assert state.attributes["active_session_id"] is None
+    # taken from the real structure (a made-up answer has False here)
+    assert state.attributes["remote_start_stop_capable"] is False
 
 
 async def test_switch_is_on_with_active_session(hass, http):

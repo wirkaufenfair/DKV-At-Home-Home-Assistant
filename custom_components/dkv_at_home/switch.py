@@ -92,6 +92,10 @@ class DkvChargingSwitch(CoordinatorEntity, SwitchEntity):
             "charge_point_status": self.coordinator.data.get("status"),
             "active_session_id": self.coordinator.data.get("activeSessionId"),
             "charge_point_name": self.coordinator.data.get("name"),
+            # Information only: DKV says whether the wallbox supports it.
+            "remote_start_stop_capable": self.coordinator.data.get(
+                "remoteStartStopCapable"
+            ),
         }
 
     # ------------------------------------------------------------------

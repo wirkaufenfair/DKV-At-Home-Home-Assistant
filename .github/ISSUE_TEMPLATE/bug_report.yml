@@ -45,6 +45,15 @@ body:
       required: true
 
   - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnose-Datei
+      description: >
+        Einstellungen > Geräte & Dienste > DKV@Home > drei Punkte > Diagnose
+        herunterladen. Die Datei enthält keine Tokens oder Kennungen. Bitte
+        hier hineinziehen oder den Inhalt einfügen.
+
+  - type: textarea
     id: logs
     attributes:
       label: Relevante Logs
