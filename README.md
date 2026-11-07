@@ -53,23 +53,26 @@ iPhone/iPad und in Safari geht das nicht oder nur sehr umständlich.
    hinzufügen → DKV@Home** wählen. Der Dialog zeigt einen Anmeldelink und ein
    Eingabefeld.
 
-2. In einem **neuen Tab** die Entwicklertools mit `F12` öffnen, den Tab
-   **Netzwerk** (englisch **Network**) wählen und das Häkchen bei
-   **Protokoll beibehalten** setzen (englisch **Preserve log**, in manchen
-   Browsern **Keep log**).
+2. Den **Anmeldelink** aus dem Dialog öffnen. Es erscheint die
+   DKV-Anmeldeseite. **Noch nicht anmelden.**
+
+3. In diesem Tab die Entwicklertools mit `F12` öffnen, den Tab **Netzwerk**
+   (englisch **Network**) wählen und das Häkchen bei **Protokoll
+   beibehalten** setzen (englisch **Preserve log**, in manchen Browsern
+   **Keep log**). Die Tools müssen offen sein, **bevor** Sie sich anmelden,
+   sonst wird die Weiterleitung nicht aufgezeichnet.
 
    ![Netzwerk-Tab mit gesetztem Häkchen](docs/images/02-netzwerk.png)
 
-3. **Im selben Tab** den Anmeldelink aus dem Home-Assistant-Dialog öffnen und
-   bei DKV anmelden.
+4. Jetzt bei DKV anmelden.
 
-   ![DKV-Anmeldung](docs/images/03-login.png)
+   ![DKV-Anmeldung mit geöffneten Entwicklertools](docs/images/03-login.png)
 
-4. Nach dem Login erscheint die Frage, ob die DKV-App geöffnet werden soll,
+5. Nach dem Login erscheint die Frage, ob die DKV-App geöffnet werden soll,
    oder eine leere Seite bzw. Fehlermeldung. Das ist normal. Die Frage mit
    **Abbrechen** beantworten.
 
-5. Im Netzwerk-Tab ins Filterfeld `authen` eingeben. Es bleibt ein Eintrag
+6. Im Netzwerk-Tab ins Filterfeld `authen` eingeben. Es bleibt ein Eintrag
    **`authenticate?session_code=…`** übrig (Methode `POST`, Status
    `302 Found`; das ist die Anfrage, die beim Klick auf „Anmelden“ gesendet
    wird, nicht der Eintrag `auth?…` davor). Diesen Eintrag anklicken, im
@@ -83,7 +86,7 @@ iPhone/iPad und in Safari geht das nicht oder nur sehr umständlich.
    Browser stehen dort lange Zeichenfolgen, die komplett kopiert werden
    müssen.)
 
-6. Die **ganze** Adresse in das Eingabefeld des Home-Assistant-Dialogs
+7. Die **ganze** Adresse in das Eingabefeld des Home-Assistant-Dialogs
    einfügen und bestätigen. Der Code gilt nur kurz, deshalb am besten sofort.
 
 Funktioniert es nicht („Code abgelaufen“ o. Ä.), erzeugt die Integration einen
