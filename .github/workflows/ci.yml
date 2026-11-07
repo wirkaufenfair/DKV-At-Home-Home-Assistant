@@ -79,4 +79,4 @@ jobs:
           pip install -r requirements-test-ha.txt
 
       - name: Run tests
-        run: python -m pytest tests -v
+        run: python -m pytest tests -v --cov=custom_components.dkv_at_home --cov-report=term-missing

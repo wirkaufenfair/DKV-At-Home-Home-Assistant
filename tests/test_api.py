@@ -49,6 +49,14 @@ class TestJwt:
     def test_claims_of_invalid_token_are_empty(self, api_module):
         assert api_module.DkvApiClient._decode_jwt_claims("nope") == {}
 
+    def test_decodes_claims(self, api_module):
+        token = make_jwt(1234, typ="Offline")
+        claims = api_module.DkvApiClient._decode_jwt_claims(token)
+        assert claims == {"typ": "Offline", "exp": 1234}
+
+    def test_undecodable_payload_gives_no_claims(self, api_module):
+        assert api_module.DkvApiClient._decode_jwt_claims("a.bm90IGpzb24.c") == {}
+
 
 # ----------------------------------------------------------------------
 # Token handling
@@ -185,6 +193,25 @@ class TestCard:
         with pytest.raises(api_module.DkvTransientError):
             client._get_card_id()
 
+    def test_empty_list_is_error(self, http, client, api_module):
+        http.add("GET", "service-card", FakeResponse(200, []))
+        with pytest.raises(api_module.DkvApiError, match="Ladekarten"):
+            client._get_card_id()
+
+    def test_401_triggers_refresh_and_retry(self, http, client):
+        http.add(
+            "GET", "service-card", FakeResponse(401), FakeResponse(200, CARDS)
+        )
+        http.add("POST", "openid-connect/token", token_response())
+        assert client._get_card_id() == "card-1"
+        assert len(http.calls_to("POST", "openid-connect/token")) == 1
+
+    def test_second_401_is_auth_error(self, http, client, api_module):
+        http.add("GET", "service-card", FakeResponse(401))
+        http.add("POST", "openid-connect/token", token_response())
+        with pytest.raises(api_module.DkvAuthError):
+            client._get_card_id()
+
 
 # ----------------------------------------------------------------------
 # Login (PKCE)
@@ -258,6 +285,22 @@ class TestLogin:
         http.add("GET", "userinfo", FakeResponse(200, {}))
         with pytest.raises(api_module.DkvApiError):
             client.fetch_preferred_username()
+
+    def test_userinfo_needs_an_access_token(self, http, api_module):
+        client = api_module.DkvApiClient("refresh-0", "user")
+        with pytest.raises(api_module.DkvApiError, match="Access Token"):
+            client.fetch_preferred_username()
+        assert http.calls == []
+
+    def test_userinfo_error_is_reported(self, http, client, api_module):
+        http.add("GET", "userinfo", FakeResponse(401, text="expired"))
+        with pytest.raises(api_module.DkvApiError, match="HTTP 401"):
+            client.fetch_preferred_username()
+
+    def test_validate_refreshes_the_token(self, http, client):
+        http.add("POST", "openid-connect/token", token_response("refresh-7"))
+        client.validate()
+        assert client.refresh_token == "refresh-7"
 
 
 # ----------------------------------------------------------------------
