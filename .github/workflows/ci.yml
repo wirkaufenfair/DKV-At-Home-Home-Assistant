@@ -80,14 +80,3 @@ jobs:
 
       - name: Run tests
         run: python -m pytest tests -v
-
-  contract-smoke:
-    name: Contract smoke (temporary)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-      - run: pip install -r requirements-test.txt
-      - run: python -m pytest -m contract -v
