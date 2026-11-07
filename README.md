@@ -6,8 +6,9 @@ einzubinden und einen Ladevorgang per Switch zu starten.
 ## Funktionen
 
 - Integration als Home-Assistant-Custom-Component (`dkv_at_home`)
-- OAuth-Token-basierte Anmeldung über DKV-Portal-Tokens
-- Entität: ein `switch` zum Starten des Ladevorgangs
+- Anmeldung über den Login von DKV (OAuth mit PKCE), langlebiger Token
+- Entität: ein `switch` zum Starten und Stoppen des Ladevorgangs
+- Diagnose-Download für Fehlerberichte (ohne Tokens und Kennungen)
 - Statusabfrage via Coordinator (Polling alle 30 Sekunden)
 - Automatische Token-Aktualisierung (Refresh-Token)
 
@@ -156,23 +157,66 @@ Die Home-Assistant-Tests laufen unter Windows nicht, nur unter Linux/macOS.
 
 ## Fehlerbehebung
 
-### „Token ungültig oder abgelaufen“
+### Bei der Einrichtung
 
-- Neue Token-JSON aus dem DKV-Portal holen und erneut einfügen
+**„Safari kann die Seite nicht öffnen, da die Adresse ungültig ist“**
+Das ist normal. Nach dem Login springt DKV auf die Adresse der DKV-App
+(`com.dkv-mobility.app://…`), die ein Browser nicht öffnen kann. Die Adresse
+mit dem Code steht trotzdem in den Entwicklertools, siehe Schritt 6 der
+Einrichtung. Dafür braucht es einen Computer mit Chrome, Edge oder Firefox. Am
+iPhone/iPad und in Safari geht das nicht oder nur sehr umständlich.
 
-### „Keine gültige Token-JSON erkannt“
+**Im Netzwerk-Tab fehlt der Eintrag `authenticate?…`**
+Die Entwicklertools müssen **vor** dem Klick auf „Anmelden“ offen sein, mit
+gesetztem „Protokoll beibehalten“ (Preserve log / Keep log). Sonst wird die
+Weiterleitung nicht aufgezeichnet. Den Vorgang mit dem Anmeldelink aus dem
+Dialog wiederholen.
 
-- Prüfen, ob wirklich die komplette JSON-Response kopiert wurde
-- Kein Text vor/nach dem JSON einfügen
+**„Code abgelaufen oder bereits verwendet“**
+Der Code gilt nur kurz und nur einmal. Der Dialog hat einen neuen Anmeldelink
+erzeugt. Den Vorgang **mit diesem neuen Link** wiederholen und die Adresse
+sofort einfügen. Ein alter Link oder ein anderer Browser-Tab führt zu diesem
+Fehler.
 
-### Switch startet nicht / keine Bestätigung
+**„Der eingefügte Refresh-Token ist ungültig oder abgelaufen“**
+Ein eingefügter Refresh-Token wurde von DKV abgelehnt (zu alt oder schon von
+etwas anderem verwendet). Neu anmelden und die Weiterleitungs-URL einfügen.
+
+**„Verbindung fehlgeschlagen“**
+DKV war nicht erreichbar oder hat unerwartet geantwortet. Später erneut
+versuchen. Bei Dauerfehlern bitte ein Issue mit der Diagnose-Datei eröffnen
+(siehe unten).
+
+### Im Betrieb
+
+**Die Integration meldet „erneut anmelden“ (Reparatur-Hinweis)**
+Der Login ist bei DKV abgelaufen oder wurde beendet. In Home Assistant auf den
+Hinweis klicken und den Anmelde-Ablauf wiederholen. Ein Refresh-Token darf nur
+von **einer** Stelle genutzt werden; wird derselbe Login parallel woanders
+verwendet, entwerten sich beide.
+
+**Der Schalter ist „nicht verfügbar“**
+Die Statusabfrage bei DKV schlägt fehl (Server nicht erreichbar, Login
+ungültig oder DKV hat etwas geändert). Kurze DKV-Ausfälle ändern den Zustand
+nicht, erst ein harter Fehler macht den Schalter unavailable.
+
+**Switch startet nicht / keine Bestätigung**
 
 - Prüfen, ob Wallbox online ist
 - Prüfen, ob die Wallbox gerade laden darf (siehe „Voraussetzung: Wallbox
   muss sofort laden dürfen“)
-- Home-Assistant-Logs kontrollieren
 - Falls DKV den Start annimmt, aber die Wallbox nicht bestätigt,
-  kommt nach Timeout eine entsprechende Fehlermeldung
+  kommt nach Timeout (60 Sekunden) eine entsprechende Fehlermeldung
+
+### Fehler melden
+
+Bitte ein [Issue](https://github.com/wirkaufenfair/DKV-At-Home-Home-Assistant/issues)
+eröffnen und die **Diagnose-Datei** anhängen: Einstellungen → Geräte & Dienste
+→ DKV@Home → drei Punkte → **Diagnose herunterladen**. Die Datei enthält
+Versionen, den Zustand und die Struktur der DKV-Antworten (nur Schlüssel und
+Typen), aber keine Tokens, Kontonummern oder Kennungen. Für tiefergehende
+Fehler hilft zusätzlich das Debug-Log (Einstellungen → Geräte & Dienste →
+DKV@Home → Debug-Protokollierung aktivieren).
 
 ## Sicherheitshinweis
 
@@ -184,7 +228,7 @@ Home Assistant. Behandle Backups und Log-Ausgaben entsprechend sensibel.
 - Domain: `dkv_at_home`
 - Plattform: `switch`
 - `iot_class`: `cloud_polling`
-- Python-Abhängigkeit: `requests>=2.28.0`
+- Nutzt `requests` (von Home Assistant mitgebracht, keine eigene Abhängigkeit)
 
 ## Haftungsausschluss
 
