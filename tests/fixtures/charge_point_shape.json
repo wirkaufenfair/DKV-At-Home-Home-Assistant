@@ -1,0 +1,76 @@
+{
+  "chargePoints": [
+    {
+      "activeSessionId": "NoneType",
+      "chargePointId": "str",
+      "chargingFacilityType": "str",
+      "chargingStationId": "str",
+      "contractsPermittedActions": {
+        "create": {
+          "validFromDateLowerBound": "str",
+          "validFromDateUpperBound": "NoneType"
+        }
+      },
+      "currentMonthActiveContracts": [
+        {
+          "actionReason": "NoneType",
+          "approvalStatus": "str",
+          "assignedTo": "str",
+          "contractId": "str",
+          "currency": "str",
+          "files": [],
+          "price": "float",
+          "subCurrency": "str",
+          "validFrom": "str",
+          "version": "int"
+        }
+      ],
+      "currentType": "str",
+      "hardwareInfo": {
+        "chargePointModel": "str",
+        "chargePointVendor": "str",
+        "connectors": [
+          {
+            "amperage": "int",
+            "chargePointId": "str",
+            "connectorId": "str",
+            "format": "str",
+            "maxElectricPower": "int",
+            "powerType": "str",
+            "standard": "str",
+            "tariffId": "NoneType",
+            "voltage": "int"
+          }
+        ],
+        "evseUid": "str",
+        "firmwareVersion": "str",
+        "locationIdCa": "str",
+        "locationIdPlatform": "str"
+      },
+      "imageUrl": "str",
+      "label": "NoneType",
+      "location": {
+        "city": "str",
+        "country": "str",
+        "latitude": "str",
+        "longitude": "str",
+        "street": "str",
+        "zipCode": "str"
+      },
+      "lpExtSstNr2": "str",
+      "name": "str",
+      "newContract": "NoneType",
+      "payments": [],
+      "plugs": ["str"],
+      "reimbursement": {
+        "consumption": "int",
+        "currencyIsoCode": "str",
+        "sum": "int"
+      },
+      "remoteStartStopCapable": "bool",
+      "stationIdGfx": "str",
+      "status": "str",
+      "statusReceived": "str"
+    }
+  ]
+}

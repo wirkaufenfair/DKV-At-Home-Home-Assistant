@@ -3,7 +3,7 @@
 from datetime import timedelta
 
 import pytest
-from helpers import FakeResponse, make_jwt
+from helpers import FakeResponse, charge_point_answer, make_jwt
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.data_entry_flow import FlowResultType
@@ -63,15 +63,10 @@ class FakeCharger:
             return FakeResponse(200)  # not JSON
         return FakeResponse(
             200,
-            [
-                {
-                    "evseUid": "EVSE-1",
-                    "locationIdCa": "LOC-1",
-                    "status": "CHARGING" if self.session else "AVAILABLE",
-                    "activeSessionId": self.session,
-                    "name": "Wallbox",
-                }
-            ],
+            charge_point_answer(
+                session=self.session,
+                status="CHARGING" if self.session else "AVAILABLE",
+            ),
         )
 
     def _start(self):

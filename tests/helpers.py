@@ -2,6 +2,7 @@
 
 import base64
 import json
+from pathlib import Path
 
 
 def make_jwt(exp: int | None, **claims) -> str:
@@ -69,3 +70,38 @@ class FakeHttp:
                 # a callable answers from test state (e.g. a started session)
                 return response() if callable(response) else response
         raise AssertionError(f"unexpected request: {method} {url}")
+
+
+SHAPE_FILE = Path(__file__).resolve().parent / "fixtures" / "charge_point_shape.json"
+_PLACEHOLDERS = {"str": "x", "int": 1, "float": 1.0, "bool": False, "NoneType": None}
+
+
+def charge_point_shape() -> dict:
+    """Structure of a real DKV charge point answer: keys and types only.
+
+    Captured from the debug log of a live installation (v1.0.31 logs it).
+    """
+    return json.loads(SHAPE_FILE.read_text(encoding="utf-8"))
+
+
+def payload_from_shape(shape):
+    """Build a made-up answer with the structure of ``shape``."""
+    if isinstance(shape, dict):
+        return {key: payload_from_shape(value) for key, value in shape.items()}
+    if isinstance(shape, list):
+        return [payload_from_shape(shape[0])] if shape else []
+    return _PLACEHOLDERS[shape]
+
+
+def charge_point_answer(
+    session=None, evse_uid="EVSE-1", location_id="LOC-1", status="AVAILABLE"
+):
+    """An answer with the real structure and the values a test cares about."""
+    answer = payload_from_shape(charge_point_shape())
+    cp = answer["chargePoints"][0]
+    cp["activeSessionId"] = session
+    cp["status"] = status
+    cp["name"] = "Wallbox"
+    cp["hardwareInfo"]["evseUid"] = evse_uid
+    cp["hardwareInfo"]["locationIdCa"] = location_id
+    return answer
