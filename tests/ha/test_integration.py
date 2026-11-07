@@ -1,5 +1,7 @@
 """Tests for setup, the charging switch and token persistence."""
 
+from datetime import timedelta
+
 import pytest
 from helpers import FakeResponse, make_jwt
 from homeassistant import config_entries
@@ -7,7 +9,11 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from homeassistant.util import dt as dt_util
+from pytest_homeassistant_custom_component.common import (
+    MockConfigEntry,
+    async_fire_time_changed,
+)
 
 from custom_components.dkv_at_home.const import CLIENT_ID, DOMAIN
 
@@ -72,6 +78,12 @@ async def setup_entry(hass, entry):
     await hass.async_block_till_done()
 
 
+async def let_refresh_run(hass):
+    """Home Assistant delays a requested refresh by its cooldown (10 s)."""
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=30))
+    await hass.async_block_till_done()
+
+
 def switch_id(hass):
     return er.async_get(hass).async_get_entity_id(
         "switch", DOMAIN, f"dkv_at_home_{USER}"
@@ -117,7 +129,7 @@ async def test_turn_on_starts_session(hass, http):
     await hass.services.async_call(
         "switch", "turn_on", {"entity_id": entity_id}, blocking=True
     )
-    await hass.async_block_till_done()
+    await let_refresh_run(hass)
 
     body = http.calls_to("POST", "session/start")[0]["json"]
     assert body["isHomeCharger"] is True
@@ -133,7 +145,7 @@ async def test_turn_off_stops_session(hass, http):
     await hass.services.async_call(
         "switch", "turn_off", {"entity_id": entity_id}, blocking=True
     )
-    await hass.async_block_till_done()
+    await let_refresh_run(hass)
 
     call = http.calls_to("POST", "session/stop")[0]
     assert call["json"] == {"chargeSessionId": "SESSION-1"}
