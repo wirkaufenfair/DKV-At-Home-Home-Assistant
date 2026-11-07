@@ -4,6 +4,3 @@ __pycache__/
 .env
 .venv/
 scripts/
-
-# Tokens fuer tests/test_live_account.py
-.dkv-test-token
