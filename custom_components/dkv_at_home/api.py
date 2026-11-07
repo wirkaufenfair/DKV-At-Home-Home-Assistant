@@ -54,6 +54,15 @@ class DkvTransientError(DkvApiError):
     """
 
 
+def describe_shape(value):
+    """Describe the structure of an answer: keys and types, never values."""
+    if isinstance(value, dict):
+        return {key: describe_shape(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [describe_shape(value[0])] if value else []
+    return type(value).__name__
+
+
 def _locked(method):
     """Run a public client call while holding the client's lock.
 
@@ -91,6 +100,7 @@ class DkvApiClient:
         self.client_id = client_id
         self.access_token = access_token
         self._lock = threading.RLock()
+        self._shapes: dict[str, object] = {}
 
     @staticmethod
     def _decode_jwt_exp(token: str | None) -> int | None:
@@ -240,6 +250,19 @@ class DkvApiClient:
         self.access_token = access_token
         self.refresh_token = refresh_token
 
+    def _log_shape(self, name: str, data) -> None:
+        """Log the structure of an answer when it is new or has changed.
+
+        Only keys and types are logged, so ids and other values stay out of
+        the log. A change of structure shows what DKV altered.
+        """
+        shape = describe_shape(data)
+        if self._shapes.get(name) != shape:
+            self._shapes[name] = shape
+            _LOGGER.debug(
+                "API-Struktur %s: %s", name, json.dumps(shape, sort_keys=True)
+            )
+
     def _headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.access_token}"}
 
@@ -268,6 +291,7 @@ class DkvApiClient:
             )
         r.raise_for_status()
         data = r.json()
+        self._log_shape("charge-points", data)
         points = data if isinstance(data, list) else data.get(
             "chargePoints", [data]
         )
@@ -302,6 +326,7 @@ class DkvApiClient:
             )
         r.raise_for_status()
         data = r.json()
+        self._log_shape("service-card", data)
         cards = (
             data
             if isinstance(data, list)

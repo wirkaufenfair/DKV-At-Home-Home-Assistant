@@ -511,3 +511,53 @@ class TestConcurrentUse:
         assert errors == []
         assert state["uses"] == 1
         assert client.refresh_token == "refresh-1"
+
+
+# ----------------------------------------------------------------------
+# Structure logging (shows what DKV changed, without leaking values)
+# ----------------------------------------------------------------------
+
+
+class TestShapeLogging:
+    def test_describe_shape_has_types_only(self, api_module):
+        payload = {"id": "SECRET-1", "n": 3, "nested": {"flag": True, "x": None},
+                   "items": [{"a": "SECRET-2"}, {"a": "SECRET-3"}], "empty": []}
+        shape = api_module.describe_shape(payload)
+        assert shape == {
+            "id": "str",
+            "n": "int",
+            "nested": {"flag": "bool", "x": "NoneType"},
+            "items": [{"a": "str"}],
+            "empty": [],
+        }
+        assert "SECRET" not in str(shape)
+
+    def test_logs_structure_without_values(self, http, client, caplog):
+        import logging
+
+        cp = {**CP_IDLE, "evseUid": "SECRET-EVSE"}
+        http.add("GET", "charge-points", FakeResponse(200, [cp]))
+        with caplog.at_level(logging.DEBUG, logger="dkv_at_home.api"):
+            client._get_charge_point()
+        text = caplog.text
+        assert "API-Struktur charge-points" in text
+        assert "evseUid" in text
+        assert "SECRET-EVSE" not in text
+
+    def test_logs_only_when_the_structure_changes(self, http, client, caplog):
+        import logging
+
+        http.add(
+            "GET",
+            "charge-points",
+            FakeResponse(200, [CP_IDLE]),
+            FakeResponse(200, [{**CP_IDLE, "name": "Other"}]),  # same structure
+            FakeResponse(200, [{**CP_IDLE, "newField": 1}]),  # new field
+        )
+        with caplog.at_level(logging.DEBUG, logger="dkv_at_home.api"):
+            client._get_charge_point()
+            client._get_charge_point()
+            client._get_charge_point()
+        lines = [r for r in caplog.records if "API-Struktur" in r.getMessage()]
+        assert len(lines) == 2
+        assert "newField" in lines[1].getMessage()

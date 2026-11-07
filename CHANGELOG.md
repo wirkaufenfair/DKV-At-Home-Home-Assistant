@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.31] - 2026-11-07
+
+### Fixed
+
+- **Gleichzeitige Token-Erneuerung**: Status-Abfrage und Start/Stopp liefen
+  in getrennten Threads mit demselben Client. DKV rotiert den Refresh-Token;
+  erneuerten beide gleichzeitig, wurde der zweite mit `invalid_grant`
+  abgelehnt und die Integration verlangte eine Neuanmeldung. Aufrufe des
+  Clients sperren sich jetzt gegenseitig.
+- **Einrichtungsdialog**: Nach einem abgelaufenen Code wurde zwar ein neuer
+  Anmeldelink erzeugt, im Formular stand aber kein Link. Jetzt wird vor dem
+  Anzeigen immer ein gueltiger erzeugt.
+- **Fehlende Texte** `reauth_successful` und `unknown` in den Uebersetzungen:
+  nach der erneuten Anmeldung wurde der rohe Schluessel angezeigt.
+- **Unerwartete Token-Antwort von DKV** (Feld fehlt oder kein JSON) gibt eine
+  klare Fehlermeldung statt eines internen Fehlers.
+
+### Added
+
+- **Debug-Log der API-Struktur**: Beim ersten Abruf und bei jeder Aenderung
+  wird die Struktur der Antworten (nur Schluessel und Typen, nie Werte) von
+  Ladepunkt und Zahlungskarte protokolliert. So faellt auf, wenn DKV Felder
+  aendert.
+- **Tests**: API-Client, Einrichtungsdialog, Schalter, Token-Speicherung,
+  Uebersetzungen; taegliche Pruefung der DKV-Login-Server in der CI.
+
 ## [1.0.30] - 2026-11-07
 
 ### Fixed
