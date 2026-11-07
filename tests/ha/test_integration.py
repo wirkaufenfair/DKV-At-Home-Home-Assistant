@@ -11,8 +11,6 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.dkv_at_home.const import CLIENT_ID, DOMAIN
 
-pytestmark = pytest.mark.asyncio
-
 USER = "100000451057"
 FAR_FUTURE = 4102444800
 
@@ -119,6 +117,7 @@ async def test_turn_on_starts_session(hass, http):
     await hass.services.async_call(
         "switch", "turn_on", {"entity_id": entity_id}, blocking=True
     )
+    await hass.async_block_till_done()
 
     body = http.calls_to("POST", "session/start")[0]["json"]
     assert body["isHomeCharger"] is True
@@ -134,6 +133,7 @@ async def test_turn_off_stops_session(hass, http):
     await hass.services.async_call(
         "switch", "turn_off", {"entity_id": entity_id}, blocking=True
     )
+    await hass.async_block_till_done()
 
     call = http.calls_to("POST", "session/stop")[0]
     assert call["json"] == {"chargeSessionId": "SESSION-1"}
