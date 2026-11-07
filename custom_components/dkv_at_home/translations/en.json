@@ -25,7 +25,9 @@
       "unknown": "Unknown error. Check the HA logs for details."
     },
     "abort": {
-      "already_configured": "DKV@Home is already configured."
+      "already_configured": "DKV@Home is already configured.",
+      "reauth_successful": "Re-authentication was successful.",
+      "unknown": "Unknown error. Please try again."
     }
   }
 }
