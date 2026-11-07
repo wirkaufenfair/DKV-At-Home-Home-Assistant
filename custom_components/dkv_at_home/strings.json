@@ -22,7 +22,8 @@
       "wrong_auth_url": "Der Code gehört zu einem anderen Anmeldelink (falscher Tab oder alter Link). Ein neuer Link wurde generiert. Bitte jetzt den Link AUS DEM FORMULAR klicken und sich neu anmelden!",
       "invalid_input": "Ungültige Eingabe. Bitte die vollständige Weiterleitungs-URL (mit ?code=…) oder den Refresh-Token (beginnt mit 'eyJ') einfügen.",
       "invalid_redirect_url": "Kein Autorisierungs-Code in der URL gefunden. Bitte die vollständige Weiterleitungs-URL einfügen.",
-      "unknown": "Unbekannter Fehler. Bitte die HA-Logs prüfen."
+      "unknown": "Unbekannter Fehler. Bitte die HA-Logs prüfen.",
+      "invalid_token": "Der eingefügte Refresh-Token ist ungültig oder abgelaufen. Bitte neu anmelden und die Weiterleitungs-URL einfügen."
     },
     "abort": {
       "already_configured": "DKV@Home ist bereits konfiguriert.",
