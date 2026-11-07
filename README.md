@@ -68,9 +68,11 @@ iPhone/iPad und in Safari geht das nicht oder nur sehr umständlich.
 
    ![DKV-Anmeldung mit geöffneten Entwicklertools](docs/images/03-login.png)
 
-5. Nach dem Login erscheint die Frage, ob die DKV-App geöffnet werden soll,
-   oder eine leere Seite bzw. Fehlermeldung. Das ist normal. Die Frage mit
-   **Abbrechen** beantworten.
+5. Nach dem Login passiert im Browser scheinbar nichts, oder es erscheint eine
+   leere Seite bzw. Fehlermeldung. Das ist normal, denn DKV leitet auf die
+   Adresse der DKV-App weiter, die ein Browser nicht öffnen kann. Fragt der
+   Browser, ob die DKV-App geöffnet werden soll, mit **Abbrechen**
+   antworten. Den Tab mit den Entwicklertools **nicht schließen**.
 
 6. Im Netzwerk-Tab ins Filterfeld `authen` eingeben. Es bleibt ein Eintrag
    **`authenticate?session_code=…`** übrig (Methode `POST`, Status
