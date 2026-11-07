@@ -28,5 +28,16 @@
       "reauth_successful": "Erneute Anmeldung erfolgreich.",
       "unknown": "Unbekannter Fehler. Bitte erneut versuchen."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Automatisches Freischalten",
+        "description": "Wählen Sie einen Sensor, der „an“ meldet, sobald ein Fahrzeug angeschlossen ist (zum Beispiel von evcc). Dann schaltet die Integration die Wallbox bei DKV selbst frei und versucht es bei Bedarf bis zu 10 Mal im Abstand von 30 Sekunden erneut. Leer lassen, um die Funktion auszuschalten.",
+        "data": {
+          "connected_entity": "Sensor „Fahrzeug angeschlossen“"
+        }
+      }
+    }
   }
 }

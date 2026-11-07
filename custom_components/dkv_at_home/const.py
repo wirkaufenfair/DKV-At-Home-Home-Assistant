@@ -26,3 +26,9 @@ STOP_APP_TOKEN = "{app-token}"
 CONFIRM_TIMEOUT_SECONDS = 60
 CONFIRM_INTERVAL_SECONDS = 5
 POLL_INTERVAL_SECONDS = 30
+
+# Automatic unlock: option, retry pace and the event fired when it gives up.
+CONF_CONNECTED_ENTITY = "connected_entity"
+UNLOCK_RETRY_SECONDS = 30
+UNLOCK_MAX_ATTEMPTS = 10
+EVENT_UNLOCK_FAILED = "dkv_at_home_unlock_failed"

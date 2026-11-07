@@ -28,5 +28,16 @@
       "reauth_successful": "Re-authentication was successful.",
       "unknown": "Unknown error. Please try again."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Automatic unlock",
+        "description": "Choose a sensor that turns on when a vehicle is connected (for example from evcc). The integration then releases the wallbox at DKV by itself and retries up to 10 times, 30 seconds apart, if needed. Leave empty to switch the feature off.",
+        "data": {
+          "connected_entity": "Sensor “vehicle connected”"
+        }
+      }
+    }
   }
 }

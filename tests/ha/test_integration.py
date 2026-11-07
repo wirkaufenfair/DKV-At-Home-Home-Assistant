@@ -22,13 +22,14 @@ USER = "100000000001"
 FAR_FUTURE = 4102444800
 
 
-def make_entry(access_token="valid", refresh_token="refresh-0"):
+def make_entry(access_token="valid", refresh_token="refresh-0", options=None):
     if access_token == "valid":
         access_token = make_jwt(FAR_FUTURE)
     return MockConfigEntry(
         domain=DOMAIN,
         unique_id=USER,
         title=f"DKV@Home ({USER})",
+        options=options or {},
         data={
             "preferred_username": USER,
             "refresh_token": refresh_token,
@@ -41,8 +42,11 @@ def make_entry(access_token="valid", refresh_token="refresh-0"):
 class FakeCharger:
     """A charge point whose state the fake DKV server reports and changes."""
 
-    def __init__(self, http, session=None, confirms=True):
+    def __init__(self, http, session=None, confirms=True, confirm_from=1):
         self.session = session
+        # the wallbox confirms from the n-th start request on (retry tests)
+        self.confirm_from = confirm_from
+        self.start_calls = 0
         # False: DKV accepts start/stop but the wallbox never confirms it
         self.confirms = confirms
         # None, "transient" (HTTP 503), "empty" (no charge point), "auth" (401)
@@ -71,7 +75,8 @@ class FakeCharger:
         )
 
     def _start(self):
-        if self.confirms:
+        self.start_calls += 1
+        if self.confirms and self.start_calls >= self.confirm_from:
             self.session = "SESSION-1"
         return FakeResponse(200, {"chargeSessionId": "SESSION-1"})
 

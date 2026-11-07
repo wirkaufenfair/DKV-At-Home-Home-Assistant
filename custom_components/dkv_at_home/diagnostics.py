@@ -39,6 +39,8 @@ async def async_get_config_entry_diagnostics(
             "status": data.get("status"),
             "has_active_session": data.get("activeSessionId") is not None,
             "remote_start_stop_capable": data.get("remoteStartStopCapable"),
+            # amounts only; they show what DKV means by consumption and sum
+            "reimbursement": data.get("reimbursement"),
             "structure": describe_shape(data),
         }
 

@@ -7,6 +7,19 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Automatisches Freischalten** (optional): In den Einstellungen der
+  Integration einen Sensor „Fahrzeug angeschlossen“ waehlen. Meldet er „an“,
+  startet die Integration die Session selbst, mit bis zu 10 Wiederholungen im
+  Abstand von 30 Sekunden, weil DKV den Start nur bestaetigt, solange die
+  Wallbox laden darf. Bei endgueltigem Scheitern: Ereignis
+  `dkv_at_home_unlock_failed` und Benachrichtigung. Ersetzt eine eigene
+  Automation.
+- **Diagnose**: enthaelt jetzt die Werte von `reimbursement` (nur Betraege),
+  damit sich Verbrauch und Erstattung als Sensoren umsetzen lassen.
+- **README**: Plaketten fuer den Stand der CI und der taeglichen DKV-Pruefung.
+
 ### Changed
 
 - **Zeitgesteuerte Workflows** schalten sich bei jedem taeglichen Lauf selbst

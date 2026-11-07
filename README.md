@@ -1,5 +1,8 @@
 # DKV@Home für Home Assistant
 
+[![CI](https://github.com/wirkaufenfair/DKV-At-Home-Home-Assistant/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/wirkaufenfair/DKV-At-Home-Home-Assistant/actions/workflows/ci.yml)
+[![DKV-Login](https://github.com/wirkaufenfair/DKV-At-Home-Home-Assistant/actions/workflows/contract.yml/badge.svg)](https://github.com/wirkaufenfair/DKV-At-Home-Home-Assistant/actions/workflows/contract.yml)
+
 Custom Integration für Home Assistant, um eine **DKV@Home-Wallbox**
 einzubinden und einen Ladevorgang per Switch zu starten.
 
@@ -8,6 +11,7 @@ einzubinden und einen Ladevorgang per Switch zu starten.
 - Integration als Home-Assistant-Custom-Component (`dkv_at_home`)
 - Anmeldung über den Login von DKV (OAuth mit PKCE), langlebiger Token
 - Entität: ein `switch` zum Starten und Stoppen des Ladevorgangs
+- Optional: automatisches Freischalten, sobald ein Fahrzeug angeschlossen ist
 - Diagnose-Download für Fehlerberichte (ohne Tokens und Kennungen)
 - Statusabfrage via Coordinator (Polling alle 30 Sekunden)
 - Automatische Token-Aktualisierung (Refresh-Token)
@@ -98,6 +102,31 @@ wiederholen. Ein alter Link oder ein anderer Tab führt zum Fehler.
 
 > Statt der Adresse akzeptiert das Feld auch den reinen Anmeldecode oder einen
 > vorhandenen Refresh-Token (beginnt mit `eyJ`).
+
+## Automatisches Freischalten
+
+Optional schaltet die Integration die Wallbox selbst frei, sobald ein Fahrzeug
+angeschlossen ist. Eine eigene Automation ist dafür nicht nötig.
+
+Einstellen: **Einstellungen → Geräte & Dienste → DKV@Home → Konfigurieren** und
+den Sensor „Fahrzeug angeschlossen“ wählen. Das ist ein `binary_sensor`, der
+„an“ meldet, sobald ein Auto angesteckt ist (zum Beispiel von evcc). Leer
+lassen schaltet die Funktion aus.
+
+So verhält sie sich:
+
+- Geht der Sensor auf „an“, wird die Session bei DKV gestartet. Läuft schon
+  eine, passiert nichts (es startet nie eine zweite).
+- DKV bestätigt den Start nur, solange die Wallbox laden darf. Deshalb wird
+  es bis zu 10 Mal im Abstand von 30 Sekunden erneut versucht (siehe
+  „Voraussetzung: Wallbox muss sofort laden dürfen“).
+- Geht der Sensor auf „aus“, enden die Versuche. „Nicht verfügbar“ (zum
+  Beispiel während evcc neu startet) beendet sie nicht.
+- War Home Assistant beim Start schon mit angeschlossenem Auto, wird sofort
+  freigeschaltet.
+- Gelingt es nicht, wird das Ereignis `dkv_at_home_unlock_failed` ausgelöst
+  (Daten: `attempts`, `reason`) und eine Benachrichtigung angezeigt. Das Ereignis
+  eignet sich als Auslöser für eine eigene Meldung.
 
 ## Entität & Attribute
 

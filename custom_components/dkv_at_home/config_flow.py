@@ -8,10 +8,11 @@ from urllib.parse import parse_qs, urlparse
 
 import voluptuous as vol  # type: ignore[import]
 from homeassistant import config_entries  # type: ignore[import]
-from homeassistant.core import HomeAssistant  # type: ignore[import]
+from homeassistant.core import HomeAssistant, callback  # type: ignore[import]
+from homeassistant.helpers import selector  # type: ignore[import]
 
 from .api import DkvApiClient, DkvApiError
-from .const import CLIENT_ID, DOMAIN
+from .const import CLIENT_ID, CONF_CONNECTED_ENTITY, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -101,6 +102,12 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
     """Handle the DKV@Home config flow."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(_config_entry):
+        """Options: which sensor reports a connected car (automatic unlock)."""
+        return DkvOptionsFlow()
 
     def __init__(self) -> None:
         """Initialize flow state."""
@@ -329,4 +336,25 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             data_schema=vol.Schema({vol.Required("token_input"): str}),
             errors=errors,
             description_placeholders={"auth_url": self._auth_url},
+        )
+
+
+class DkvOptionsFlow(config_entries.OptionsFlow):
+    """Choose the "vehicle connected" sensor for the automatic unlock."""
+
+    async def async_step_init(self, user_input: dict | None = None):
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+        schema = vol.Schema(
+            {
+                vol.Optional(CONF_CONNECTED_ENTITY): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="binary_sensor")
+                )
+            }
+        )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=self.add_suggested_values_to_schema(
+                schema, self.config_entry.options
+            ),
         )
