@@ -171,6 +171,8 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             return entry_data, {}
         except DkvApiError as exc:
             _LOGGER.error("Refresh-Token ungültig: %s", exc)
+            if "invalid_grant" in str(exc):
+                return None, {"base": "invalid_token"}
             return None, {"base": "cannot_connect"}
         except (ValueError, TypeError) as exc:
             _LOGGER.error("Fehler bei Refresh-Token-Validierung: %s", exc)

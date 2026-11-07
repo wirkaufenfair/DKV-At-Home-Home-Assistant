@@ -22,7 +22,8 @@
       "wrong_auth_url": "The code belongs to a different login link (wrong tab or old link). A new link has been generated. Please click the link FROM THE FORM and sign in again!",
       "invalid_input": "Invalid input. Please paste the full redirect URL (with ?code=…) or a refresh token (starts with 'eyJ').",
       "invalid_redirect_url": "No authorization code found in the URL. Please paste the full redirect URL.",
-      "unknown": "Unknown error. Check the HA logs for details."
+      "unknown": "Unknown error. Check the HA logs for details.",
+      "invalid_token": "The pasted refresh token is invalid or has expired. Please log in again and paste the redirect URL."
     },
     "abort": {
       "already_configured": "DKV@Home is already configured.",

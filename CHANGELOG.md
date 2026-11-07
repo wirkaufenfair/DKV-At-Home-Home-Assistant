@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- **Einrichtungsdialog**: Lehnt DKV einen eingefuegten Refresh-Token ab
+  (`invalid_grant`), steht jetzt „Der eingefuegte Refresh-Token ist ungueltig
+  oder abgelaufen“ statt „Verbindung fehlgeschlagen“.
+
 ## [1.0.31] - 2026-11-07
 
 ### Fixed

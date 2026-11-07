@@ -256,4 +256,5 @@ async def test_rejected_pasted_refresh_token_shows_error(hass, http):
     )
 
     assert result["type"] is FlowResultType.FORM
-    assert result["errors"]
+    # not "cannot_connect": the connection worked, the token is dead
+    assert result["errors"] == {"base": "invalid_token"}
