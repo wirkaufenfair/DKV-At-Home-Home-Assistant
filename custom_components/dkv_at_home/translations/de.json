@@ -3,14 +3,14 @@
     "step": {
       "auth": {
         "title": "DKV@Home Anmeldung",
-        "description": "**Wichtig vorher:** Browser-Entwicklertools öffnen (F12) → Tab **Netzwerk** → Häkchen bei **„Protokoll beibehalten“ / „Preserve log“** setzen.\n\n1. Anmeldelink klicken: [DKV anmelden]({auth_url})\n2. Bei DKV einloggen\n3. Der Browser fragt: „Möchten Sie „com.dkv-mobility.app…“ öffnen?“ → **Abbrechen**\n4. Im Netzwerk-Tab den Eintrag **„authenticate?…“** (POST, Status 302) anklicken → Bereich **Antwortheader / Response Headers** → Wert von **`Location`** kopieren (beginnt mit `com.dkv-mobility.app://oauth2redirect?code=…`)\n5. URL unten einfügen\n\n> Falls der Code abgelaufen ist, wird automatisch ein neuer Anmeldelink generiert.",
+        "description": "**Wichtig vorher:** Browser-Entwicklertools öffnen (F12) → Tab **Netzwerk** → Häkchen bei **„Protokoll beibehalten“ / „Preserve log“** setzen.\n\n1. Anmeldelink klicken: [DKV anmelden]({auth_url})\n2. Bei DKV einloggen\n3. Danach passiert im Browser scheinbar nichts, oder es erscheint eine leere Seite bzw. Fehlermeldung – das ist normal. Fragt der Browser, ob die DKV-App geöffnet werden soll → **Abbrechen**. Tab mit den Entwicklertools nicht schließen\n4. Im Netzwerk-Tab den Eintrag **„authenticate?…“** (POST, Status 302) anklicken → Bereich **Antwortheader / Response Headers** → Wert von **`Location`** kopieren (beginnt mit `com.dkv-mobility.app://oauth2redirect?code=…`)\n5. URL unten einfügen\n\n> Falls der Code abgelaufen ist, wird automatisch ein neuer Anmeldelink generiert.",
         "data": {
           "token_input": "Weiterleitungs-URL (com.dkv-mobility.app://…?code=…)"
         }
       },
       "reauth_confirm": {
         "title": "DKV@Home erneut verbinden",
-        "description": "**Wichtig vorher:** Browser-Entwicklertools öffnen (F12) → Tab **Netzwerk** → Häkchen bei **„Protokoll beibehalten“ / „Preserve log“** setzen.\n\n1. Anmeldelink klicken: [DKV anmelden]({auth_url})\n2. Bei DKV einloggen\n3. Der Browser fragt: „Möchten Sie „com.dkv-mobility.app…“ öffnen?“ → **Abbrechen**\n4. Im Netzwerk-Tab den Eintrag **„authenticate?…“** (POST, Status 302) anklicken → Bereich **Antwortheader / Response Headers** → Wert von **`Location`** kopieren (beginnt mit `com.dkv-mobility.app://oauth2redirect?code=…`)\n5. URL unten einfügen\n\n> Falls der Code abgelaufen ist, wird automatisch ein neuer Anmeldelink generiert.",
+        "description": "**Wichtig vorher:** Browser-Entwicklertools öffnen (F12) → Tab **Netzwerk** → Häkchen bei **„Protokoll beibehalten“ / „Preserve log“** setzen.\n\n1. Anmeldelink klicken: [DKV anmelden]({auth_url})\n2. Bei DKV einloggen\n3. Danach passiert im Browser scheinbar nichts, oder es erscheint eine leere Seite bzw. Fehlermeldung – das ist normal. Fragt der Browser, ob die DKV-App geöffnet werden soll → **Abbrechen**. Tab mit den Entwicklertools nicht schließen\n4. Im Netzwerk-Tab den Eintrag **„authenticate?…“** (POST, Status 302) anklicken → Bereich **Antwortheader / Response Headers** → Wert von **`Location`** kopieren (beginnt mit `com.dkv-mobility.app://oauth2redirect?code=…`)\n5. URL unten einfügen\n\n> Falls der Code abgelaufen ist, wird automatisch ein neuer Anmeldelink generiert.",
         "data": {
           "token_input": "Weiterleitungs-URL (com.dkv-mobility.app://…?code=…)"
         }

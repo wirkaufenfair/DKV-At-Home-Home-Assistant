@@ -13,8 +13,11 @@ and this project follows [Semantic Versioning](https://semver.org/).
   Netzwerk-Tab. Die Weiterleitung mit dem Code steht im `Location`-Header
   der Antwort auf `POST …/login-actions/authenticate?…` (Status 302), nicht
   beim Eintrag `auth?…`.
+- **Einrichtungsdialog**: Der Hinweis „Der Browser fragt …“ gilt jetzt auch,
+  wenn der Browser nicht nachfragt oder eine leere Seite zeigt.
 - **README**: Abschnitt „Einrichtung“ beschrieb noch das alte Token-JSON-
-  Verfahren und wurde auf den tatsaechlichen Ablauf umgestellt.
+  Verfahren und wurde auf den tatsaechlichen Ablauf umgestellt, mit
+  Bildern und der Reihenfolge Link, Entwicklertools, Login.
 
 ## [1.0.29] - 2026-10-20
 
