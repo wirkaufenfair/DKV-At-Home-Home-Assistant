@@ -228,3 +228,32 @@ async def test_server_error_is_reported(hass, http):
     )
 
     assert result["errors"] == {"base": "cannot_connect"}
+
+
+async def test_unexpected_token_answer_shows_error_not_crash(hass, http):
+    """DKV renaming a token field must give an error in the dialog."""
+    http.add("POST", "openid-connect/token", FakeResponse(200, {"token": "x"}))
+    result = await start_flow(hass)
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"token_input": redirect_url()}
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "cannot_connect"}
+
+
+async def test_rejected_pasted_refresh_token_shows_error(hass, http):
+    http.add(
+        "POST",
+        "openid-connect/token",
+        FakeResponse(400, text='{"error":"invalid_grant"}'),
+    )
+    result = await start_flow(hass)
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"token_input": make_jwt(1) + ".x"}
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"]

@@ -217,15 +217,28 @@ class DkvApiClient:
                 "Token-Refresh fehlgeschlagen: "
                 f"HTTP {r.status_code} – {r.text}"
             )
-        result = r.json()
-        self.access_token = result["access_token"]
-        self.refresh_token = result["refresh_token"]
+        self._store_tokens(r)
         _LOGGER.debug("DKV access token erneuert")
         self._log_token_type(
             "refresh_token (nach Refresh)", self.refresh_token
         )
         self._log_token_expiry("access_token", self.access_token)
         self._log_token_expiry("refresh_token", self.refresh_token)
+
+    def _store_tokens(self, response) -> None:
+        """Take both tokens from a token endpoint answer."""
+        try:
+            result = response.json()
+            access_token = result["access_token"]
+            refresh_token = result["refresh_token"]
+        except (ValueError, KeyError, TypeError) as err:
+            # DKV changed the answer; say so instead of a bare KeyError.
+            raise DkvApiError(
+                "Unerwartete Token-Antwort von DKV (access_token oder "
+                f"refresh_token fehlt): {err!r}"
+            ) from err
+        self.access_token = access_token
+        self.refresh_token = refresh_token
 
     def _headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.access_token}"}
@@ -386,9 +399,7 @@ class DkvApiClient:
                 f"HTTP {r.status_code} – {r.text}"
             )
 
-        result = r.json()
-        self.access_token = result["access_token"]
-        self.refresh_token = result["refresh_token"]
+        self._store_tokens(r)
         self._log_token_type(
             "refresh_token (Code-Exchange)", self.refresh_token
         )

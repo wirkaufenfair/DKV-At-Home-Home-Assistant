@@ -44,7 +44,8 @@ class FakeCharger:
         self.session = session
         # False: DKV accepts start/stop but the wallbox never confirms it
         self.confirms = confirms
-        # None, "transient" (HTTP 503), "empty" (no charge point) or "auth" (401)
+        # None, "transient" (HTTP 503), "empty" (no charge point), "auth" (401)
+        # or "garbage" (HTTP 200 that is not JSON)
         self.status_error = None
         http.add("GET", "charge-points", self._charge_point)
         http.add("GET", "service-card", FakeResponse(200, [{"id": "card-1"}]))
@@ -58,6 +59,8 @@ class FakeCharger:
             return FakeResponse(200, [])
         if self.status_error == "auth":
             return FakeResponse(401)
+        if self.status_error == "garbage":
+            return FakeResponse(200)  # not JSON
         return FakeResponse(
             200,
             [
@@ -364,3 +367,49 @@ async def test_entry_can_be_unloaded(hass, http):
     await hass.async_block_till_done()
 
     assert entry.state is ConfigEntryState.NOT_LOADED
+
+
+async def test_unreadable_answer_makes_switch_unavailable(hass, http):
+    charger = FakeCharger(http)
+    await setup_entry(hass, make_entry())
+    entity_id = switch_id(hass)
+
+    charger.status_error = "garbage"
+    await next_poll(hass)
+
+    assert hass.states.get(entity_id).state == "unavailable"
+
+
+async def test_unexpected_error_on_start_becomes_ha_error(hass, http):
+    charger = FakeCharger(http)
+    await setup_entry(hass, make_entry())
+
+    charger.status_error = "garbage"
+    with pytest.raises(HomeAssistantError, match="Unerwarteter Fehler beim Starten"):
+        await hass.services.async_call(
+            "switch", "turn_on", {"entity_id": switch_id(hass)}, blocking=True
+        )
+
+
+async def test_unexpected_error_on_stop_becomes_ha_error(hass, http):
+    charger = FakeCharger(http, session="SESSION-1")
+    await setup_entry(hass, make_entry())
+
+    charger.status_error = "garbage"
+    with pytest.raises(HomeAssistantError, match="Unerwarteter Fehler beim Stoppen"):
+        await hass.services.async_call(
+            "switch", "turn_off", {"entity_id": switch_id(hass)}, blocking=True
+        )
+
+
+async def test_failed_stop_is_reported_from_dkv(hass, http):
+    FakeCharger(http, session="SESSION-1")
+    http.reset_routes()
+    FakeCharger(http, session="SESSION-1")
+    http.add("POST", "session/stop", FakeResponse(403, text="no"))
+    await setup_entry(hass, make_entry())
+
+    with pytest.raises(HomeAssistantError, match="HTTP 403"):
+        await hass.services.async_call(
+            "switch", "turn_off", {"entity_id": switch_id(hass)}, blocking=True
+        )
