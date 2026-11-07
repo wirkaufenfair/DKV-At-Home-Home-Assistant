@@ -20,6 +20,7 @@ on:
 permissions:
   contents: read
   issues: write
+  actions: write  # to keep the scheduled workflows enabled
 
 jobs:
   contract:
@@ -63,3 +64,15 @@ jobs:
               --title "DKV login changed: contract tests fail" \
               --body "The daily contract tests against the DKV login servers failed, so DKV probably changed something the integration depends on (client id, redirect URI, scopes, PKCE or the error answers). Details: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           fi
+
+      # GitHub disables scheduled workflows after 60 days without repository
+      # activity (the HACS validation was switched off like this in 2026).
+      # Enabling them again on every run resets that timer.
+      - name: Keep scheduled workflows enabled
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow enable contract.yml
+          gh workflow enable validate.yml
+

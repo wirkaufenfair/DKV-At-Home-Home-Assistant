@@ -9,6 +9,9 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Zeitgesteuerte Workflows** schalten sich bei jedem taeglichen Lauf selbst
+  wieder ein. GitHub hatte die HACS-Pruefung wegen 60 Tagen ohne Aktivitaet
+  abgeschaltet; sie lief seit Juni nicht mehr.
 - **Mindestversion** Home Assistant 2025.1.0 in `hacs.json` (getestet in der CI,
   deckt etwa 96 % der Installationen ab). Aeltere Versionen installiert HACS
   nicht mehr.
