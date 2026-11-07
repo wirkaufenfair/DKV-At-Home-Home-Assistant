@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.32] - 2026-11-08
 
 ### Added
 
@@ -16,7 +16,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
   Fernstart der Wallbox meldet (nur Information, es wird nichts blockiert).
 - **README**: Abschnitt Fehlerbehebung neu, passend zum aktuellen Login.
 - **Weitere Waechter**: keine Tokens, Kontonummern oder privaten Pfade im
-  Repository (Test), kein Warnung oder Fehler im Log bei normalem Betrieb,
+  Repository (Test), keine Warnung und kein Fehler im Log bei normalem Betrieb,
   Pruefung von Tag, `manifest.json` und Changelog bei jedem Release,
   Workflow-Pruefung (actionlint) und Markdown-Pruefung in der CI,
   Tests auch gegen die aelteste unterstuetzte Home-Assistant-Version (2025.1),
