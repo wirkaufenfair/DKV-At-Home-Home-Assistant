@@ -15,9 +15,14 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - **Attribut `remote_start_stop_capable`** am Schalter: zeigt, was DKV zum
   Fernstart der Wallbox meldet (nur Information, es wird nichts blockiert).
 - **README**: Abschnitt Fehlerbehebung neu, passend zum aktuellen Login.
+- **Waechter-Tests**: README, Dialogtexte und Code muessen uebereinstimmen
+  (Zahlen, Attribute, Fehlertexte, genannte Netzwerk-Eintraege, Links und
+  Bilder); nicht genutzte Fehlertexte werden erkannt.
 
 ### Fixed
 
+- **Einrichtungsdialog**: Zwei Fehlertexte, die nirgends angezeigt wurden
+  (`wrong_auth_url`, `invalid_redirect_url`), entfernt.
 - **Einrichtungsdialog**: Lehnt DKV einen eingefuegten Refresh-Token ab
   (`invalid_grant`), steht jetzt „Der eingefuegte Refresh-Token ist ungueltig
   oder abgelaufen“ statt „Verbindung fehlgeschlagen“.
