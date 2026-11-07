@@ -287,6 +287,9 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
                     data_updates=entry_data,
                 )
 
+        # A failed attempt may have discarded the link (expired code):
+        # always show a valid one.
+        self._ensure_auth_url()
         return self.async_show_form(
             step_id="reauth_confirm",
             data_schema=vol.Schema({vol.Required("token_input"): str}),
@@ -316,6 +319,9 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
                     data=entry_data,
                 )
 
+        # A failed attempt may have discarded the link (expired code):
+        # always show a valid one.
+        self._ensure_auth_url()
         return self.async_show_form(
             step_id="auth",
             data_schema=vol.Schema({vol.Required("token_input"): str}),

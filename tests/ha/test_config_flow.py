@@ -20,8 +20,6 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.dkv_at_home.config_flow import _parse_user_input
 from custom_components.dkv_at_home.const import CLIENT_ID, DOMAIN, TOKEN_URL
 
-pytestmark = pytest.mark.asyncio
-
 REDIRECT = "com.dkv-mobility.app://oauth2redirect"
 USER = "100000000001"
 
