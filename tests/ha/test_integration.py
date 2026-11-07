@@ -403,10 +403,9 @@ async def test_unexpected_error_on_stop_becomes_ha_error(hass, http):
 
 
 async def test_failed_stop_is_reported_from_dkv(hass, http):
-    FakeCharger(http, session="SESSION-1")
-    http.reset_routes()
-    FakeCharger(http, session="SESSION-1")
+    # the first matching route wins, so register the rejection first
     http.add("POST", "session/stop", FakeResponse(403, text="no"))
+    FakeCharger(http, session="SESSION-1")
     await setup_entry(hass, make_entry())
 
     with pytest.raises(HomeAssistantError, match="HTTP 403"):
