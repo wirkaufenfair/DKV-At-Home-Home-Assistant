@@ -1,0 +1,65 @@
+name: DKV contract tests
+
+# Asks the real DKV login servers every day whether they still accept what
+# the integration sends. A failure on the schedule opens an issue (and a
+# later green run closes it again), so DKV changes are noticed quickly.
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - custom_components/dkv_at_home/api.py
+      - custom_components/dkv_at_home/const.py
+      - tests/test_contract.py
+      - .github/workflows/contract.yml
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  contract:
+    name: Login endpoints (no credentials)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-test.txt
+
+      - name: Run contract tests
+        run: python -m pytest -m contract -v
+
+      - name: Close the issue after a green scheduled run
+        if: success() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for n in $(gh issue list --label dkv-contract --state open --json number --jq '.[].number'); do
+            gh issue close "$n" --comment "Contract tests are green again: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          done
+
+      - name: Open an issue after a failed scheduled run
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create dkv-contract --color D93F0B \
+            --description "DKV changed something" --force
+          if [ -z "$(gh issue list --label dkv-contract --state open --json number --jq '.[].number')" ]; then
+            gh issue create --label dkv-contract \
+              --title "DKV login changed: contract tests fail" \
+              --body "The daily contract tests against the DKV login servers failed, so DKV probably changed something the integration depends on (client id, redirect URI, scopes, PKCE or the error answers). Details: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          fi

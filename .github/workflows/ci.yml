@@ -36,7 +36,47 @@ jobs:
           pip install ruff requests voluptuous
 
       - name: Run Ruff
-        run: ruff check custom_components
+        run: ruff check custom_components tests
 
       - name: Run compileall
         run: python -m compileall custom_components
+
+  tests:
+    name: Unit tests (API client)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-test.txt
+
+      - name: Run tests
+        run: python -m pytest tests -v
+
+  ha-tests:
+    name: Home Assistant tests (setup dialog, switch)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-test-ha.txt
+
+      - name: Run tests
+        run: python -m pytest tests -v
