@@ -42,8 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def async_update_data() -> dict:
         try:
-            result = await hass.async_add_executor_job(client.fetch_status)
-            return result
+            return await hass.async_add_executor_job(client.fetch_status)
         except DkvAuthError as err:
             raise ConfigEntryAuthFailed(str(err)) from err
         except DkvTransientError as err:

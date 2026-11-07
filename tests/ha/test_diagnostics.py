@@ -9,7 +9,7 @@ from custom_components.dkv_at_home.diagnostics import (
     async_get_config_entry_diagnostics,
 )
 
-SECRETS = ["refresh-0", "100000451057", "EVSE-1", "LOC-1"]
+SECRETS = ["refresh-0", "100000000001", "EVSE-1", "LOC-1"]
 
 
 async def test_diagnostics_show_state_and_structure(hass, http):

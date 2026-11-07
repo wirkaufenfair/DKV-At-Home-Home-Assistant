@@ -15,6 +15,12 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - **Attribut `remote_start_stop_capable`** am Schalter: zeigt, was DKV zum
   Fernstart der Wallbox meldet (nur Information, es wird nichts blockiert).
 - **README**: Abschnitt Fehlerbehebung neu, passend zum aktuellen Login.
+- **Weitere Waechter**: keine Tokens, Kontonummern oder privaten Pfade im
+  Repository (Test), kein Warnung oder Fehler im Log bei normalem Betrieb,
+  Pruefung von Tag, `manifest.json` und Changelog bei jedem Release,
+  Workflow-Pruefung (actionlint) und Markdown-Pruefung in der CI,
+  Tests auch gegen die aelteste unterstuetzte Home-Assistant-Version (2025.1),
+  feste Ruff-Regeln im Repository, Dependabot fuer die CI-Aktionen.
 - **Waechter-Tests**: README, Dialogtexte und Code muessen uebereinstimmen
   (Zahlen, Attribute, Fehlertexte, genannte Netzwerk-Eintraege, Links und
   Bilder); nicht genutzte Fehlertexte werden erkannt.

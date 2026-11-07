@@ -1,0 +1,31 @@
+name: Release check
+
+# Fails when a version tag does not match manifest.json and the top entry of
+# CHANGELOG.md, so a release with a forgotten version bump is noticed at once.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  versions:
+    name: Tag, manifest and changelog agree
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Compare versions
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          manifest=$(python3 -c "import json; print(json.load(open('custom_components/dkv_at_home/manifest.json'))['version'])")
+          changelog=$(grep -m1 -oP '^## \[\K[0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md)
+          echo "tag=$tag manifest=$manifest changelog=$changelog"
+          if [ "$tag" != "$manifest" ] || [ "$tag" != "$changelog" ]; then
+            echo "::error::Tag, manifest.json and CHANGELOG.md disagree"
+            exit 1
+          fi

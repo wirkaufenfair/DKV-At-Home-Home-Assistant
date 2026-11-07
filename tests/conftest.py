@@ -28,9 +28,9 @@ if "dkv_at_home" not in sys.modules:
     _pkg.__path__ = [str(COMPONENT_DIR)]
     sys.modules["dkv_at_home"] = _pkg
 
-from dkv_at_home import api as dkv_api
-from dkv_at_home import const
-from helpers import FakeHttp, make_jwt
+from dkv_at_home import api as dkv_api  # noqa: E402
+from dkv_at_home import const  # noqa: E402
+from helpers import FakeHttp, make_jwt  # noqa: E402
 
 
 @pytest.fixture

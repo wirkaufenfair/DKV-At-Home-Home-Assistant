@@ -160,57 +160,66 @@ Die Home-Assistant-Tests laufen unter Windows nicht, nur unter Linux/macOS.
 
 ### Bei der Einrichtung
 
-**„Safari kann die Seite nicht öffnen, da die Adresse ungültig ist“**
+#### „Safari kann die Seite nicht öffnen, da die Adresse ungültig ist“
+
 Das ist normal. Nach dem Login springt DKV auf die Adresse der DKV-App
 (`com.dkv-mobility.app://…`), die ein Browser nicht öffnen kann. Die Adresse
 mit dem Code steht trotzdem in den Entwicklertools, siehe Schritt 6 der
 Einrichtung. Dafür braucht es einen Computer mit Chrome, Edge oder Firefox. Am
 iPhone/iPad und in Safari geht das nicht oder nur sehr umständlich.
 
-**Im Netzwerk-Tab fehlt der Eintrag `authenticate?…`**
+#### Im Netzwerk-Tab fehlt der Eintrag `authenticate?…`
+
 Die Entwicklertools müssen **vor** dem Klick auf „Anmelden“ offen sein, mit
 gesetztem „Protokoll beibehalten“ (Preserve log / Keep log). Sonst wird die
 Weiterleitung nicht aufgezeichnet. Den Vorgang mit dem Anmeldelink aus dem
 Dialog wiederholen.
 
-**„Code abgelaufen oder bereits verwendet“**
+#### „Code abgelaufen oder bereits verwendet“
+
 Der Code gilt nur kurz und nur einmal. Der Dialog hat einen neuen Anmeldelink
 erzeugt. Den Vorgang **mit diesem neuen Link** wiederholen und die Adresse
 sofort einfügen. Ein alter Link oder ein anderer Browser-Tab führt zu diesem
 Fehler.
 
-**„Der eingefügte Refresh-Token ist ungültig oder abgelaufen“**
+#### „Der eingefügte Refresh-Token ist ungültig oder abgelaufen“
+
 Ein eingefügter Refresh-Token wurde von DKV abgelehnt (zu alt oder schon von
 etwas anderem verwendet). Neu anmelden und die Weiterleitungs-URL einfügen.
 
-**„Ungültige Eingabe“**
+#### „Ungültige Eingabe“
+
 Das Feld erwartet die vollständige Weiterleitungs-URL (mit `?code=…`), den
 reinen Code oder einen Refresh-Token (beginnt mit `eyJ`). Alles andere wird
 abgelehnt.
 
-**„Unbekannter Fehler“**
+#### „Unbekannter Fehler“
+
 Es ist etwas Unerwartetes passiert. Die Home-Assistant-Logs prüfen und ein
 Issue mit der Diagnose-Datei eröffnen (siehe unten).
 
-**„Verbindung fehlgeschlagen“**
+#### „Verbindung fehlgeschlagen“
+
 DKV war nicht erreichbar oder hat unerwartet geantwortet. Später erneut
 versuchen. Bei Dauerfehlern bitte ein Issue mit der Diagnose-Datei eröffnen
 (siehe unten).
 
 ### Im Betrieb
 
-**Die Integration meldet „erneut anmelden“ (Reparatur-Hinweis)**
+#### Die Integration meldet „erneut anmelden“ (Reparatur-Hinweis)
+
 Der Login ist bei DKV abgelaufen oder wurde beendet. In Home Assistant auf den
 Hinweis klicken und den Anmelde-Ablauf wiederholen. Ein Refresh-Token darf nur
 von **einer** Stelle genutzt werden; wird derselbe Login parallel woanders
 verwendet, entwerten sich beide.
 
-**Der Schalter ist „nicht verfügbar“**
+#### Der Schalter ist „nicht verfügbar“
+
 Die Statusabfrage bei DKV schlägt fehl (Server nicht erreichbar, Login
 ungültig oder DKV hat etwas geändert). Kurze DKV-Ausfälle ändern den Zustand
 nicht, erst ein harter Fehler macht den Schalter unavailable.
 
-**Switch startet nicht / keine Bestätigung**
+#### Switch startet nicht / keine Bestätigung
 
 - Prüfen, ob Wallbox online ist
 - Prüfen, ob die Wallbox gerade laden darf (siehe „Voraussetzung: Wallbox
