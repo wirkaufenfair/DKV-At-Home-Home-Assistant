@@ -40,16 +40,24 @@ def make_entry(access_token="valid", refresh_token="refresh-0"):
 class FakeCharger:
     """A charge point whose state the fake DKV server reports and changes."""
 
-    def __init__(self, http, session=None):
+    def __init__(self, http, session=None, confirms=True):
         self.session = session
-        self.start_bodies = []
-        self.stop_bodies = []
+        # False: DKV accepts start/stop but the wallbox never confirms it
+        self.confirms = confirms
+        # None, "transient" (HTTP 503), "empty" (no charge point) or "auth" (401)
+        self.status_error = None
         http.add("GET", "charge-points", self._charge_point)
         http.add("GET", "service-card", FakeResponse(200, [{"id": "card-1"}]))
         http.add("POST", "session/start", self._start)
         http.add("POST", "session/stop", self._stop)
 
     def _charge_point(self):
+        if self.status_error == "transient":
+            return FakeResponse(503)
+        if self.status_error == "empty":
+            return FakeResponse(200, [])
+        if self.status_error == "auth":
+            return FakeResponse(401)
         return FakeResponse(
             200,
             [
@@ -64,11 +72,13 @@ class FakeCharger:
         )
 
     def _start(self):
-        self.session = "SESSION-1"
+        if self.confirms:
+            self.session = "SESSION-1"
         return FakeResponse(200, {"chargeSessionId": "SESSION-1"})
 
     def _stop(self):
-        self.session = None
+        if self.confirms:
+            self.session = None
         return FakeResponse(204)
 
 
@@ -81,6 +91,12 @@ async def setup_entry(hass, entry):
 async def let_refresh_run(hass):
     """Home Assistant delays a requested refresh by its cooldown (10 s)."""
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=30))
+    await hass.async_block_till_done()
+
+
+async def next_poll(hass):
+    """Let the 30 second status poll of the coordinator run once."""
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=45))
     await hass.async_block_till_done()
 
 
@@ -257,3 +273,94 @@ async def test_reauth_with_new_login_reloads_entry(hass, http):
     assert result["reason"] == "reauth_successful"
     assert entry.data["refresh_token"] == "refresh-after-login"
     assert entry.state is ConfigEntryState.LOADED
+
+
+# ----------------------------------------------------------------------
+# Status poll errors (the phone alert relies on this behaviour)
+# ----------------------------------------------------------------------
+
+
+async def test_short_outage_keeps_last_state(hass, http):
+    """A DKV hiccup (HTTP 5xx) must not turn the switch unavailable."""
+    charger = FakeCharger(http, session="SESSION-1")
+    await setup_entry(hass, make_entry())
+    entity_id = switch_id(hass)
+    assert hass.states.get(entity_id).state == "on"
+
+    charger.status_error = "transient"
+    await next_poll(hass)
+
+    assert hass.states.get(entity_id).state == "on"
+
+
+async def test_hard_error_makes_switch_unavailable_then_recovers(hass, http):
+    charger = FakeCharger(http, session="SESSION-1")
+    await setup_entry(hass, make_entry())
+    entity_id = switch_id(hass)
+
+    charger.status_error = "empty"
+    await next_poll(hass)
+    assert hass.states.get(entity_id).state == "unavailable"
+
+    charger.status_error = None
+    await next_poll(hass)
+    assert hass.states.get(entity_id).state == "on"
+
+
+async def test_auth_failure_during_poll_starts_reauth(hass, http):
+    charger = FakeCharger(http)
+    await setup_entry(hass, make_entry())
+    entity_id = switch_id(hass)
+    http.add(
+        "POST",
+        "openid-connect/token",
+        FakeResponse(400, text='{"error":"invalid_grant"}'),
+    )
+
+    charger.status_error = "auth"
+    await next_poll(hass)
+
+    assert hass.states.get(entity_id).state == "unavailable"
+    flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
+    assert [f["context"]["source"] for f in flows] == [config_entries.SOURCE_REAUTH]
+
+
+# ----------------------------------------------------------------------
+# Wallbox does not confirm
+# ----------------------------------------------------------------------
+
+
+async def test_unconfirmed_start_raises_clear_error(hass, http):
+    FakeCharger(http, confirms=False)
+    await setup_entry(hass, make_entry())
+
+    with pytest.raises(HomeAssistantError, match="Zeitlimit"):
+        await hass.services.async_call(
+            "switch", "turn_on", {"entity_id": switch_id(hass)}, blocking=True
+        )
+
+
+async def test_unconfirmed_stop_raises_clear_error(hass, http):
+    FakeCharger(http, session="SESSION-1", confirms=False)
+    await setup_entry(hass, make_entry())
+
+    with pytest.raises(HomeAssistantError, match="Zeitlimit"):
+        await hass.services.async_call(
+            "switch", "turn_off", {"entity_id": switch_id(hass)}, blocking=True
+        )
+
+
+# ----------------------------------------------------------------------
+# Unload
+# ----------------------------------------------------------------------
+
+
+async def test_entry_can_be_unloaded(hass, http):
+    FakeCharger(http)
+    entry = make_entry()
+    await setup_entry(hass, entry)
+
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.NOT_LOADED

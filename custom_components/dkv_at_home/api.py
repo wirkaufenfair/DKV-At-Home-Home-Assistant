@@ -3,10 +3,12 @@
 # pyright: reportMissingImports=false, reportMissingModuleSource=false
 
 import base64
+import functools
 import hashlib
 import json
 import logging
 import secrets
+import threading
 import time
 from datetime import UTC, datetime
 from urllib.parse import urlencode
@@ -52,6 +54,22 @@ class DkvTransientError(DkvApiError):
     """
 
 
+def _locked(method):
+    """Run a public client call while holding the client's lock.
+
+    The status poll and a start/stop run in separate executor threads. DKV
+    rotates the refresh token, so two threads refreshing at once would send
+    the same token twice and the second one gets ``invalid_grant``.
+    """
+
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        with self._lock:
+            return method(self, *args, **kwargs)
+
+    return wrapper
+
+
 class DkvApiClient:
     """Synchronous HTTP client for the DKV@Home at-home API.
 
@@ -72,6 +90,7 @@ class DkvApiClient:
         self.app_token = app_token
         self.client_id = client_id
         self.access_token = access_token
+        self._lock = threading.RLock()
 
     @staticmethod
     def _decode_jwt_exp(token: str | None) -> int | None:
@@ -404,6 +423,7 @@ class DkvApiClient:
     # Public API
     # ------------------------------------------------------------------
 
+    @_locked
     def fetch_status(self) -> dict:
         """Refresh token and return the raw charge-point dict.
 
@@ -412,6 +432,7 @@ class DkvApiClient:
         self._ensure_access_token()
         return self._get_charge_point()
 
+    @_locked
     def validate(self) -> None:
         """Validate credentials by performing a token refresh.
 
@@ -419,6 +440,7 @@ class DkvApiClient:
         """
         self._refresh()
 
+    @_locked
     def start(self) -> str | None:
         """Start a charging session.
 
@@ -511,6 +533,7 @@ class DkvApiClient:
         )
         return None
 
+    @_locked
     def stop(self) -> bool:
         """Stop the active charging session.
 

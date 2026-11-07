@@ -25,7 +25,9 @@
       "unknown": "Unbekannter Fehler. Bitte die HA-Logs prüfen."
     },
     "abort": {
-      "already_configured": "DKV@Home ist bereits konfiguriert."
+      "already_configured": "DKV@Home ist bereits konfiguriert.",
+      "reauth_successful": "Erneute Anmeldung erfolgreich.",
+      "unknown": "Unbekannter Fehler. Bitte erneut versuchen."
     }
   }
 }

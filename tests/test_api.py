@@ -379,3 +379,63 @@ class TestStop:
         http.add("GET", "charge-points", FakeResponse(200, [CP_ACTIVE]))
         http.add("POST", "session/stop", FakeResponse(200))
         assert client.stop() is False
+
+
+# ----------------------------------------------------------------------
+# Concurrency
+# ----------------------------------------------------------------------
+
+
+class TestConcurrentUse:
+    """The poll (every 30 s) and a start/stop run in separate threads.
+
+    DKV rotates the refresh token: it works once. If both threads refresh
+    at the same moment, the second one is rejected with ``invalid_grant``
+    and the integration asks for a new login.
+    """
+
+    def test_parallel_refresh_uses_the_token_only_once(self, http, api_module):
+        import threading
+
+        state = {"valid": "refresh-0", "uses": 0}
+        lock = threading.Lock()
+        meeting = threading.Barrier(2, timeout=1)
+
+        def token_endpoint():
+            # Make a second thread that is also refreshing arrive here at the
+            # same time; without a lock in the client both get this far.
+            try:
+                meeting.wait()
+            except threading.BrokenBarrierError:
+                pass
+            with lock:
+                state["uses"] += 1
+                posts = http.calls_to("POST", "openid-connect/token")
+                presented = posts[-1]["data"]["refresh_token"]
+                if presented != state["valid"]:
+                    return FakeResponse(400, text='{"error":"invalid_grant"}')
+                state["valid"] = "refresh-1"
+                return token_response("refresh-1")
+
+        http.add("POST", "openid-connect/token", token_endpoint)
+        http.add("GET", "charge-points", FakeResponse(200, [CP_IDLE]))
+
+        expired = make_jwt(int(time.time()) - 10)
+        client = api_module.DkvApiClient("refresh-0", "user", access_token=expired)
+        errors = []
+
+        def poll():
+            try:
+                client.fetch_status()
+            except Exception as err:  # noqa: BLE001
+                errors.append(err)
+
+        threads = [threading.Thread(target=poll) for _ in range(2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=10)
+
+        assert errors == []
+        assert state["uses"] == 1
+        assert client.refresh_token == "refresh-1"
