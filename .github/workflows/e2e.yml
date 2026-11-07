@@ -1,0 +1,61 @@
+name: DKV login end-to-end
+
+# Weekly real login with a DKV account, token exchange and read-only API
+# calls. This is the test that notices new required parameters at the token
+# endpoint. It needs the repository secrets DKV_USERNAME and DKV_PASSWORD;
+# without them it is skipped. It never starts or stops a charging session.
+
+on:
+  schedule:
+    - cron: "43 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  e2e:
+    name: Login and read-only API calls
+    runs-on: ubuntu-latest
+    env:
+      DKV_USERNAME: ${{ secrets.DKV_USERNAME }}
+      DKV_PASSWORD: ${{ secrets.DKV_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-test.txt
+
+      - name: Run end-to-end tests
+        run: python -m pytest -m e2e -v -rs
+
+      - name: Close the issue after a green scheduled run
+        if: success() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for n in $(gh issue list --label dkv-e2e --state open --json number --jq '.[].number'); do
+            gh issue close "$n" --comment "End-to-end test is green again: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          done
+
+      - name: Open an issue after a failed scheduled run
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create dkv-e2e --color D93F0B \
+            --description "DKV login or API changed" --force
+          if [ -z "$(gh issue list --label dkv-e2e --state open --json number --jq '.[].number')" ]; then
+            gh issue create --label dkv-e2e \
+              --title "DKV login or API changed: end-to-end test fails" \
+              --body "The weekly end-to-end login test failed. DKV probably changed the login form, the token request or the API answers. Details: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          fi
