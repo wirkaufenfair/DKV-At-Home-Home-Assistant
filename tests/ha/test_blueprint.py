@@ -207,7 +207,7 @@ async def test_waits_for_the_partner_card_and_then_does_nothing(hass, http):
     await setup_blueprint(hass, grace=30)
 
     hass.states.async_set(CAR, "on")
-    await hass.async_block_till_done()
+    await asyncio.sleep(0.3)  # not block_till_done: that would wait out the 30 s
     assert charger.start_calls == 0  # waiting, not starting
 
     charger.session = "PARTNER-CARD-SESSION"  # the partner card is held up
