@@ -210,9 +210,9 @@ die Karte:
 - Ohne Wartezeit (0) startet sie gleich beim Anschließen mit der Karte des
   Kontos.
 
-### Wichtig bei Firmenwagen: nur das Firmenfahrzeug freischalten
+### Wichtig bei gemischter Nutzung: nur das Firmenfahrzeug freischalten
 
-DKV@Home rechnet bei einem Firmenwagen jede geladene kWh ab und erstattet sie.
+DKV@Home rechnet beim Firmenwagen jede geladene kWh ab und erstattet sie.
 Die Freischaltung läuft über die Karte des Kontos. Laden an derselben Wallbox
 auch **private** Fahrzeuge (zum Beispiel das des Partners), darf ein privates
 Fahrzeug nicht über diese Karte freigeschaltet werden, sonst würde sein Strom

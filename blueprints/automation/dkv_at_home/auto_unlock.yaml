@@ -11,8 +11,8 @@ blueprint:
     Session, passiert nichts. Geht der Sensor auf „aus“, enden die Versuche.
 
 
-    **Wichtig bei Firmenwagen:** Die Freischaltung läuft über die Karte des
-    Kontos, und bei einem Firmenwagen wird jede kWh erstattet. Laden an
+    **Wichtig bei gemischter Nutzung:** Die Freischaltung läuft über die Karte
+    des Kontos, und beim Firmenwagen wird jede kWh erstattet. Laden an
     derselben Wallbox auch private Fahrzeuge, darf der Sensor nur „an“
     melden, wenn das Firmenfahrzeug angeschlossen ist. Sonst würde der Strom
     eines privaten Autos als Firmenladung abgerechnet.
@@ -29,8 +29,9 @@ blueprint:
     vehicle_connected:
       name: Sensor „Fahrzeug angeschlossen“
       description: >
-        Meldet „an“, solange ein Fahrzeug angeschlossen ist. Bei Firmenwagen
-        mit privaten Mitnutzern: nur für das Firmenfahrzeug (siehe README).
+        Meldet „an“, solange ein Fahrzeug angeschlossen ist. Laden an der
+        Wallbox auch private Fahrzeuge: nur für das Firmenfahrzeug (siehe
+        README, „Wichtig bei gemischter Nutzung“).
       selector:
         entity:
           domain: binary_sensor

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- **Hinweis zur gemischten Nutzung** umbenannt: Der Abschnitt in der README
+  heißt jetzt „Wichtig bei gemischter Nutzung“ statt „Wichtig bei
+  Firmenwagen“, ebenso der Hinweis in der Blaupause. DKV@Home gibt es nur für
+  Firmenwagen, der Sonderfall sind private Fahrzeuge an derselben Wallbox.
+  Der Inhalt bleibt gleich.
+
 ## [1.3.0] - 2026-11-08
 
 ### Added
