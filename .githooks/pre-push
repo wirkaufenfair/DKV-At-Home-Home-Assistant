@@ -1,0 +1,3 @@
+#!/bin/sh
+# Auch vor dem Push, falls beim Commit mit --no-verify uebersprungen wurde.
+exec sh "$(git rev-parse --show-toplevel)/.githooks/check.sh"

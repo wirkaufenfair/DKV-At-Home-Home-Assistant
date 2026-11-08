@@ -1,0 +1,2 @@
+# Hook-Skripte muessen auch unter Windows LF-Zeilenenden behalten, sonst startet sh sie nicht.
+.githooks/* text eol=lf
