@@ -8,7 +8,12 @@ whatever the integration does. Only structure (keys and types) may be logged.
 import logging
 
 import pytest
-from helpers import FakeResponse, charge_point_answer, make_jwt
+from helpers import (
+    FakeResponse,
+    charge_point_answer,
+    make_jwt,
+    service_card_answer,
+)
 
 SECRET_EVSE = "EVSE-SECRET-1"
 SECRET_LOCATION = "LOC-SECRET-2"
@@ -74,7 +79,7 @@ def test_log_never_contains_tokens_ids_or_contract_data(
         FakeResponse(200, answer(SECRET_SESSION)),  # lookup before stop
         FakeResponse(200, answer()),  # stopped
     )
-    http.add("GET", "service-card", FakeResponse(200, [{"id": SECRET_CARD}]))
+    http.add("GET", "service-card", FakeResponse(200, service_card_answer(SECRET_CARD)))
     http.add(
         "POST", "session/start", FakeResponse(200, {"chargeSessionId": SECRET_SESSION})
     )

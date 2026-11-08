@@ -1,0 +1,16 @@
+{
+  "data": [
+    {
+      "accountPaymentMethod": "bool",
+      "cardHint": "str",
+      "cardShortHint": "str",
+      "chargeCardIssuer": "str",
+      "compatible": "bool",
+      "default": "bool",
+      "id": "str",
+      "type": "str",
+      "verificationStatus": "str",
+      "vidMapped": "bool"
+    }
+  ]
+}

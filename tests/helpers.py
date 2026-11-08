@@ -72,7 +72,9 @@ class FakeHttp:
         raise AssertionError(f"unexpected request: {method} {url}")
 
 
-SHAPE_FILE = Path(__file__).resolve().parent / "fixtures" / "charge_point_shape.json"
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+SHAPE_FILE = FIXTURES / "charge_point_shape.json"
+CARD_SHAPE_FILE = FIXTURES / "service_card_shape.json"
 _PLACEHOLDERS = {"str": "x", "int": 1, "float": 1.0, "bool": False, "NoneType": None}
 
 
@@ -104,4 +106,15 @@ def charge_point_answer(
     cp["name"] = "Wallbox"
     cp["hardwareInfo"]["evseUid"] = evse_uid
     cp["hardwareInfo"]["locationIdCa"] = location_id
+    return answer
+
+
+def service_card_answer(card_id="card-1"):
+    """An answer with the real structure of the payment card list.
+
+    Captured from the debug log of a live installation (keys and types).
+    """
+    shape = json.loads(CARD_SHAPE_FILE.read_text(encoding="utf-8"))
+    answer = payload_from_shape(shape)
+    answer["data"][0]["id"] = card_id
     return answer

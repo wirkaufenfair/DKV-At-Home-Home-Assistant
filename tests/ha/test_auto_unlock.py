@@ -226,3 +226,47 @@ async def test_clearing_the_sensor_switches_the_feature_off(hass, http):
 
     assert entry.options == {}
     assert charger.start_calls == 0
+
+
+async def test_the_log_says_who_started_and_what_happened(hass, http, caplog):
+    """The log must show that the sensor triggered the unlock and the result."""
+    import logging
+
+    FakeCharger(http, confirm_from=2)
+    hass.states.async_set(CAR, "off")
+    await setup_entry(hass, make_entry(options=OPTIONS))
+
+    with caplog.at_level(logging.INFO, logger="custom_components.dkv_at_home"):
+        await connect_car(hass)
+        await retry_pause(hass)
+
+    assert f"Fahrzeug angeschlossen ({CAR}): Freischalten beginnt" in caplog.text
+    assert "Wallbox freigeschaltet nach 2 Versuch(en)" in caplog.text
+
+
+async def test_the_log_says_when_a_session_was_already_running(hass, http, caplog):
+    import logging
+
+    FakeCharger(http, session="SESSION-1")
+    hass.states.async_set(CAR, "off")
+    await setup_entry(hass, make_entry(options=OPTIONS))
+
+    with caplog.at_level(logging.INFO, logger="custom_components.dkv_at_home"):
+        await connect_car(hass)
+
+    assert "bereits freigeschaltet" in caplog.text
+
+
+async def test_the_log_says_when_the_car_is_unplugged(hass, http, caplog):
+    import logging
+
+    FakeCharger(http, confirms=False)
+    hass.states.async_set(CAR, "off")
+    await setup_entry(hass, make_entry(options=OPTIONS))
+
+    with caplog.at_level(logging.INFO, logger="custom_components.dkv_at_home"):
+        await connect_car(hass)
+        hass.states.async_set(CAR, "off")
+        await hass.async_block_till_done()
+
+    assert "Freischalten abgebrochen" in caplog.text

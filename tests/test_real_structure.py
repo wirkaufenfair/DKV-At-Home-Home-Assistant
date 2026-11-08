@@ -11,9 +11,12 @@ fixture and update both.
 """
 
 import pytest
-from helpers import FakeResponse, charge_point_answer, charge_point_shape
-
-CARDS = [{"id": "card-1"}]  # structure of the card answer is not captured yet
+from helpers import (
+    FakeResponse,
+    charge_point_answer,
+    charge_point_shape,
+    service_card_answer,
+)
 
 
 def charge_point(shape=None):
@@ -66,7 +69,7 @@ class TestClientWithTheRealStructure:
             FakeResponse(200, charge_point_answer()),  # lookup
             FakeResponse(200, charge_point_answer(session="SESSION-1")),  # confirmed
         )
-        http.add("GET", "service-card", FakeResponse(200, CARDS))
+        http.add("GET", "service-card", FakeResponse(200, service_card_answer()))
         http.add("POST", "session/start", FakeResponse(200, {"chargeSessionId": "S"}))
 
         assert client.start() == "SESSION-1"
@@ -110,3 +113,31 @@ class TestClientWithTheRealStructure:
         messages = [r.getMessage() for r in caplog.records if "API-Struktur" in r.getMessage()]
         assert len(messages) == 2
         assert "brandNewField" in messages[1]
+
+
+class TestPaymentCardStructure:
+    """The card list is wrapped in ``data``; start() takes the id of the first."""
+
+    def test_the_real_answer_is_wrapped_in_data(self):
+        assert list(service_card_answer()) == ["data"]
+
+    def test_the_id_the_code_reads_exists(self, http, client):
+        answer = service_card_answer("CARD-X")
+        http.add("GET", "service-card", FakeResponse(200, answer))
+        assert client._get_card_id() == "CARD-X"
+
+    def test_structure_is_logged_without_values(self, http, client, caplog):
+        import logging
+
+        answer = service_card_answer("SECRET-CARD")
+        http.add("GET", "service-card", FakeResponse(200, answer))
+        with caplog.at_level(logging.DEBUG, logger="dkv_at_home.api"):
+            client._get_card_id()
+        assert "API-Struktur service-card" in caplog.text
+        assert "SECRET-CARD" not in caplog.text
+
+    def test_several_cards_use_the_first(self, http, client):
+        answer = service_card_answer("FIRST")
+        answer["data"].append({**answer["data"][0], "id": "SECOND"})
+        http.add("GET", "service-card", FakeResponse(200, answer))
+        assert client._get_card_id() == "FIRST"

@@ -31,11 +31,19 @@ _LOGGER = logging.getLogger(__name__)
 NOTIFICATION_ID = f"{DOMAIN}_unlock_failed"
 
 
-def unlock(client: DkvApiClient) -> bool:
-    """Make sure a session is active, starting one if needed (executor)."""
+ALREADY_ACTIVE = "already_active"
+STARTED = "started"
+
+
+def unlock(client: DkvApiClient) -> str | None:
+    """Make sure a session is active, starting one if needed (executor).
+
+    Returns ``ALREADY_ACTIVE`` or ``STARTED``, and ``None`` when the wallbox
+    did not confirm.
+    """
     if client.fetch_status().get("activeSessionId"):
-        return True
-    return client.start() is not None
+        return ALREADY_ACTIVE
+    return STARTED if client.start() is not None else None
 
 
 class AutoUnlock:
@@ -95,10 +103,18 @@ class AutoUnlock:
             return
         self._running = True
         self._attempt = 0
+        _LOGGER.info(
+            "Fahrzeug angeschlossen (%s): Freischalten beginnt", self._entity_id
+        )
         self._hass.async_create_task(self._try())
 
     @callback
     def _cancel(self) -> None:
+        if self._running:
+            _LOGGER.info(
+                "Fahrzeug abgesteckt (%s): Freischalten abgebrochen",
+                self._entity_id,
+            )
         self._running = False
         if self._unsub_retry is not None:
             self._unsub_retry()
@@ -111,9 +127,10 @@ class AutoUnlock:
         self._attempt += 1
         reason = None
         try:
-            done = await self._hass.async_add_executor_job(
+            result = await self._hass.async_add_executor_job(
                 unlock, self._client
             )
+            done = result is not None
         except DkvAuthError as err:
             # The status poll starts the new login; retrying cannot help.
             _LOGGER.warning("Freischalten nicht möglich: %s", err)
@@ -131,6 +148,12 @@ class AutoUnlock:
             return
         if done:
             self._running = False
+            if result == ALREADY_ACTIVE:
+                _LOGGER.info("Wallbox ist bereits freigeschaltet (Session läuft)")
+            else:
+                _LOGGER.info(
+                    "Wallbox freigeschaltet nach %d Versuch(en)", self._attempt
+                )
             persistent_notification.async_dismiss(self._hass, NOTIFICATION_ID)
             await self._coordinator.async_request_refresh()
             return

@@ -7,6 +7,13 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Log des automatischen Freischaltens**: Beginn („Fahrzeug angeschlossen
+  (Sensor): Freischalten beginnt“), Ergebnis („Wallbox freigeschaltet nach n
+  Versuch(en)“ oder „bereits freigeschaltet“) und Abbruch beim Abstecken.
+  Vorher war im Log nicht zu erkennen, wer den Start ausgeloest hatte.
+
 ### Changed
 
 - **README und Fehlervorlage** weisen darauf hin, dass Home Assistant der
