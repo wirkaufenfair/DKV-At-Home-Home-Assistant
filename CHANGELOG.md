@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-11-08
+
+### Changed
+
+- **Blaupause an die erprobte Praxis angepasst**: Pause zwischen den Versuchen
+  jetzt 2 Minuten statt 30 Sekunden (die bisherige eigene Automation brauchte
+  bis zu 35 Minuten, die kuerzere Pause haette zu frueh aufgegeben), neue
+  Eingabe „Wartezeit auf die Bestaetigung“ (30 s). Ohne dieses Warten konnte
+  nach dem letzten Versuch faelschlich „nicht freigeschaltet“ gemeldet werden,
+  obwohl die Session lief, weil der Schalter seinen Zustand verzoegert
+  nachzieht.
+- **Ausloeser nur beim Anschliessen** (`aus` -> `an`), nicht beim Start von Home
+  Assistant und nicht bei `nicht verfuegbar` -> `an`. Sonst konnte ein Neustart
+  oder ein Ausfall des Sensors bei noch angestecktem Auto eine zusaetzliche
+  Session oeffnen.
+- **Wartezeit vor dem ersten Versuch** (Voreinstellung 0 = sofort): Zeit, in der
+  man noch die Partnerkarte vorhalten oder in der DKV-App freischalten kann. Sie
+  endet sofort, sobald jemand freigeschaltet hat, und die Blaupause startet dann
+  nichts.
+- **Hinweis fuer Firmenwagen** in Beschreibung und README: Laden auch private
+  Fahrzeuge an der Wallbox, darf der Sensor nur fuer das Firmenfahrzeug „an“
+  melden, sonst wuerde deren Strom ueber die Firmenkarte erstattet.
+
 ## [1.2.0] - 2026-11-08
 
 ### Removed

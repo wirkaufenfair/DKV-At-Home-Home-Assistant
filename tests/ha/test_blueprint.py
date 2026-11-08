@@ -50,7 +50,7 @@ async def stop_automations(hass):
         await hass.async_block_till_done()
 
 
-async def setup_blueprint(hass, attempts=3):
+async def setup_blueprint(hass, attempts=3, grace=0):
     """Create an automation from the blueprint, as the UI does."""
     assert await async_setup_component(
         hass,
@@ -66,6 +66,8 @@ async def setup_blueprint(hass, attempts=3):
                             "dkv_switch": switch_id(hass),
                             "max_attempts": attempts,
                             "retry_delay": DELAY,
+                            "confirm_wait": 1,  # real seconds in the tests
+                            "grace_period": grace,
                             "on_failure": [{"event": FAILED_EVENT}],
                         },
                     },
@@ -86,7 +88,7 @@ async def until(hass, condition, *, pause_passes=False):
     With ``pause_passes`` the clock is moved on in every round, so the
     blueprint's pause between two attempts ends.
     """
-    for _ in range(200):
+    for _ in range(600):
         if condition():
             return
         if pause_passes:
@@ -195,3 +197,36 @@ async def test_nothing_happens_while_no_car_is_connected(hass, http):
     await hass.async_block_till_done()
 
     assert charger.start_calls == 0
+
+
+async def test_waits_for_the_partner_card_and_then_does_nothing(hass, http):
+    """Someone unlocks with another card during the grace period."""
+    charger = FakeCharger(http)
+    hass.states.async_set(CAR, "off")
+    await setup_entry(hass, make_entry())
+    await setup_blueprint(hass, grace=30)
+
+    hass.states.async_set(CAR, "on")
+    await hass.async_block_till_done()
+    assert charger.start_calls == 0  # waiting, not starting
+
+    charger.session = "PARTNER-CARD-SESSION"  # the partner card is held up
+    let_the_pause_pass(hass)  # the status poll sees it
+    await until(hass, lambda: hass.states.get(switch_id(hass)).state == "on")
+    await asyncio.sleep(0.2)
+
+    assert charger.start_calls == 0
+
+
+async def test_unlocks_after_the_grace_period_when_nobody_else_did(hass, http):
+    charger = FakeCharger(http)
+    hass.states.async_set(CAR, "off")
+    await setup_entry(hass, make_entry())
+    await setup_blueprint(hass, grace=2)  # real seconds in the tests
+
+    hass.states.async_set(CAR, "on")
+    await asyncio.sleep(0.3)
+    assert charger.start_calls == 0
+    await until(hass, lambda: charger.start_calls == 1, pause_passes=True)
+
+    assert charger.session == "SESSION-1"

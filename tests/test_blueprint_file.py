@@ -17,8 +17,13 @@ class Loader(yaml.SafeLoader):
     """Home Assistant tags such as !input are kept as plain strings."""
 
 
-Loader.add_constructor("!input", lambda loader, node: "!input " + loader.construct_scalar(node))
+Loader.add_constructor(
+    "!input", lambda loader, node: "!input " + loader.construct_scalar(node)
+)
 BLUEPRINT = yaml.load(FILE.read_text(encoding="utf-8"), Loader=Loader)
+
+# What the loop does, step by step (see the comments in the blueprint)
+LOOP = BLUEPRINT["actions"][2]["repeat"]["sequence"]
 
 
 def test_it_is_an_automation_blueprint():
@@ -38,7 +43,8 @@ def test_every_input_is_used_and_every_used_input_exists():
 
 def test_minimum_home_assistant_matches_hacs():
     hacs = json.loads((ROOT / "hacs.json").read_text(encoding="utf-8"))
-    assert BLUEPRINT["blueprint"]["homeassistant"]["min_version"] == hacs["homeassistant"]
+    minimum = BLUEPRINT["blueprint"]["homeassistant"]["min_version"]
+    assert minimum == hacs["homeassistant"]
 
 
 def test_source_url_points_to_this_file_in_the_repository():
@@ -57,6 +63,8 @@ def test_readme_offers_the_import_for_this_blueprint():
     [
         ("max_attempts", "Anzahl Versuche"),
         ("retry_delay", "Pause zwischen den Versuchen"),
+        ("confirm_wait", "Wartezeit auf die Bestätigung"),
+        ("grace_period", "Wartezeit vor dem ersten Versuch"),
         ("vehicle_connected", "Sensor „Fahrzeug angeschlossen“"),
         ("dkv_switch", "DKV-Schalter"),
         ("on_failure", "Aktionen, wenn es nicht klappt"),
@@ -67,10 +75,25 @@ def test_readme_names_the_inputs_as_the_blueprint_does(name, label):
     assert label in README
 
 
-def test_readme_defaults_match_the_blueprint():
+@pytest.mark.parametrize(
+    "name", ["max_attempts", "retry_delay", "confirm_wait", "grace_period"]
+)
+def test_readme_defaults_match_the_blueprint(name):
+    default = BLUEPRINT["blueprint"]["input"][name]["default"]
+    assert f"Voreinstellung {default})" in README
+
+
+def test_the_defaults_are_the_ones_proven_in_daily_use():
+    """10 attempts, 2 minutes apart, 30 seconds to wait for the state."""
     inputs = BLUEPRINT["blueprint"]["input"]
-    assert f"Voreinstellung {inputs['max_attempts']['default']})" in README
-    assert f"Voreinstellung {inputs['retry_delay']['default']})" in README
+    assert inputs["max_attempts"]["default"] == 10
+    assert inputs["retry_delay"]["default"] == 120
+    assert inputs["confirm_wait"]["default"] == 30
+
+
+# ----------------------------------------------------------------------
+# Structure of the run
+# ----------------------------------------------------------------------
 
 
 def test_a_second_run_never_happens_at_the_same_time():
@@ -97,35 +120,81 @@ def test_unplugging_the_car_restarts_the_run_which_then_ends():
     assert first["state"] == "on"
 
 
-def test_the_run_starts_at_home_assistant_start_as_well():
-    kinds = [(t["trigger"], t.get("event")) for t in BLUEPRINT["triggers"]]
-    assert ("homeassistant", "start") in kinds
+def test_it_triggers_only_when_the_car_gets_connected():
+    """Not at Home Assistant start, not when the sensor was merely unavailable."""
+    on_triggers = [
+        trigger
+        for trigger in BLUEPRINT["triggers"]
+        if trigger.get("trigger") == "state" and trigger.get("to") == "on"
+    ]
+    assert len(on_triggers) == 1
+    assert on_triggers[0]["from"] == "off"
+    assert all(trigger["trigger"] == "state" for trigger in BLUEPRINT["triggers"])
+
+
+def test_the_grace_period_ends_early_when_someone_else_unlocks():
+    """Waiting for the state "on" lets a partner card (or the app) go first."""
+    grace = BLUEPRINT["actions"][1]
+    assert "grace_period" in grace["if"][0]["value_template"]
+    wait = grace["then"][0]
+    assert "is_state(dkv_switch, 'on')" in wait["wait_template"]
+    assert wait["continue_on_timeout"] is True
+
+
+def test_by_default_it_starts_at_once():
+    assert BLUEPRINT["blueprint"]["input"]["grace_period"]["default"] == 0
 
 
 def test_it_pauses_between_attempts_but_not_before_the_first():
-    sequence = BLUEPRINT["actions"][1]["repeat"]["sequence"]
-    pause = sequence[0]
+    pause = LOOP[0]
     assert "repeat.index > 1" in pause["if"][0]["value_template"]
     assert "delay" in pause["then"][0]
 
 
 def test_it_only_switches_on_when_no_session_runs():
-    sequence = BLUEPRINT["actions"][1]["repeat"]["sequence"]
-    start = sequence[1]
+    start = LOOP[1]
     assert start["if"][0]["state"] == "off"
     assert start["then"][0]["action"] == "switch.turn_on"
     # DKV answers with an error when the wallbox does not confirm
     assert start["then"][0]["continue_on_error"] is True
 
 
+def test_it_waits_for_the_switch_state_before_judging_the_attempt():
+    """The state lags; without the wait a running session could be reported
+    as a failure after the last attempt."""
+    wait = LOOP[2]
+    assert "wait_template" in wait
+    assert wait["continue_on_timeout"] is True
+
+
 def test_it_stops_at_the_first_confirmation():
-    sequence = BLUEPRINT["actions"][1]["repeat"]["sequence"]
-    confirmed = sequence[2]
+    confirmed = LOOP[3]
     assert confirmed["if"][0]["state"] == "on"
     assert "stop" in confirmed["then"][0]
 
 
 def test_the_failure_actions_run_only_after_the_last_attempt():
     """They come after the repeat, so ``stop`` skips them."""
-    assert "repeat" in BLUEPRINT["actions"][1]
-    assert BLUEPRINT["actions"][2]["sequence"] == "!input on_failure"
+    assert "repeat" in BLUEPRINT["actions"][2]
+    assert BLUEPRINT["actions"][3]["sequence"] == "!input on_failure"
+
+
+# ----------------------------------------------------------------------
+# Company cars
+# ----------------------------------------------------------------------
+
+
+def test_the_blueprint_warns_about_private_cars_on_a_company_card():
+    """The company card reimburses every kWh; a private car must not use it."""
+    description = BLUEPRINT["blueprint"]["description"]
+    assert "Firmenwagen" in description
+    assert "private Fahrzeuge" in description
+    sensor = BLUEPRINT["blueprint"]["input"]["vehicle_connected"]
+    assert "Firmenfahrzeug" in sensor["description"]
+
+
+def test_the_readme_explains_the_company_car_rule():
+    assert "nur das Firmenfahrzeug freischalten" in README
+    assert "privates" in README
+    assert "Partnerkarte" in README
+    assert "Wartezeit vor dem ersten Versuch" in README

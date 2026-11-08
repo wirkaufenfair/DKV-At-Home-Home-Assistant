@@ -6,8 +6,16 @@ blueprint:
 
     DKV bestätigt den Start nur, solange die Wallbox in diesem Moment laden
     darf. Deshalb wird der Schalter bei Bedarf mehrmals eingeschaltet, mit
-    einer Pause dazwischen. Läuft schon eine Session, passiert nichts. Geht
-    der Sensor auf „aus“, enden die Versuche.
+    einer Pause dazwischen. Die Voreinstellungen (10 Versuche, 2 Minuten
+    Pause) stammen aus einer im Alltag erprobten Automation. Läuft schon eine
+    Session, passiert nichts. Geht der Sensor auf „aus“, enden die Versuche.
+
+
+    **Wichtig bei Firmenwagen:** Die Freischaltung läuft über die Karte des
+    Kontos, und bei einem Firmenwagen wird jede kWh erstattet. Laden an
+    derselben Wallbox auch private Fahrzeuge, darf der Sensor nur „an“
+    melden, wenn das Firmenfahrzeug angeschlossen ist. Sonst würde der Strom
+    eines privaten Autos als Firmenladung abgerechnet.
 
 
     Voraussetzung: die Integration DKV@Home und ein Sensor, der „an“ meldet,
@@ -20,7 +28,9 @@ blueprint:
   input:
     vehicle_connected:
       name: Sensor „Fahrzeug angeschlossen“
-      description: Meldet „an“, solange ein Fahrzeug angeschlossen ist.
+      description: >
+        Meldet „an“, solange ein Fahrzeug angeschlossen ist. Bei Firmenwagen
+        mit privaten Mitnutzern: nur für das Firmenfahrzeug (siehe README).
       selector:
         entity:
           domain: binary_sensor
@@ -43,10 +53,37 @@ blueprint:
     retry_delay:
       name: Pause zwischen den Versuchen
       description: Wartezeit nach einem Versuch, der nicht bestätigt wurde.
-      default: 30
+      default: 120
       selector:
         number:
           min: 5
+          max: 600
+          unit_of_measurement: s
+          mode: box
+    confirm_wait:
+      name: Wartezeit auf die Bestätigung
+      description: >
+        Wie lange nach dem Einschalten auf den Zustand „an“ gewartet wird,
+        bevor der Versuch als gescheitert gilt. Der Schalter zieht seinen
+        Zustand mit kleiner Verzögerung nach.
+      default: 30
+      selector:
+        number:
+          min: 1
+          max: 120
+          unit_of_measurement: s
+          mode: box
+    grace_period:
+      name: Wartezeit vor dem ersten Versuch
+      description: >
+        Optional, aus (0) in der Voreinstellung. So lange kann man noch eine
+        andere Karte (zum Beispiel die Partnerkarte für ein privates Fahrzeug)
+        an die Wallbox halten oder in der DKV-App freischalten. Wird in dieser
+        Zeit freigeschaltet, startet die Blaupause nichts. 0 startet sofort.
+      default: 0
+      selector:
+        number:
+          min: 0
           max: 300
           unit_of_measurement: s
           mode: box
@@ -67,18 +104,23 @@ mode: restart
 max_exceeded: silent
 
 variables:
+  dkv_switch: !input dkv_switch
   max_attempts: !input max_attempts
   retry_delay: !input retry_delay
+  confirm_wait: !input confirm_wait
+  grace_period: !input grace_period
 
+# Ausgelöst nur beim Anschließen (aus -> an), nicht bei "nicht verfügbar -> an"
+# und nicht beim Start von Home Assistant: Sonst könnte ein Neustart oder ein
+# Ausfall des Sensors bei noch angestecktem Auto eine zusätzliche Session öffnen.
 triggers:
   - trigger: state
     entity_id: !input vehicle_connected
+    from: "off"
     to: "on"
   - trigger: state
     entity_id: !input vehicle_connected
     to: "off"
-  - trigger: homeassistant
-    event: start
 
 # Die Bedingung steht bewusst als erster Schritt der Aktionen und nicht oben
 # unter "conditions": Eine oben nicht erfüllte Bedingung würde den neuen Lauf
@@ -87,6 +129,16 @@ actions:
   - condition: state
     entity_id: !input vehicle_connected
     state: "on"
+  # Wartezeit vor dem ersten Versuch (Partnerkarte vorhalten oder in der App
+  # freischalten). Sie endet vorzeitig, sobald jemand freigeschaltet hat; die
+  # Schritte danach schalten nur ein, wenn noch keine Session läuft.
+  - if:
+      - condition: template
+        value_template: "{{ grace_period | int > 0 }}"
+    then:
+      - wait_template: "{{ is_state(dkv_switch, 'on') }}"
+        timeout: "{{ grace_period | int }}"
+        continue_on_timeout: true
   - repeat:
       count: "{{ max_attempts | int }}"
       sequence:
@@ -109,6 +161,12 @@ actions:
               # Meldet DKV den Start, die Wallbox bestätigt ihn aber nicht
               # innerhalb von 60 Sekunden, gibt der Schalter einen Fehler.
               continue_on_error: true
+        # Der Schalter zieht seinen Zustand mit kleiner Verzögerung nach. Ohne
+        # dieses Warten könnte nach dem letzten Versuch fälschlich "nicht
+        # freigeschaltet" gemeldet werden, obwohl die Session läuft.
+        - wait_template: "{{ is_state(dkv_switch, 'on') }}"
+          timeout: "{{ confirm_wait | int }}"
+          continue_on_timeout: true
         - if:
             - condition: state
               entity_id: !input dkv_switch

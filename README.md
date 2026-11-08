@@ -126,20 +126,61 @@ Danach eine Automation aus der Blaupause anlegen. Die Eingaben:
 | Sensor „Fahrzeug angeschlossen“ | ein `binary_sensor`, der „an“ meldet, solange ein Auto angesteckt ist (zum Beispiel von evcc) |
 | DKV-Schalter | der Schalter „Ladevorgang“ dieser Integration |
 | Anzahl Versuche | wie oft der Start versucht wird (Voreinstellung 10) |
-| Pause zwischen den Versuchen | Wartezeit in Sekunden (Voreinstellung 30) |
+| Pause zwischen den Versuchen | Wartezeit in Sekunden (Voreinstellung 120) |
+| Wartezeit vor dem ersten Versuch | optional: Zeit in Sekunden, in der man noch eine andere Karte (zum Beispiel die Partnerkarte) vorhalten kann; 0 startet sofort (Voreinstellung 0) |
+| Wartezeit auf die Bestätigung | wie lange nach dem Einschalten auf „an“ gewartet wird, in Sekunden (Voreinstellung 30) |
 | Aktionen, wenn es nicht klappt | optional, zum Beispiel eine Meldung aufs Handy |
 
 So verhält sie sich:
 
-- Meldet der Sensor „an“ (oder startet Home Assistant mit angeschlossenem
-  Auto), wird der Schalter eingeschaltet. Läuft schon eine Session, passiert
-  nichts, es startet nie eine zweite.
+- Wechselt der Sensor von „aus“ auf „an“, wird der Schalter eingeschaltet.
+  Läuft schon eine Session, passiert nichts, es startet nie eine zweite. Ein
+  Neustart von Home Assistant oder ein kurz „nicht verfügbarer“ Sensor lösen
+  nichts aus.
 - DKV bestätigt den Start nur, solange die Wallbox laden darf (siehe
   „Voraussetzung: Wallbox muss sofort laden dürfen“). Deshalb wird es mit
   Pause wiederholt, bis die Wallbox bestätigt oder die Versuche aufgebraucht
   sind. Dann laufen Ihre „Aktionen, wenn es nicht klappt“.
 - Geht der Sensor auf „aus“, enden die Versuche. Es gibt nie zwei Läufe
   gleichzeitig.
+
+### Partnerkarte für private Fahrzeuge
+
+Das DKV-Backend verlangt für jede Ladung eine Freigabe, per RFID-Karte oder
+App. Mit der Partnerkarte lässt sich ein privates Fahrzeug laden, dessen Strom
+nicht erstattet wird. Das ist **optional und standardmäßig aus**. Wer die
+Partnerkarte nutzt, sorgt so dafür, dass die Blaupause nicht schneller ist als
+die Karte:
+
+- Die **Wartezeit vor dem ersten Versuch** (zum Beispiel 60 Sekunden) gibt Zeit,
+  die Partnerkarte vorzuhalten. Die Blaupause schaltet nur ein, wenn noch
+  keine Session läuft. Wird in der Wartezeit mit der Partnerkarte freigegeben,
+  startet sie nichts, die Wartezeit endet sofort.
+- Ohne Wartezeit (0) startet sie gleich beim Anschließen mit der Karte des
+  Kontos.
+
+### Wichtig bei Firmenwagen: nur das Firmenfahrzeug freischalten
+
+DKV@Home rechnet bei einem Firmenwagen jede geladene kWh ab und erstattet sie.
+Die Freischaltung läuft über die Karte des Kontos. Laden an derselben Wallbox
+auch **private** Fahrzeuge (zum Beispiel das des Partners), darf ein privates
+Fahrzeug nicht über diese Karte freigeschaltet werden, sonst würde sein Strom
+als Firmenladung abgerechnet.
+
+In diesem Fall muss der Sensor der Blaupause **nur dann „an“ melden, wenn das
+Firmenfahrzeug angeschlossen ist**, nicht schon bei jedem Auto. Erkennt evcc
+das Fahrzeug, legt man dafür in Home Assistant einen Vorlagen-Helfer (Binärer
+Sensor) an, der „angeschlossen“ und „Fahrzeug ist das Firmenfahrzeug“
+verknüpft, zum Beispiel:
+
+```jinja
+{{ is_state('binary_sensor.evcc_angeschlossen', 'on')
+   and is_state('sensor.evcc_fahrzeug', 'Firmenwagen') }}
+```
+
+Die Entity-IDs sind Beispiele und müssen angepasst werden. Private Fahrzeuge
+schaltet man weiterhin mit der Partnerkarte oder der DKV-App frei. Laden an der
+Wallbox nur Firmenfahrzeuge, ist nichts weiter zu beachten.
 
 ## Entität & Attribute
 
