@@ -56,6 +56,8 @@ class FakeCharger:
         # None, "transient" (HTTP 503), "empty" (no charge point), "auth" (401)
         # or "garbage" (HTTP 200 that is not JSON)
         self.status_error = None
+        # None: the placeholders of the real structure
+        self.reimbursement = None
         http.add("GET", "charge-points", self._charge_point)
         http.add("GET", "service-card", FakeResponse(200, service_card_answer("card-1")))
         http.add("POST", "session/start", self._start)
@@ -75,6 +77,7 @@ class FakeCharger:
             charge_point_answer(
                 session=self.session,
                 status="CHARGING" if self.session else "AVAILABLE",
+                reimbursement=self.reimbursement,
             ),
         )
 

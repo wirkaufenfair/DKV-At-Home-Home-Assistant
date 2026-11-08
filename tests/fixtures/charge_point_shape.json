@@ -63,9 +63,9 @@
       "payments": [],
       "plugs": ["str"],
       "reimbursement": {
-        "consumption": "int",
+        "consumption": "float",
         "currencyIsoCode": "str",
-        "sum": "int"
+        "sum": "float"
       },
       "remoteStartStopCapable": "bool",
       "stationIdGfx": "str",

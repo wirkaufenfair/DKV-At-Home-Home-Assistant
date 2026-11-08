@@ -19,7 +19,7 @@ from .const import DOMAIN, POLL_INTERVAL_SECONDS
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["switch"]
+PLATFORMS = ["switch", "sensor"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

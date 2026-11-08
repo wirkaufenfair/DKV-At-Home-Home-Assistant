@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-11-08
+
+### Added
+
+- **Zwei Sensoren** am Gerät der Wallbox: „Verbrauch laut DKV“ (kWh) und
+  „Erstattung laut DKV“ (Betrag in der Währung, die DKV meldet). Sie lesen
+  `reimbursement` aus der Antwort, die die Integration ohnehin alle 30 Sekunden
+  abfragt. Einheiten und Zeitraum sind Annahmen aus einer echten Installation
+  (18,01 und 5,02 EUR, etwa 0,28 € je kWh); DKV nennt keinen Zeitraum, daher
+  steht keiner im Namen. Meldet DKV keine Zahl, ist der Zustand „unbekannt“.
+
+### Changed
+
+- Die Testdaten von `reimbursement` haben jetzt die echte Struktur
+  (Kommazahlen statt ganzer Zahlen).
+
 ## [1.2.1] - 2026-11-08
 
 ### Changed

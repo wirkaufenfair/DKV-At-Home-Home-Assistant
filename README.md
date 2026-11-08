@@ -11,6 +11,7 @@ einzubinden und einen Ladevorgang per Switch zu starten.
 - Integration als Home-Assistant-Custom-Component (`dkv_at_home`)
 - Anmeldung über den Login von DKV (OAuth mit PKCE), langlebiger Token
 - Entität: ein `switch` zum Starten und Stoppen des Ladevorgangs
+- Zwei Sensoren: Verbrauch und Erstattung, wie DKV sie führt
 - Blaupause für eine Automation, die die Wallbox beim Anschließen freischaltet
 - Diagnose-Download für Fehlerberichte (ohne Tokens und Kennungen)
 - Statusabfrage via Coordinator (Polling alle 30 Sekunden)
@@ -214,6 +215,19 @@ Zusätzliche Attribute:
 - `charge_point_name`
 - `remote_start_stop_capable` (Angabe von DKV, nur zur Information)
 
+Dazu kommen zwei Sensoren am selben Gerät. Sie zeigen, was DKV zur Wallbox als
+`reimbursement` meldet:
+
+| Sensor | Bedeutung | Einheit |
+| --- | --- | --- |
+| **Verbrauch laut DKV** | `consumption`, gelesen als Energie | kWh |
+| **Erstattung laut DKV** | `sum`, gelesen als Betrag | die Währung, die DKV meldet (zum Beispiel EUR) |
+
+Beides sind Annahmen aus einer echten Installation (18,01 und 5,02 EUR, also
+etwa 0,28 € je kWh). DKV sagt nicht, für welchen Zeitraum die Werte gelten.
+Deshalb tragen die Sensoren keinen Zeitraum im Namen. Meldet DKV keine Zahl,
+zeigt der Sensor „unbekannt“.
+
 ## Wie die Integration arbeitet
 
 - Bei Updates wird zuerst das Access-Token per Refresh erneuert
@@ -351,6 +365,7 @@ Home Assistant. Behandle Backups und Log-Ausgaben entsprechend sensibel.
 
 - Domain: `dkv_at_home`
 - Plattform: `switch`
+- Plattform: `sensor`
 - `iot_class`: `cloud_polling`
 - Nutzt `requests` (von Home Assistant mitgebracht, keine eigene Abhängigkeit)
 

@@ -96,11 +96,17 @@ def payload_from_shape(shape):
 
 
 def charge_point_answer(
-    session=None, evse_uid="EVSE-1", location_id="LOC-1", status="AVAILABLE"
+    session=None,
+    evse_uid="EVSE-1",
+    location_id="LOC-1",
+    status="AVAILABLE",
+    reimbursement=None,
 ):
     """An answer with the real structure and the values a test cares about."""
     answer = payload_from_shape(charge_point_shape())
     cp = answer["chargePoints"][0]
+    if reimbursement is not None:
+        cp["reimbursement"] = reimbursement
     cp["activeSessionId"] = session
     cp["status"] = status
     cp["name"] = "Wallbox"
