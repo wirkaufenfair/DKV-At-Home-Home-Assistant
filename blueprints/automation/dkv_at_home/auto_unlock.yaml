@@ -59,8 +59,10 @@ blueprint:
       selector:
         action: {}
 
-# "restart": geht der Sensor auf "aus" oder wieder auf "an", beginnt der Lauf
-# neu bzw. endet an der Bedingung unten. So gibt es nie zwei Läufe gleichzeitig.
+# "restart": jeder neue Auslöser beendet einen laufenden Lauf und beginnt neu.
+# Geht der Sensor auf "aus", startet deshalb ein neuer Lauf, der gleich im
+# ersten Schritt endet. So enden die Versuche beim Abstecken, und es gibt nie
+# zwei Läufe gleichzeitig.
 mode: restart
 max_exceeded: silent
 
@@ -78,12 +80,13 @@ triggers:
   - trigger: homeassistant
     event: start
 
-conditions:
+# Die Bedingung steht bewusst als erster Schritt der Aktionen und nicht oben
+# unter "conditions": Eine oben nicht erfüllte Bedingung würde den neuen Lauf
+# gar nicht starten, und der alte Lauf würde weiterlaufen.
+actions:
   - condition: state
     entity_id: !input vehicle_connected
     state: "on"
-
-actions:
   - repeat:
       count: "{{ max_attempts | int }}"
       sequence:

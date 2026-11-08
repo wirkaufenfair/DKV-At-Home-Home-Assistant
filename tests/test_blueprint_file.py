@@ -79,15 +79,22 @@ def test_a_second_run_never_happens_at_the_same_time():
 
 
 def test_unplugging_the_car_restarts_the_run_which_then_ends():
+    """The check must be the first step, not a top level condition.
+
+    A top level condition that is false stops the *new* run from starting, and
+    the old run would go on. As the first step, the new run starts, ends the
+    old one (mode restart) and ends itself.
+    """
     off_triggers = [
         trigger
         for trigger in BLUEPRINT["triggers"]
         if trigger.get("trigger") == "state" and trigger.get("to") == "off"
     ]
     assert off_triggers
-    condition = BLUEPRINT["conditions"][0]
-    assert condition["condition"] == "state"
-    assert condition["state"] == "on"
+    assert "conditions" not in BLUEPRINT
+    first = BLUEPRINT["actions"][0]
+    assert first["condition"] == "state"
+    assert first["state"] == "on"
 
 
 def test_the_run_starts_at_home_assistant_start_as_well():
@@ -96,14 +103,14 @@ def test_the_run_starts_at_home_assistant_start_as_well():
 
 
 def test_it_pauses_between_attempts_but_not_before_the_first():
-    sequence = BLUEPRINT["actions"][0]["repeat"]["sequence"]
+    sequence = BLUEPRINT["actions"][1]["repeat"]["sequence"]
     pause = sequence[0]
     assert "repeat.index > 1" in pause["if"][0]["value_template"]
     assert "delay" in pause["then"][0]
 
 
 def test_it_only_switches_on_when_no_session_runs():
-    sequence = BLUEPRINT["actions"][0]["repeat"]["sequence"]
+    sequence = BLUEPRINT["actions"][1]["repeat"]["sequence"]
     start = sequence[1]
     assert start["if"][0]["state"] == "off"
     assert start["then"][0]["action"] == "switch.turn_on"
@@ -112,7 +119,7 @@ def test_it_only_switches_on_when_no_session_runs():
 
 
 def test_it_stops_at_the_first_confirmation():
-    sequence = BLUEPRINT["actions"][0]["repeat"]["sequence"]
+    sequence = BLUEPRINT["actions"][1]["repeat"]["sequence"]
     confirmed = sequence[2]
     assert confirmed["if"][0]["state"] == "on"
     assert "stop" in confirmed["then"][0]
@@ -120,5 +127,5 @@ def test_it_stops_at_the_first_confirmation():
 
 def test_the_failure_actions_run_only_after_the_last_attempt():
     """They come after the repeat, so ``stop`` skips them."""
-    assert "repeat" in BLUEPRINT["actions"][0]
-    assert BLUEPRINT["actions"][1]["sequence"] == "!input on_failure"
+    assert "repeat" in BLUEPRINT["actions"][1]
+    assert BLUEPRINT["actions"][2]["sequence"] == "!input on_failure"
