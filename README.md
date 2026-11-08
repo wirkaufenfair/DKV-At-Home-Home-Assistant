@@ -148,6 +148,38 @@ So verhält sie sich:
 - Geht der Sensor auf „aus“, enden die Versuche. Es gibt nie zwei Läufe
   gleichzeitig.
 
+### Meldung, wenn es nicht klappt
+
+Die Eingabe „Aktionen, wenn es nicht klappt“ nimmt beliebige Aktionen. Sie
+laufen erst, wenn alle Versuche aufgebraucht sind und die Wallbox nicht
+freigeschaltet ist. Bei den Voreinstellungen (10 Versuche, 2 Minuten Pause)
+dauert das rund 20 bis 25 Minuten nach dem Anschließen. Ein Beispiel im
+YAML-Modus der Automation, das einen Hilfsschalter einschaltet und eine
+Meldung aufs Handy schickt:
+
+```yaml
+use_blueprint:
+  path: dkv_at_home/auto_unlock.yaml
+  input:
+    vehicle_connected: binary_sensor.evcc_angeschlossen
+    dkv_switch: switch.dkv_home_wallbox_ladevorgang
+    on_failure:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.dkv_freischaltung_fehler
+      - action: notify.mobile_app_mein_handy
+        data:
+          title: DKV-Freischalten fehlgeschlagen
+          message: Wallbox nicht freigeschaltet. Bitte in der DKV-App freischalten.
+          data:
+            tag: dkv_unlock_failed
+```
+
+Die Entity-IDs und der Name des Meldedienstes sind Beispiele und müssen
+angepasst werden. Mit dem festen `tag` ersetzt eine neue Meldung die alte, und
+eine eigene Automation kann sie beim nächsten Anschließen mit der Aktion
+`clear_notification` wieder löschen.
+
 ### Fahrzeugerkennung mit evcc (optional)
 
 Erkennt evcc das angeschlossene Fahrzeug, kann die Blaupause nur das

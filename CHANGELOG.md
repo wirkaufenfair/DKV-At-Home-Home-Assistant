@@ -18,6 +18,9 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **README**: Beispiel für „Aktionen, wenn es nicht klappt“ der Blaupause
+  (Hilfsschalter und Meldung aufs Handy) und der Hinweis, wann die Meldung
+  kommt.
 - Die Testdaten von `reimbursement` haben jetzt die echte Struktur
   (Kommazahlen statt ganzer Zahlen).
 
