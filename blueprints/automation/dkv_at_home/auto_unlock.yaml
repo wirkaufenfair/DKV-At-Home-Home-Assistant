@@ -1,0 +1,116 @@
+blueprint:
+  name: DKV@Home – Wallbox automatisch freischalten
+  description: >
+    Schaltet die Wallbox bei DKV frei, sobald ein Fahrzeug angeschlossen ist.
+
+
+    DKV bestätigt den Start nur, solange die Wallbox in diesem Moment laden
+    darf. Deshalb wird der Schalter bei Bedarf mehrmals eingeschaltet, mit
+    einer Pause dazwischen. Läuft schon eine Session, passiert nichts. Geht
+    der Sensor auf „aus“, enden die Versuche.
+
+
+    Voraussetzung: die Integration DKV@Home und ein Sensor, der „an“ meldet,
+    solange ein Auto angesteckt ist (zum Beispiel von evcc).
+  domain: automation
+  author: wirkaufenfair
+  homeassistant:
+    min_version: 2025.1.0
+  source_url: https://github.com/wirkaufenfair/DKV-At-Home-Home-Assistant/blob/main/blueprints/automation/dkv_at_home/auto_unlock.yaml
+  input:
+    vehicle_connected:
+      name: Sensor „Fahrzeug angeschlossen“
+      description: Meldet „an“, solange ein Fahrzeug angeschlossen ist.
+      selector:
+        entity:
+          domain: binary_sensor
+    dkv_switch:
+      name: DKV-Schalter
+      description: Der Schalter „Ladevorgang“ der Integration DKV@Home.
+      selector:
+        entity:
+          domain: switch
+          integration: dkv_at_home
+    max_attempts:
+      name: Anzahl Versuche
+      description: Wie oft der Start versucht wird, bevor aufgegeben wird.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 30
+          mode: box
+    retry_delay:
+      name: Pause zwischen den Versuchen
+      description: Wartezeit nach einem Versuch, der nicht bestätigt wurde.
+      default: 30
+      selector:
+        number:
+          min: 5
+          max: 300
+          unit_of_measurement: s
+          mode: box
+    on_failure:
+      name: Aktionen, wenn es nicht klappt
+      description: >
+        Wird ausgeführt, wenn die Wallbox nach allen Versuchen nicht
+        freigeschaltet ist, zum Beispiel eine Meldung aufs Handy.
+      default: []
+      selector:
+        action: {}
+
+# "restart": geht der Sensor auf "aus" oder wieder auf "an", beginnt der Lauf
+# neu bzw. endet an der Bedingung unten. So gibt es nie zwei Läufe gleichzeitig.
+mode: restart
+max_exceeded: silent
+
+variables:
+  max_attempts: !input max_attempts
+  retry_delay: !input retry_delay
+
+triggers:
+  - trigger: state
+    entity_id: !input vehicle_connected
+    to: "on"
+  - trigger: state
+    entity_id: !input vehicle_connected
+    to: "off"
+  - trigger: homeassistant
+    event: start
+
+conditions:
+  - condition: state
+    entity_id: !input vehicle_connected
+    state: "on"
+
+actions:
+  - repeat:
+      count: "{{ max_attempts | int }}"
+      sequence:
+        # Zwischen zwei Versuchen warten, vor dem ersten nicht.
+        - if:
+            - condition: template
+              value_template: "{{ repeat.index > 1 }}"
+          then:
+            - delay:
+                seconds: "{{ retry_delay | int }}"
+        # Nur einschalten, wenn noch keine Session läuft.
+        - if:
+            - condition: state
+              entity_id: !input dkv_switch
+              state: "off"
+          then:
+            - action: switch.turn_on
+              target:
+                entity_id: !input dkv_switch
+              # Meldet DKV den Start, die Wallbox bestätigt ihn aber nicht
+              # innerhalb von 60 Sekunden, gibt der Schalter einen Fehler.
+              continue_on_error: true
+        - if:
+            - condition: state
+              entity_id: !input dkv_switch
+              state: "on"
+          then:
+            - stop: Wallbox freigeschaltet
+  - alias: Es hat nicht geklappt
+    sequence: !input on_failure

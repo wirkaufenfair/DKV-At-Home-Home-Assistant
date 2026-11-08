@@ -11,7 +11,7 @@ einzubinden und einen Ladevorgang per Switch zu starten.
 - Integration als Home-Assistant-Custom-Component (`dkv_at_home`)
 - Anmeldung über den Login von DKV (OAuth mit PKCE), langlebiger Token
 - Entität: ein `switch` zum Starten und Stoppen des Ladevorgangs
-- Optional: automatisches Freischalten, sobald ein Fahrzeug angeschlossen ist
+- Blaupause für eine Automation, die die Wallbox beim Anschließen freischaltet
 - Diagnose-Download für Fehlerberichte (ohne Tokens und Kennungen)
 - Statusabfrage via Coordinator (Polling alle 30 Sekunden)
 - Automatische Token-Aktualisierung (Refresh-Token)
@@ -103,30 +103,43 @@ wiederholen. Ein alter Link oder ein anderer Tab führt zum Fehler.
 > Statt der Adresse akzeptiert das Feld auch den reinen Anmeldecode oder einen
 > vorhandenen Refresh-Token (beginnt mit `eyJ`).
 
-## Automatisches Freischalten
+## Automatisches Freischalten (Blaupause)
 
-Optional schaltet die Integration die Wallbox selbst frei, sobald ein Fahrzeug
-angeschlossen ist. Eine eigene Automation ist dafür nicht nötig.
+Damit die Wallbox von selbst freigeschaltet wird, sobald ein Fahrzeug
+angeschlossen ist, gibt es eine **Blaupause** für eine Automation. Die
+Entscheidung, *wann* gestartet wird, gehört in eine Automation, nicht in die
+Integration. Die Integration liefert den Schalter, die Blaupause nutzt ihn.
 
-Einstellen: **Einstellungen → Geräte & Dienste → DKV@Home → Konfigurieren** und
-den Sensor „Fahrzeug angeschlossen“ wählen. Das ist ein `binary_sensor`, der
-„an“ meldet, sobald ein Auto angesteckt ist (zum Beispiel von evcc). Leer
-lassen schaltet die Funktion aus.
+[![Blaupause in Home Assistant importieren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fwirkaufenfair%2FDKV-At-Home-Home-Assistant%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fdkv_at_home%2Fauto_unlock.yaml)
+
+Oder von Hand: **Einstellungen → Automatisierungen & Szenen → Blaupausen →
+Blaupause importieren** und diese Adresse einfügen:
+
+```text
+https://github.com/wirkaufenfair/DKV-At-Home-Home-Assistant/blob/main/blueprints/automation/dkv_at_home/auto_unlock.yaml
+```
+
+Danach eine Automation aus der Blaupause anlegen. Die Eingaben:
+
+| Eingabe | Bedeutung |
+| --- | --- |
+| Sensor „Fahrzeug angeschlossen“ | ein `binary_sensor`, der „an“ meldet, solange ein Auto angesteckt ist (zum Beispiel von evcc) |
+| DKV-Schalter | der Schalter „Ladevorgang“ dieser Integration |
+| Anzahl Versuche | wie oft der Start versucht wird (Voreinstellung 10) |
+| Pause zwischen den Versuchen | Wartezeit in Sekunden (Voreinstellung 30) |
+| Aktionen, wenn es nicht klappt | optional, zum Beispiel eine Meldung aufs Handy |
 
 So verhält sie sich:
 
-- Geht der Sensor auf „an“, wird die Session bei DKV gestartet. Läuft schon
-  eine, passiert nichts (es startet nie eine zweite).
-- DKV bestätigt den Start nur, solange die Wallbox laden darf. Deshalb wird
-  es bis zu 10 Mal im Abstand von 30 Sekunden erneut versucht (siehe
-  „Voraussetzung: Wallbox muss sofort laden dürfen“).
-- Geht der Sensor auf „aus“, enden die Versuche. „Nicht verfügbar“ (zum
-  Beispiel während evcc neu startet) beendet sie nicht.
-- War Home Assistant beim Start schon mit angeschlossenem Auto, wird sofort
-  freigeschaltet.
-- Gelingt es nicht, wird das Ereignis `dkv_at_home_unlock_failed` ausgelöst
-  (Daten: `attempts`, `reason`) und eine Benachrichtigung angezeigt. Das Ereignis
-  eignet sich als Auslöser für eine eigene Meldung.
+- Meldet der Sensor „an“ (oder startet Home Assistant mit angeschlossenem
+  Auto), wird der Schalter eingeschaltet. Läuft schon eine Session, passiert
+  nichts, es startet nie eine zweite.
+- DKV bestätigt den Start nur, solange die Wallbox laden darf (siehe
+  „Voraussetzung: Wallbox muss sofort laden dürfen“). Deshalb wird es mit
+  Pause wiederholt, bis die Wallbox bestätigt oder die Versuche aufgebraucht
+  sind. Dann laufen Ihre „Aktionen, wenn es nicht klappt“.
+- Geht der Sensor auf „aus“, enden die Versuche. Es gibt nie zwei Läufe
+  gleichzeitig.
 
 ## Entität & Attribute
 

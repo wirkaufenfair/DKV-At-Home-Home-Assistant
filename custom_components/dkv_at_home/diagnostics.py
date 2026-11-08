@@ -13,10 +13,22 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.loader import async_get_integration
 
-from .api import DkvApiClient, describe_shape
+from .api import DkvApiClient, DkvApiError, describe_shape
 from .const import DOMAIN
 
 TO_REDACT = {"refresh_token", "access_token", "preferred_username"}
+
+# Of a payment card only what tells the kinds apart. Never the id or the hints
+# (they identify the card).
+SAFE_CARD_KEYS = (
+    "type",
+    "chargeCardIssuer",
+    "verificationStatus",
+    "default",
+    "compatible",
+    "accountPaymentMethod",
+    "vidMapped",
+)
 
 
 async def async_get_config_entry_diagnostics(
@@ -44,6 +56,14 @@ async def async_get_config_entry_diagnostics(
             "structure": describe_shape(data),
         }
 
+    try:
+        cards = [
+            {key: card.get(key) for key in SAFE_CARD_KEYS}
+            for card in await hass.async_add_executor_job(client.fetch_cards)
+        ]
+    except DkvApiError as err:
+        cards = f"not available: {err}"
+
     return {
         "integration_version": integration.version,
         "entry": async_redact_data(dict(entry.data), TO_REDACT),
@@ -60,4 +80,5 @@ async def async_get_config_entry_diagnostics(
             ),
         },
         "charge_point": charge_point,
+        "payment_cards": cards,
     }

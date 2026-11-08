@@ -4,7 +4,12 @@ import logging
 from datetime import timedelta
 
 import pytest
-from helpers import FakeResponse, charge_point_answer, make_jwt
+from helpers import (
+    FakeResponse,
+    charge_point_answer,
+    make_jwt,
+    service_card_answer,
+)
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.data_entry_flow import FlowResultType
@@ -22,14 +27,13 @@ USER = "100000000001"
 FAR_FUTURE = 4102444800
 
 
-def make_entry(access_token="valid", refresh_token="refresh-0", options=None):
+def make_entry(access_token="valid", refresh_token="refresh-0"):
     if access_token == "valid":
         access_token = make_jwt(FAR_FUTURE)
     return MockConfigEntry(
         domain=DOMAIN,
         unique_id=USER,
         title=f"DKV@Home ({USER})",
-        options=options or {},
         data={
             "preferred_username": USER,
             "refresh_token": refresh_token,
@@ -53,7 +57,7 @@ class FakeCharger:
         # or "garbage" (HTTP 200 that is not JSON)
         self.status_error = None
         http.add("GET", "charge-points", self._charge_point)
-        http.add("GET", "service-card", FakeResponse(200, [{"id": "card-1"}]))
+        http.add("GET", "service-card", FakeResponse(200, service_card_answer("card-1")))
         http.add("POST", "session/start", self._start)
         http.add("POST", "session/stop", self._stop)
 

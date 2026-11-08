@@ -206,31 +206,6 @@ def test_every_screenshot_in_the_folder_is_used():
     assert used == present
 
 
-# ----------------------------------------------------------------------
-# Automatic unlock: README, options dialog and code say the same
-# ----------------------------------------------------------------------
-
-
-def test_readme_numbers_of_the_unlock_match_the_constants(consts):
-    assert f"bis zu {consts.UNLOCK_MAX_ATTEMPTS} Mal" in README
-    assert f"im Abstand von {consts.UNLOCK_RETRY_SECONDS} Sekunden" in README
-
-
-@pytest.mark.parametrize("name", ["translations/de.json", "strings.json"])
-def test_options_dialog_numbers_match_the_constants(name, consts):
-    text = load(name)["options"]["step"]["init"]["description"]
-    assert f"{consts.UNLOCK_MAX_ATTEMPTS} Mal" in text
-    assert f"{consts.UNLOCK_RETRY_SECONDS} Sekunden" in text
-
-
-def test_readme_names_the_options_field_and_the_event(consts):
-    label = load("translations/de.json")["options"]["step"]["init"]["data"][
-        consts.CONF_CONNECTED_ENTITY
-    ]
-    assert label in README
-    assert f"`{consts.EVENT_UNLOCK_FAILED}`" in README
-
-
 def test_the_readme_badges_point_to_existing_workflows():
     workflows = re.findall(r"actions/workflows/([\w.-]+)/badge\.svg", README)
     assert workflows

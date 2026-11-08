@@ -5,17 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.2.0] - 2026-11-08
+
+### Removed
+
+- **Automatisches Freischalten als Option der Integration** (Sensor
+  „Fahrzeug angeschlossen“ in den Einstellungen) samt Ereignis
+  `dkv_at_home_unlock_failed` und Benachrichtigung. Die Entscheidung, wann
+  gestartet wird, gehoert in eine Automation, nicht in die Integration. Wer die
+  Option aus 1.1.0 benutzt hat, richtet stattdessen die Blaupause ein (siehe
+  unten). Eine gespeicherte Option bleibt ohne Wirkung stehen.
 
 ### Added
 
-- **Log des automatischen Freischaltens**: Beginn („Fahrzeug angeschlossen
-  (Sensor): Freischalten beginnt“), Ergebnis („Wallbox freigeschaltet nach n
-  Versuch(en)“ oder „bereits freigeschaltet“) und Abbruch beim Abstecken.
-  Vorher war im Log nicht zu erkennen, wer den Start ausgeloest hatte.
+- **Blaupause** `blueprints/automation/dkv_at_home/auto_unlock.yaml`:
+  schaltet die Wallbox frei, sobald ein Fahrzeug angeschlossen ist, mit
+  Wiederholung (DKV bestaetigt nur, solange die Wallbox laden darf), ohne
+  zweite Session, mit eigenen Aktionen bei Scheitern. Per Link importierbar,
+  in den Tests gegen den Fake-Server gelaufen.
+- **Diagnose** zeigt die Zahlungsmethoden des Kontos (Art, Aussteller,
+  Pruefstatus und Kennzeichen, nie Kennung oder Hinweise zur Karte), damit sich
+  z. B. eine Partnerkarte erkennen laesst.
+- **Diagnose** enthaelt die Werte von `reimbursement` (nur Betraege).
+- **README**: Plaketten fuer den Stand der CI und der taeglichen DKV-Pruefung.
 
 ### Changed
 
+- **Mindestversion** Home Assistant 2025.1.0 in `hacs.json` (getestet in der CI,
+  deckt etwa 96 % der Installationen ab).
+- **Zeitgesteuerte Workflows** schalten sich bei jedem taeglichen Lauf selbst
+  wieder ein. GitHub hatte die HACS-Pruefung wegen 60 Tagen ohne Aktivitaet
+  abgeschaltet; sie lief seit Juni nicht mehr.
 - **README und Fehlervorlage** weisen darauf hin, dass Home Assistant der
   Diagnose-Datei Systeminformationen und die Liste der installierten eigenen
   Integrationen hinzufuegt, und wie man diesen Block vor dem Teilen entfernt.

@@ -301,7 +301,8 @@ class DkvApiClient:
             )
         return points[0]
 
-    def _get_card_id(self) -> str:
+    def _get_cards(self) -> list[dict]:
+        """Return the payment cards of the account (usually one)."""
         r = requests.get(
             f"{BASE_URL}/cards/service-card",
             headers=self._headers(),
@@ -334,6 +335,10 @@ class DkvApiClient:
         )
         if not cards:
             raise DkvApiError("Keine Ladekarten in der API-Antwort gefunden")
+        return cards
+
+    def _get_card_id(self) -> str:
+        cards = self._get_cards()
         card_id = cards[0].get("id")
         if not card_id:
             raise DkvApiError("Card-ID fehlt in der API-Antwort")
@@ -343,6 +348,12 @@ class DkvApiClient:
             {k: v for k, v in cards[0].items() if isinstance(v, bool)},
         )
         return card_id
+
+    @_locked
+    def fetch_cards(self) -> list[dict]:
+        """Return the payment cards (for the diagnostics, on demand)."""
+        self._ensure_access_token()
+        return self._get_cards()
 
     @staticmethod
     def generate_pkce_pair() -> tuple[str, str]:

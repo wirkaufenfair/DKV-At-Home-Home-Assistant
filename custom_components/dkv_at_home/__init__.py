@@ -15,8 +15,7 @@ from homeassistant.helpers.update_coordinator import (  # type: ignore[import]
 )
 
 from .api import DkvApiClient, DkvApiError, DkvAuthError, DkvTransientError
-from .const import CONF_CONNECTED_ENTITY, DOMAIN, POLL_INTERVAL_SECONDS
-from .unlock import AutoUnlock
+from .const import DOMAIN, POLL_INTERVAL_SECONDS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -83,27 +82,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
-    connected_entity = entry.options.get(CONF_CONNECTED_ENTITY)
-    if connected_entity:
-        auto_unlock = AutoUnlock(
-            hass, connected_entity, client, coordinator, _persist_tokens
-        )
-        auto_unlock.async_start()
-        entry.async_on_unload(auto_unlock.async_stop)
-
-    # Home Assistant calls update listeners on every change of the entry,
-    # including the token written back every few minutes. Reload only when
-    # the options changed, otherwise the entry would reload constantly.
-    options_at_setup = dict(entry.options)
-
-    async def _async_options_updated(
-        hass: HomeAssistant, updated: ConfigEntry
-    ) -> None:
-        if dict(updated.options) != options_at_setup:
-            await hass.config_entries.async_reload(updated.entry_id)
-
-    entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
 
 
