@@ -87,6 +87,40 @@ blueprint:
           max: 300
           unit_of_measurement: s
           mode: box
+    vehicle_sensor:
+      name: "Fahrzeugerkennung: Sensor mit dem Fahrzeugnamen (optional)"
+      description: >
+        Optional, aus in der Voreinstellung. Ein Sensor, der den Namen des
+        angeschlossenen Fahrzeugs meldet, zum Beispiel aus evcc. Zusammen mit
+        dem Namen unten schaltet die Blaupause nur frei, wenn dieses Fahrzeug
+        erkannt wird, andere (zum Beispiel ein privates Auto) bleiben
+        unberührt.
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+    vehicle_name:
+      name: "Fahrzeugerkennung: Name des Firmenfahrzeugs (optional)"
+      description: >
+        Der Name, den der Sensor oben für das Firmenfahrzeug meldet (ohne
+        Beachtung von Groß- und Kleinschreibung). Ohne Sensor und Namen ist die
+        Fahrzeugerkennung aus.
+      default: ""
+      selector:
+        text: {}
+    vehicle_wait:
+      name: "Fahrzeugerkennung: Wartezeit"
+      description: >
+        evcc erkennt das Fahrzeug erst einige Sekunden nach dem Anschließen.
+        So lange wird auf den Namen des Firmenfahrzeugs gewartet. Kommt er
+        nicht, passiert nichts.
+      default: 60
+      selector:
+        number:
+          min: 5
+          max: 300
+          unit_of_measurement: s
+          mode: box
     on_failure:
       name: Aktionen, wenn es nicht klappt
       description: >
@@ -109,6 +143,9 @@ variables:
   retry_delay: !input retry_delay
   confirm_wait: !input confirm_wait
   grace_period: !input grace_period
+  vehicle_sensor: !input vehicle_sensor
+  vehicle_name: !input vehicle_name
+  vehicle_wait: !input vehicle_wait
 
 # Ausgelöst nur beim Anschließen (aus -> an), nicht bei "nicht verfügbar -> an"
 # und nicht beim Start von Home Assistant: Sonst könnte ein Neustart oder ein
@@ -129,6 +166,22 @@ actions:
   - condition: state
     entity_id: !input vehicle_connected
     state: "on"
+  # Optionale Fahrzeugerkennung (zum Beispiel aus evcc): nur das Firmenfahrzeug
+  # freischalten. evcc erkennt das Fahrzeug erst nach dem Anschließen, deshalb
+  # wird auf den Namen gewartet. Kommt er nicht, endet der Lauf, ohne etwas zu
+  # starten.
+  - if:
+      - condition: template
+        value_template: "{{ vehicle_sensor != '' and vehicle_name != '' }}"
+    then:
+      - wait_template: "{{ states(vehicle_sensor) | lower == vehicle_name | lower }}"
+        timeout: "{{ vehicle_wait | int }}"
+        continue_on_timeout: true
+      - if:
+          - condition: template
+            value_template: "{{ states(vehicle_sensor) | lower != vehicle_name | lower }}"
+        then:
+          - stop: Fahrzeug nicht erkannt
   # Wartezeit vor dem ersten Versuch (Partnerkarte vorhalten oder in der App
   # freischalten). Sie endet vorzeitig, sobald jemand freigeschaltet hat; die
   # Schritte danach schalten nur ein, wenn noch keine Session läuft.

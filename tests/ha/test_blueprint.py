@@ -50,7 +50,7 @@ async def stop_automations(hass):
         await hass.async_block_till_done()
 
 
-async def setup_blueprint(hass, attempts=3, grace=0):
+async def setup_blueprint(hass, attempts=3, grace=0, detection=None):
     """Create an automation from the blueprint, as the UI does."""
     assert await async_setup_component(
         hass,
@@ -68,6 +68,7 @@ async def setup_blueprint(hass, attempts=3, grace=0):
                             "retry_delay": DELAY,
                             "confirm_wait": 1,  # real seconds in the tests
                             "grace_period": grace,
+                            **(detection or {}),
                             "on_failure": [{"event": FAILED_EVENT}],
                         },
                     },
@@ -230,3 +231,53 @@ async def test_unlocks_after_the_grace_period_when_nobody_else_did(hass, http):
     await until(hass, lambda: charger.start_calls == 1, pause_passes=True)
 
     assert charger.session == "SESSION-1"
+
+
+VEHICLE = "sensor.evcc_vehicle"
+DETECTION = {
+    "vehicle_sensor": VEHICLE,
+    "vehicle_name": "Firmenwagen",
+    "vehicle_wait": 2,  # real seconds in the tests
+}
+
+
+async def test_with_detection_it_unlocks_the_company_car(hass, http):
+    """evcc names the car a moment after it was connected."""
+    charger = FakeCharger(http)
+    hass.states.async_set(CAR, "off")
+    hass.states.async_set(VEHICLE, "unknown")
+    await setup_entry(hass, make_entry())
+    await setup_blueprint(hass, detection=DETECTION)
+
+    hass.states.async_set(CAR, "on")
+    await asyncio.sleep(0.3)
+    assert charger.start_calls == 0  # still waiting for the name
+    hass.states.async_set(VEHICLE, "firmenwagen")  # case does not matter
+    await until(hass, lambda: charger.start_calls == 1, pause_passes=True)
+
+    assert charger.session == "SESSION-1"
+
+
+async def test_with_detection_other_cars_are_left_alone(hass, http):
+    charger = FakeCharger(http)
+    hass.states.async_set(CAR, "off")
+    hass.states.async_set(VEHICLE, "unknown")
+    await setup_entry(hass, make_entry())
+    await setup_blueprint(hass, detection=DETECTION)
+
+    hass.states.async_set(CAR, "on")
+    hass.states.async_set(VEHICLE, "Gast")
+    await asyncio.sleep(2.6)  # past the real 2 second wait
+
+    assert charger.start_calls == 0
+
+
+async def test_without_a_vehicle_sensor_the_detection_is_off(hass, http):
+    """Opt-in: nothing configured means every connected car is unlocked."""
+    charger = FakeCharger(http)
+    hass.states.async_set(CAR, "off")
+    await setup_entry(hass, make_entry())
+    await setup_blueprint(hass)
+
+    hass.states.async_set(CAR, "on")
+    await until(hass, lambda: charger.start_calls == 1, pause_passes=True)

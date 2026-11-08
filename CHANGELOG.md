@@ -24,6 +24,11 @@ and this project follows [Semantic Versioning](https://semver.org/).
   man noch die Partnerkarte vorhalten oder in der DKV-App freischalten kann. Sie
   endet sofort, sobald jemand freigeschaltet hat, und die Blaupause startet dann
   nichts.
+- **Fahrzeugerkennung** (optional, aus in der Voreinstellung): Ein Sensor mit
+  dem Fahrzeugnamen (zum Beispiel aus evcc) und der Name des Firmenfahrzeugs
+  begrenzen die Freischaltung auf dieses Fahrzeug. evcc erkennt das Fahrzeug
+  erst nach dem Anschliessen, deshalb wartet die Blaupause bis zu einer
+  einstellbaren Zeit auf den Namen.
 - **Hinweis fuer Firmenwagen** in Beschreibung und README: Laden auch private
   Fahrzeuge an der Wallbox, darf der Sensor nur fuer das Firmenfahrzeug „an“
   melden, sonst wuerde deren Strom ueber die Firmenkarte erstattet.

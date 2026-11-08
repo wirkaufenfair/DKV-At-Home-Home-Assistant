@@ -127,6 +127,9 @@ Danach eine Automation aus der Blaupause anlegen. Die Eingaben:
 | DKV-Schalter | der Schalter „Ladevorgang“ dieser Integration |
 | Anzahl Versuche | wie oft der Start versucht wird (Voreinstellung 10) |
 | Pause zwischen den Versuchen | Wartezeit in Sekunden (Voreinstellung 120) |
+| Fahrzeugerkennung: Sensor mit dem Fahrzeugnamen (optional) | zum Beispiel ein Sensor aus evcc, der das erkannte Fahrzeug meldet (Voreinstellung leer, also aus) |
+| Fahrzeugerkennung: Name des Firmenfahrzeugs (optional) | der Name, den dieser Sensor für das Firmenfahrzeug meldet |
+| Fahrzeugerkennung: Wartezeit | wie lange auf die Erkennung gewartet wird, in Sekunden (Voreinstellung 60) |
 | Wartezeit vor dem ersten Versuch | optional: Zeit in Sekunden, in der man noch eine andere Karte (zum Beispiel die Partnerkarte) vorhalten kann; 0 startet sofort (Voreinstellung 0) |
 | Wartezeit auf die Bestätigung | wie lange nach dem Einschalten auf „an“ gewartet wird, in Sekunden (Voreinstellung 30) |
 | Aktionen, wenn es nicht klappt | optional, zum Beispiel eine Meldung aufs Handy |
@@ -143,6 +146,21 @@ So verhält sie sich:
   sind. Dann laufen Ihre „Aktionen, wenn es nicht klappt“.
 - Geht der Sensor auf „aus“, enden die Versuche. Es gibt nie zwei Läufe
   gleichzeitig.
+
+### Fahrzeugerkennung mit evcc (optional)
+
+Erkennt evcc das angeschlossene Fahrzeug, kann die Blaupause nur das
+Firmenfahrzeug freischalten und alle anderen Autos unberührt lassen. Dafür
+in der Blaupause den Sensor wählen, der den Fahrzeugnamen meldet, und
+den Namen des Firmenfahrzeugs eintragen (Groß- und Kleinschreibung spielt keine
+Rolle). Das ist **optional und standardmäßig aus**.
+
+- evcc erkennt das Fahrzeug erst einige Sekunden nach dem Anschließen. Die
+  Blaupause wartet deshalb bis zur eingestellten **Wartezeit** auf den Namen.
+- Kommt der Name nicht oder ein anderer, passiert nichts. Ein privates
+  Fahrzeug schaltet man dann mit der Partnerkarte oder in der DKV-App frei.
+- Die Entity-ID des Sensors hängt von der evcc-Anbindung ab und muss selbst
+  gewählt werden.
 
 ### Partnerkarte für private Fahrzeuge
 

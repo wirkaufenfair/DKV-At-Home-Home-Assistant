@@ -23,7 +23,7 @@ Loader.add_constructor(
 BLUEPRINT = yaml.load(FILE.read_text(encoding="utf-8"), Loader=Loader)
 
 # What the loop does, step by step (see the comments in the blueprint)
-LOOP = BLUEPRINT["actions"][2]["repeat"]["sequence"]
+LOOP = BLUEPRINT["actions"][3]["repeat"]["sequence"]
 
 
 def test_it_is_an_automation_blueprint():
@@ -65,6 +65,9 @@ def test_readme_offers_the_import_for_this_blueprint():
         ("retry_delay", "Pause zwischen den Versuchen"),
         ("confirm_wait", "Wartezeit auf die Bestätigung"),
         ("grace_period", "Wartezeit vor dem ersten Versuch"),
+        ("vehicle_sensor", "Fahrzeugerkennung: Sensor mit dem Fahrzeugnamen (optional)"),
+        ("vehicle_name", "Fahrzeugerkennung: Name des Firmenfahrzeugs (optional)"),
+        ("vehicle_wait", "Fahrzeugerkennung: Wartezeit"),
         ("vehicle_connected", "Sensor „Fahrzeug angeschlossen“"),
         ("dkv_switch", "DKV-Schalter"),
         ("on_failure", "Aktionen, wenn es nicht klappt"),
@@ -76,7 +79,8 @@ def test_readme_names_the_inputs_as_the_blueprint_does(name, label):
 
 
 @pytest.mark.parametrize(
-    "name", ["max_attempts", "retry_delay", "confirm_wait", "grace_period"]
+    "name",
+    ["max_attempts", "retry_delay", "confirm_wait", "grace_period", "vehicle_wait"],
 )
 def test_readme_defaults_match_the_blueprint(name):
     default = BLUEPRINT["blueprint"]["input"][name]["default"]
@@ -132,9 +136,24 @@ def test_it_triggers_only_when_the_car_gets_connected():
     assert all(trigger["trigger"] == "state" for trigger in BLUEPRINT["triggers"])
 
 
+def test_the_vehicle_detection_is_opt_in():
+    inputs = BLUEPRINT["blueprint"]["input"]
+    assert inputs["vehicle_sensor"]["default"] == ""
+    assert inputs["vehicle_name"]["default"] == ""
+
+
+def test_the_detection_waits_for_the_name_and_then_decides():
+    """evcc names the car only after it was connected."""
+    detection = BLUEPRINT["actions"][1]
+    assert "vehicle_sensor != ''" in detection["if"][0]["value_template"]
+    wait, decide = detection["then"]
+    assert wait["continue_on_timeout"] is True
+    assert "stop" in decide["then"][0]
+
+
 def test_the_grace_period_ends_early_when_someone_else_unlocks():
     """Waiting for the state "on" lets a partner card (or the app) go first."""
-    grace = BLUEPRINT["actions"][1]
+    grace = BLUEPRINT["actions"][2]
     assert "grace_period" in grace["if"][0]["value_template"]
     wait = grace["then"][0]
     assert "is_state(dkv_switch, 'on')" in wait["wait_template"]
@@ -175,8 +194,8 @@ def test_it_stops_at_the_first_confirmation():
 
 def test_the_failure_actions_run_only_after_the_last_attempt():
     """They come after the repeat, so ``stop`` skips them."""
-    assert "repeat" in BLUEPRINT["actions"][2]
-    assert BLUEPRINT["actions"][3]["sequence"] == "!input on_failure"
+    assert "repeat" in BLUEPRINT["actions"][3]
+    assert BLUEPRINT["actions"][4]["sequence"] == "!input on_failure"
 
 
 # ----------------------------------------------------------------------
