@@ -71,3 +71,54 @@ def test_readme_defaults_match_the_blueprint():
     inputs = BLUEPRINT["blueprint"]["input"]
     assert f"Voreinstellung {inputs['max_attempts']['default']})" in README
     assert f"Voreinstellung {inputs['retry_delay']['default']})" in README
+
+
+def test_a_second_run_never_happens_at_the_same_time():
+    """"restart" ends a running attempt when the sensor changes."""
+    assert BLUEPRINT["mode"] == "restart"
+
+
+def test_unplugging_the_car_restarts_the_run_which_then_ends():
+    off_triggers = [
+        trigger
+        for trigger in BLUEPRINT["triggers"]
+        if trigger.get("trigger") == "state" and trigger.get("to") == "off"
+    ]
+    assert off_triggers
+    condition = BLUEPRINT["conditions"][0]
+    assert condition["condition"] == "state"
+    assert condition["state"] == "on"
+
+
+def test_the_run_starts_at_home_assistant_start_as_well():
+    kinds = [(t["trigger"], t.get("event")) for t in BLUEPRINT["triggers"]]
+    assert ("homeassistant", "start") in kinds
+
+
+def test_it_pauses_between_attempts_but_not_before_the_first():
+    sequence = BLUEPRINT["actions"][0]["repeat"]["sequence"]
+    pause = sequence[0]
+    assert "repeat.index > 1" in pause["if"][0]["value_template"]
+    assert "delay" in pause["then"][0]
+
+
+def test_it_only_switches_on_when_no_session_runs():
+    sequence = BLUEPRINT["actions"][0]["repeat"]["sequence"]
+    start = sequence[1]
+    assert start["if"][0]["state"] == "off"
+    assert start["then"][0]["action"] == "switch.turn_on"
+    # DKV answers with an error when the wallbox does not confirm
+    assert start["then"][0]["continue_on_error"] is True
+
+
+def test_it_stops_at_the_first_confirmation():
+    sequence = BLUEPRINT["actions"][0]["repeat"]["sequence"]
+    confirmed = sequence[2]
+    assert confirmed["if"][0]["state"] == "on"
+    assert "stop" in confirmed["then"][0]
+
+
+def test_the_failure_actions_run_only_after_the_last_attempt():
+    """They come after the repeat, so ``stop`` skips them."""
+    assert "repeat" in BLUEPRINT["actions"][0]
+    assert BLUEPRINT["actions"][1]["sequence"] == "!input on_failure"
