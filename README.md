@@ -12,6 +12,7 @@ einzubinden und einen Ladevorgang per Switch zu starten.
 - Anmeldung über den Login von DKV (OAuth mit PKCE), langlebiger Token
 - Entität: ein `switch` zum Starten und Stoppen des Ladevorgangs
 - Zwei Sensoren: Verbrauch und Erstattung, wie DKV sie führt
+- Diagnose-Sensor „Verbindung zu DKV“ mit Zeitpunkt und Art des letzten Fehlers
 - Blaupause für eine Automation, die die Wallbox beim Anschließen freischaltet
 - Diagnose-Download für Fehlerberichte (ohne Tokens und Kennungen)
 - Statusabfrage via Coordinator (Polling alle 30 Sekunden)
@@ -133,6 +134,8 @@ Danach eine Automation aus der Blaupause anlegen. Die Eingaben:
 | Fahrzeugerkennung: Wartezeit | wie lange auf die Erkennung gewartet wird, in Sekunden (Voreinstellung 60) |
 | Wartezeit vor dem ersten Versuch | optional: Zeit in Sekunden, in der man noch eine andere Karte (zum Beispiel die Partnerkarte) vorhalten kann; 0 startet sofort (Voreinstellung 0) |
 | Wartezeit auf die Bestätigung | wie lange nach dem Einschalten auf „an“ gewartet wird, in Sekunden (Voreinstellung 30) |
+| Wartezeit, wenn der DKV-Schalter nicht verfügbar ist | wie lange vor jedem Versuch auf einen verfügbaren Schalter gewartet wird, in Sekunden. Diese Zeit zählt nicht als Versuch. 0 wartet nicht (Voreinstellung 4200) |
+| Diagnose-Sensor „Verbindung zu DKV“ (optional) | der Diagnose-Sensor der Integration, damit die Variable `dkv_failure_reason` den Grund `blocked` melden kann (Voreinstellung leer) |
 | Aktionen, wenn es nicht klappt | optional, zum Beispiel eine Meldung aufs Handy |
 
 So verhält sie sich:
@@ -179,6 +182,56 @@ Die Entity-IDs und der Name des Meldedienstes sind Beispiele und müssen
 angepasst werden. Mit dem festen `tag` ersetzt eine neue Meldung die alte, und
 eine eigene Automation kann sie beim nächsten Anschließen mit der Aktion
 `clear_notification` wieder löschen.
+
+### Wenn der DKV-Schalter nicht verfügbar ist
+
+Ist der Schalter „nicht verfügbar“ (DKV nicht erreichbar, zum Beispiel wegen
+einer Abweisung durch den Schutzdienst, siehe „Der Schalter ist ‚nicht
+verfügbar‘“), wartet die Blaupause vor jedem Versuch darauf, dass er wieder da
+ist. Diese Zeit zählt **nicht** als Versuch, die zehn Versuche sind also nicht
+schon nach 20 Minuten verbraucht. Die Voreinstellung (4200 Sekunden, 70
+Minuten) ist länger als die längste Pause, mit der die Integration nach einer
+Abweisung wieder fragt. Ist der Schalter danach immer noch nicht da, laufen die
+Aktionen „wenn es nicht klappt“.
+
+Ein Neustart von Home Assistant beendet einen laufenden Lauf, und die
+Blaupause startet danach nicht von selbst: Sonst könnte sie nach einem Neustart
+eine neue Session öffnen, obwohl die letzte regulär zu Ende war (Auto voll, aber
+noch angesteckt).
+
+In den Aktionen „wenn es nicht klappt“ steht die Variable
+`dkv_failure_reason` zur Verfügung:
+
+| Wert | Bedeutung |
+| --- | --- |
+| `blocked` | DKV weist die Anfragen ab (nur mit dem optionalen Diagnose-Sensor) |
+| `unavailable` | der Schalter war über die ganze Wartezeit nicht verfügbar |
+| `not_confirmed` | alle Versuche gemacht, die Wallbox hat nicht bestätigt |
+
+Damit lässt sich die Meldung passend wählen. Weist DKV gerade ab, hilft die
+DKV-App womöglich auch nicht, dann ist „Ladekarte an die Wallbox halten“ der
+bessere Hinweis. Ein Beispiel mit einer Auswahl nach dem Grund:
+
+```yaml
+on_failure:
+  - action: notify.mobile_app_mein_handy
+    data:
+      title: DKV-Freischalten fehlgeschlagen
+      message: >-
+        {% if dkv_failure_reason == 'not_confirmed' %}
+          Wallbox nicht freigeschaltet. Bitte in der DKV-App freischalten.
+        {% else %}
+          DKV ist gerade nicht erreichbar. Bitte die Ladekarte an die Wallbox halten.
+        {% endif %}
+      data:
+        tag: dkv_unlock_failed
+```
+
+Der `tag` ist Ihre Sache und steht in Ihren Aktionen: Mit einem festen Wert
+ersetzt jede neue Meldung die alte, und eine eigene Automation kann sie
+beim Anstecken, Abstecken oder Freischalten wieder löschen. Nächtliche
+Meldungen, bei denen niemand handeln kann, gehören ebenfalls in Ihre Aktionen,
+nicht in die Blaupause.
 
 ### Fahrzeugerkennung mit evcc (optional)
 
@@ -259,6 +312,25 @@ Beides sind Annahmen aus einer echten Installation (18,01 und 5,02 EUR, also
 etwa 0,28 € je kWh). DKV sagt nicht, für welchen Zeitraum die Werte gelten.
 Deshalb tragen die Sensoren keinen Zeitraum im Namen. Meldet DKV keine Zahl,
 zeigt der Sensor „unbekannt“.
+
+**Nicht zusätzlich zu evcc ins Energie-Dashboard eintragen.** Läuft die Wallbox
+auch über evcc (zum Beispiel `sensor.evcc_…_charged_energy`), steht der Strom
+dort schon. Trägt man den DKV-Verbrauch zusätzlich als Geräteverbrauch ein,
+wird er doppelt gezählt. Der DKV-Wert taugt als Abrechnungs- und
+Plausibilitätswert, zum Beispiel für die Abweichung zu evcc.
+
+Dazu kommt ein **Diagnose-Sensor** „Verbindung zu DKV“ (`binary_sensor`,
+Klasse „Verbindung“). Er ist „an“, solange die letzte Abfrage bei DKV geklappt
+hat, und „aus“, wenn nicht. Anders als Schalter und Sensoren wird er nie
+„nicht verfügbar“, denn ein Hinweis, der gerade im Fehlerfall verschwindet,
+hilft nicht. Seine Attribute:
+
+| Attribut | Bedeutung |
+| --- | --- |
+| `last_success` | Zeitpunkt der letzten gelungenen Abfrage. Nur gesetzt, solange der Sensor „aus“ ist, sonst würde sich der Zustand alle 30 Sekunden ändern und die Datenbank füllen |
+| `last_error` | Art des letzten Fehlers: `blocked` (vom Schutzdienst abgewiesen), `auth` (Anmeldung ungültig), `transient` (kurze Störung bei DKV), `api` oder `unexpected`. Nie eine Adresse, ein Token oder eine Kontonummer |
+
+Damit lassen sich Automationen und Dashboards bauen, ohne Texte zu lesen.
 
 ## Wie die Integration arbeitet
 
@@ -345,6 +417,30 @@ abgelehnt.
 Es ist etwas Unerwartetes passiert. Die Home-Assistant-Logs prüfen und ein
 Issue mit der Diagnose-Datei eröffnen (siehe unten).
 
+#### „DKV weist die Anfrage ab“
+
+DKV sitzt hinter einem Schutzdienst (Akamai). Er hat die Anfrage von Ihrem
+Home Assistant mit „HTTP 403, Zugriff verweigert“ abgelehnt, noch bevor DKV sie
+gesehen hat. Das liegt weder an einem falschen Code noch an Ihrem Login. Im Log
+steht dazu eine **Referenznummer** (`Referenz 18.…`).
+
+- Nicht mehrfach hintereinander probieren, das kann die Sperre verlängern.
+- Später mit dem **neuen** Anmeldelink aus dem Dialog erneut versuchen.
+- Bei einer erneuten Anmeldung für ein bestehendes Konto nutzt die Integration
+  die gespeicherte Kontonummer weiter, auch wenn genau diese Abfrage abgewiesen
+  wird.
+- Hält es an, bitte ein Issue mit der Diagnose-Datei und der Referenznummer
+  eröffnen (siehe unten).
+
+#### „Anderes DKV-Konto“
+
+Bei der erneuten Anmeldung für eine bestehende Einrichtung wurde mit einem
+anderen DKV-Konto angemeldet. Die Integration tauscht das Konto einer
+bestehenden Einrichtung nicht still aus. Mit dem Konto anmelden, das hier
+eingerichtet ist, und den neuen Anmeldelink aus dem Formular benutzen. Soll
+wirklich ein anderes Konto verwendet werden, die Integration entfernen und neu
+hinzufügen.
+
 #### „Verbindung fehlgeschlagen“
 
 DKV war nicht erreichbar oder hat unerwartet geantwortet. Später erneut
@@ -363,8 +459,22 @@ verwendet, entwerten sich beide.
 #### Der Schalter ist „nicht verfügbar“
 
 Die Statusabfrage bei DKV schlägt fehl (Server nicht erreichbar, Login
-ungültig oder DKV hat etwas geändert). Kurze DKV-Ausfälle ändern den Zustand
-nicht, erst ein harter Fehler macht den Schalter unavailable.
+ungültig, der Schutzdienst vor DKV weist die Anfragen ab oder DKV hat etwas
+geändert). Kurze DKV-Ausfälle ändern den Zustand nicht, erst ein harter Fehler
+macht den Schalter unavailable. Eine Abweisung durch den Schutzdienst (HTTP
+403) verlangt keine neue Anmeldung, die Integration versucht es weiter und
+nimmt den Betrieb wieder auf, sobald DKV die Anfragen annimmt. Sie fragt dann
+nur noch nach 5, nach 15 und danach stündlich, statt alle 30 Sekunden, weil
+weiteres Anfragen eine Sperre verlängern kann. Die Stufe bleibt auch nach einem
+Neustart von Home Assistant erhalten, ein Neustart beginnt also nicht wieder
+im 30-Sekunden-Takt. Auch wenn schon der erste Abruf beim Start abgewiesen
+wird, wird die Integration eingerichtet (die Entitäten sind „nicht
+verfügbar“), statt ständig neu zu starten. Der normale Takt kommt erst nach
+zwei gelungenen Abfragen in Folge zurück, damit ein Schutzdienst, der einzelne
+Anfragen durchlässt, keinen Schwall bekommt. Hält die Abweisung durch alle
+drei Stufen an, zeigt Home Assistant unter *Einstellungen → System →
+Reparaturen* den Hinweis „DKV weist die Anfragen ab“. Der Diagnose-Sensor
+„Verbindung zu DKV“ zeigt in `last_error` den Grund.
 
 #### Switch startet nicht / keine Bestätigung
 
@@ -398,6 +508,7 @@ Home Assistant. Behandle Backups und Log-Ausgaben entsprechend sensibel.
 - Domain: `dkv_at_home`
 - Plattform: `switch`
 - Plattform: `sensor`
+- Plattform: `binary_sensor`
 - `iot_class`: `cloud_polling`
 - Nutzt `requests` (von Home Assistant mitgebracht, keine eigene Abhängigkeit)
 

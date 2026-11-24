@@ -5,7 +5,72 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.4.0] - 2026-11-24
+
+### Added
+
+- **Diagnose-Sensor „Verbindung zu DKV“** (`binary_sensor`, Klasse
+  „Verbindung“, Diagnose). „An“, solange die letzte Abfrage geklappt hat. Er
+  wird nie „nicht verfügbar“. Attribute `last_success` und `last_error` (nur
+  die Art: `blocked`, `auth`, `transient`, `api`, `unexpected`).
+- **Reparatur-Hinweis in Home Assistant**, wenn die Abweisung durch den
+  Schutzdienst vor DKV (HTTP 403) alle drei Stufen der verlangsamten Abfrage
+  überdauert („DKV weist die Anfragen ab“). Er verschwindet von selbst, sobald
+  eine Abfrage wieder klappt.
+- **README**: Hinweis, den DKV-Verbrauch nicht zusätzlich zu evcc ins
+  Energie-Dashboard einzutragen (doppelt gezählt).
+
+- **Blaupause: wartet auf einen verfügbaren DKV-Schalter.** Neue Eingabe
+  „Wartezeit, wenn der DKV-Schalter nicht verfügbar ist“ (Voreinstellung 4200
+  Sekunden, länger als die längste Pause der Integration nach einer
+  Abweisung). Vor jedem Versuch wird gewartet, bis der Schalter wieder da ist,
+  und diese Zeit zählt nicht als Versuch. Vorher waren bei einer Abweisung
+  nach rund 20 Minuten alle zehn Versuche verbraucht, ohne dass einer DKV
+  erreicht hätte. Danach laufen die Aktionen „wenn es nicht klappt“.
+- **Blaupause: Variable `dkv_failure_reason`** in den Aktionen „wenn es nicht
+  klappt“ (`blocked`, `unavailable`, `not_confirmed`) und die optionale
+  Eingabe „Diagnose-Sensor ‚Verbindung zu DKV‘“, damit sich die Meldung nach
+  dem Grund richten kann. Ein Start bei Home Assistant-Start gibt es bewusst
+  nicht (er könnte nach einem Neustart eine neue Session öffnen).
+
+### Fixed
+
+- **Anmeldung scheitert nicht mehr an der Abfrage der Kontonummer.** Die
+  Kontonummer wird zuerst aus dem Zugriffstoken gelesen, ohne Anfrage. Nur wenn
+  sie dort fehlt, fragt die Integration `/userinfo`. Bei einer erneuten
+  Anmeldung für ein bestehendes Konto gilt zusätzlich: Weist DKV genau diese
+  Abfrage ab, bleibt die gespeicherte Kontonummer.
+- **Abweisung durch den Schutzdienst vor DKV (HTTP 403, „Access Denied“) wird
+  erkannt.** Statt einer Seite voller HTML steht im Log ein Satz mit der
+  Referenznummer des Schutzdienstes, und der Dialog zeigt eine eigene
+  Fehlermeldung („DKV weist die Anfrage ab“) mit einem neuen Anmeldelink. Eine
+  Abweisung gilt nicht als abgelaufene Anmeldung und löst keine erneute
+  Anmeldung aus.
+- **Kein Dauerfeuer bei einer Abweisung.** Nach einem 403 fragt die
+  Statusabfrage nur noch nach 5, 15 und dann alle 60 Minuten statt alle 30
+  Sekunden, weil weiteres Anfragen eine Sperre verlängern kann. Die Stufe wird
+  gespeichert und überlebt einen Neustart von Home Assistant. Der normale
+  30-Sekunden-Takt kommt erst nach zwei gelungenen Abfragen in Folge zurück.
+- **Eine Abweisung beim Start** (erster Abruf) beendet die Einrichtung nicht
+  mehr mit „wird wiederholt“. Die Integration wird eingerichtet, die Entitäten
+  sind „nicht verfügbar“, und der Hinweis in den Reparaturen erscheint.
+- **Jeder 403 bei der Statusabfrage gilt als Sperre**, auch einer ohne die
+  Sperrseite des Schutzdienstes (leere oder geänderte Antwort). Die Integration
+  wartet und fragt langsam weiter, statt eine erneute Anmeldung zu verlangen:
+  Die würde die Abfragen ganz anhalten, bis jemand sie durchführt, und läuft
+  selbst gegen denselben Schutzdienst.
+- Der gespeicherte Sperrzustand wird gegen Uhrsprünge begrenzt (nie länger als
+  die größte Stufe) und gilt bei unlesbarem Inhalt als „vorsichtig starten“
+  statt als „nicht gesperrt“.
+- **Erneute Anmeldung nur für dasselbe Konto.** Meldet man sich mit einem
+  anderen DKV-Konto an, bricht der Dialog mit „Anderes DKV-Konto“ ab, die
+  bestehende Einrichtung bleibt unverändert.
+- **Der Schalter löst beim Anlegen keine eigene zusätzliche Abfrage mehr aus**
+  (sie umging das Warten nach einem Neustart).
+- Der Diagnose-Sensor zeigt auch bei einer kurzen Störung bei DKV „aus“ mit
+  dem Grund, `last_success` ist nur gesetzt, solange er „aus“ ist (kein
+  Schreiben in die Datenbank bei jeder Abfrage). Das Gerät aller Entitäten wird
+  an einer Stelle definiert.
 
 ### Changed
 

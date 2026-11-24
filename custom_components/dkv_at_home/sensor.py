@@ -24,6 +24,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
+from .entity import device_info
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -97,12 +98,7 @@ class DkvReimbursementSensor(CoordinatorEntity, SensorEntity):
         username = entry.data["preferred_username"]
         self._attr_unique_id = f"dkv_at_home_{username}_{description.key}"
         # Same device as the switch (identifiers must match exactly).
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, username)},
-            "name": "DKV@Home Wallbox",
-            "manufacturer": "DKV@Home",
-            "model": "At-Home Charger",
-        }
+        self._attr_device_info = device_info(username)
 
     @property
     def native_value(self) -> float | None:

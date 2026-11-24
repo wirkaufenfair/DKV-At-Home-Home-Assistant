@@ -65,6 +65,8 @@ def test_readme_offers_the_import_for_this_blueprint():
         ("retry_delay", "Pause zwischen den Versuchen"),
         ("confirm_wait", "Wartezeit auf die Bestätigung"),
         ("grace_period", "Wartezeit vor dem ersten Versuch"),
+        ("availability_wait", "Wartezeit, wenn der DKV-Schalter nicht verfügbar ist"),
+        ("connection_sensor", "Diagnose-Sensor „Verbindung zu DKV“ (optional)"),
         ("vehicle_sensor", "Fahrzeugerkennung: Sensor mit dem Fahrzeugnamen (optional)"),
         ("vehicle_name", "Fahrzeugerkennung: Name des Firmenfahrzeugs (optional)"),
         ("vehicle_wait", "Fahrzeugerkennung: Wartezeit"),
@@ -80,7 +82,14 @@ def test_readme_names_the_inputs_as_the_blueprint_does(name, label):
 
 @pytest.mark.parametrize(
     "name",
-    ["max_attempts", "retry_delay", "confirm_wait", "grace_period", "vehicle_wait"],
+    [
+        "max_attempts",
+        "retry_delay",
+        "confirm_wait",
+        "grace_period",
+        "vehicle_wait",
+        "availability_wait",
+    ],
 )
 def test_readme_defaults_match_the_blueprint(name):
     default = BLUEPRINT["blueprint"]["input"][name]["default"]
@@ -171,7 +180,7 @@ def test_it_pauses_between_attempts_but_not_before_the_first():
 
 
 def test_it_only_switches_on_when_no_session_runs():
-    start = LOOP[1]
+    start = LOOP[2]
     assert start["if"][0]["state"] == "off"
     assert start["then"][0]["action"] == "switch.turn_on"
     # DKV answers with an error when the wallbox does not confirm
@@ -181,13 +190,13 @@ def test_it_only_switches_on_when_no_session_runs():
 def test_it_waits_for_the_switch_state_before_judging_the_attempt():
     """The state lags; without the wait a running session could be reported
     as a failure after the last attempt."""
-    wait = LOOP[2]
+    wait = LOOP[3]
     assert "wait_template" in wait
     assert wait["continue_on_timeout"] is True
 
 
 def test_it_stops_at_the_first_confirmation():
-    confirmed = LOOP[3]
+    confirmed = LOOP[4]
     assert confirmed["if"][0]["state"] == "on"
     assert "stop" in confirmed["then"][0]
 
@@ -195,7 +204,65 @@ def test_it_stops_at_the_first_confirmation():
 def test_the_failure_actions_run_only_after_the_last_attempt():
     """They come after the repeat, so ``stop`` skips them."""
     assert "repeat" in BLUEPRINT["actions"][3]
-    assert BLUEPRINT["actions"][4]["sequence"] == "!input on_failure"
+    assert BLUEPRINT["actions"][5]["sequence"] == "!input on_failure"
+
+
+def test_before_every_attempt_it_waits_for_an_available_switch():
+    """An attempt on an unavailable switch does nothing and only burns attempts."""
+    step = LOOP[1]
+    assert "availability_wait" in step["if"][0]["value_template"]
+    wait, decide = step["then"]
+    assert "unavailable" in wait["wait_template"]
+    assert wait["continue_on_timeout"] is True
+    assert "unavailable" in decide["if"][0]["value_template"]
+
+
+def test_the_wait_comes_after_the_pause_and_before_the_start():
+    """The pause between attempts first, then the wait, then the attempt."""
+    assert "repeat.index > 1" in LOOP[0]["if"][0]["value_template"]
+    assert "availability_wait" in LOOP[1]["if"][0]["value_template"]
+    assert LOOP[2]["then"][0]["action"] == "switch.turn_on"
+
+
+def test_without_a_switch_in_time_the_failure_actions_run_with_the_reason():
+    decide = LOOP[1]["then"][1]["then"]
+    variables, failure, stop = decide
+    assert "dkv_failure_reason" in variables["variables"]
+    assert "'unavailable'" in variables["variables"]["dkv_failure_reason"]
+    assert failure["sequence"] == "!input on_failure"
+    assert "stop" in stop
+
+
+def test_after_the_last_attempt_the_reason_is_set_before_the_failure_actions():
+    reason = BLUEPRINT["actions"][4]["variables"]["dkv_failure_reason"]
+    assert "'not_confirmed'" in reason
+    assert "'blocked'" in reason
+    assert "last_error" in reason
+
+
+def test_the_diagnostic_sensor_is_optional_and_limited_to_this_integration(consts):
+    entry = BLUEPRINT["blueprint"]["input"]["connection_sensor"]
+    assert entry["default"] == ""
+    assert entry["selector"]["entity"] == {
+        "domain": "binary_sensor",
+        "integration": consts.DOMAIN,
+    }
+
+
+def test_the_wait_is_longer_than_the_longest_pause_of_the_integration():
+    """The integration asks again after a block in steps up to 60 minutes."""
+    assert BLUEPRINT["blueprint"]["input"]["availability_wait"]["default"] > 3600
+
+
+def test_the_blueprint_does_not_start_at_home_assistant_start():
+    """A restart must not open a session after one ended regularly (car full)."""
+    assert all(trigger["trigger"] == "state" for trigger in BLUEPRINT["triggers"])
+
+
+def test_the_readme_explains_the_waiting_and_the_reason():
+    assert "dkv_failure_reason" in README
+    assert "not_confirmed" in README
+    assert "Wartezeit, wenn der DKV-Schalter nicht verfügbar ist" in README
 
 
 # ----------------------------------------------------------------------

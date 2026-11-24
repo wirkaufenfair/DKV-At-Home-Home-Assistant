@@ -10,7 +10,7 @@ import voluptuous as vol  # type: ignore[import]
 from homeassistant import config_entries  # type: ignore[import]
 from homeassistant.core import HomeAssistant  # type: ignore[import]
 
-from .api import DkvApiClient, DkvApiError
+from .api import DkvApiClient, DkvApiError, DkvBlockedError
 from .const import CLIENT_ID, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,8 +29,14 @@ async def _build_entry_from_tokens(
     hass: HomeAssistant,
     refresh_token: str,
     access_token: str | None = None,
+    fallback_username: str | None = None,
 ) -> dict:
-    """Build config entry data from existing token values."""
+    """Build config entry data from existing token values.
+
+    ``fallback_username`` is the account number of an existing entry (new
+    login for the same entry): used when DKV's protection turns the userinfo
+    request away, so a login does not fail on a call it hardly needs.
+    """
     client = DkvApiClient(
         refresh_token=refresh_token,
         app_token="unknown",
@@ -42,9 +48,18 @@ async def _build_entry_from_tokens(
     if not client.access_token:
         await hass.async_add_executor_job(client.validate)
 
-    preferred_username = await hass.async_add_executor_job(
-        client.fetch_preferred_username
-    )
+    try:
+        preferred_username = await hass.async_add_executor_job(
+            client.fetch_preferred_username
+        )
+    except DkvBlockedError:
+        if not fallback_username:
+            raise
+        _LOGGER.warning(
+            "DKV hat die Abfrage der Kontonummer abgewiesen, die "
+            "gespeicherte Kontonummer wird weiterverwendet"
+        )
+        preferred_username = fallback_username
 
     return {
         "preferred_username": preferred_username,
@@ -105,6 +120,7 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
     def __init__(self) -> None:
         """Initialize flow state."""
         self._reauth_entry: config_entries.ConfigEntry | None = None
+        self._known_username: str | None = None
         self._auth_state: str | None = None
         self._auth_url: str | None = None
         self._code_verifier: str | None = None
@@ -167,8 +183,12 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             entry_data = await _build_entry_from_tokens(
                 self.hass,
                 refresh_token=refresh_token,
+                fallback_username=self._known_username,
             )
             return entry_data, {}
+        except DkvBlockedError as exc:
+            _LOGGER.error("DKV weist die Anfrage ab: %s", exc)
+            return None, {"base": "blocked"}
         except DkvApiError as exc:
             _LOGGER.error("Refresh-Token ungültig: %s", exc)
             if "invalid_grant" in str(exc):
@@ -225,8 +245,14 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
                 self.hass,
                 refresh_token=client.refresh_token,
                 access_token=client.access_token,
+                fallback_username=self._known_username,
             )
             return entry_data, {}
+        except DkvBlockedError as exc:
+            # The code may already be used up: always start with a new link.
+            _LOGGER.error("DKV weist die Anfrage ab: %s", exc)
+            self._reset_auth_url()
+            return None, {"base": "blocked"}
         except DkvApiError as exc:
             exc_str = str(exc)
             _LOGGER.error("Code-Austausch fehlgeschlagen: %s", exc_str)
@@ -267,6 +293,10 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
         self._reauth_entry = self.hass.config_entries.async_get_entry(
             self.context["entry_id"]
         )
+        if self._reauth_entry is not None:
+            self._known_username = self._reauth_entry.data.get(
+                "preferred_username"
+            )
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(
@@ -284,10 +314,24 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             if not errors and entry_data is not None:
                 if self._reauth_entry is None:
                     return self.async_abort(reason="unknown")
-                return self.async_update_reload_and_abort(
-                    self._reauth_entry,
-                    data_updates=entry_data,
-                )
+                if (
+                    self._known_username
+                    and entry_data["preferred_username"]
+                    != self._known_username
+                ):
+                    # The new login belongs to another account: never swap
+                    # the account of an existing entry silently.
+                    _LOGGER.error(
+                        "Die Anmeldung gehört zu einem anderen DKV-Konto "
+                        "als die bestehende Einrichtung"
+                    )
+                    self._reset_auth_url()
+                    errors = {"base": "wrong_account"}
+                else:
+                    return self.async_update_reload_and_abort(
+                        self._reauth_entry,
+                        data_updates=entry_data,
+                    )
 
         # A failed attempt may have discarded the link (expired code):
         # always show a valid one.

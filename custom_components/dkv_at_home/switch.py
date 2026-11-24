@@ -13,6 +13,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import DkvApiClient, DkvApiError
 from .const import DOMAIN
+from .entity import device_info
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,7 +34,9 @@ async def async_setup_entry(
                 entry=entry,
             )
         ],
-        update_before_add=True,
+        # The data comes from the coordinator's first poll. An extra request
+        # here would also skip the wait after a block (see __init__.py).
+        update_before_add=False,
     )
 
 
@@ -65,12 +68,7 @@ class DkvChargingSwitch(CoordinatorEntity, SwitchEntity):
         self._entry = entry
         username = entry.data["preferred_username"]
         self._attr_unique_id = f"dkv_at_home_{username}"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, username)},
-            "name": "DKV@Home Wallbox",
-            "manufacturer": "DKV@Home",
-            "model": "At-Home Charger",
-        }
+        self._attr_device_info = device_info(username)
 
     # ------------------------------------------------------------------
     # State
