@@ -107,13 +107,17 @@ async def setup_entry(hass, entry):
 async def let_refresh_run(hass):
     """Home Assistant delays a requested refresh by its cooldown (10 s)."""
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=30))
-    await hass.async_block_till_done()
+    # The refresh runs as a background task: wait for it explicitly, or a test
+    # may read the state before the poll is done (seen in the Linux CI only).
+    await hass.async_block_till_done(wait_background_tasks=True)
 
 
 async def next_poll(hass):
     """Let the 30 second status poll of the coordinator run once."""
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=45))
-    await hass.async_block_till_done()
+    # A scheduled poll is a background task: block_till_done() alone does not
+    # wait for it (seen in the Linux CI only), so wait for it explicitly.
+    await hass.async_block_till_done(wait_background_tasks=True)
 
 
 def switch_id(hass):
