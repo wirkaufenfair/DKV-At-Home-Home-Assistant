@@ -271,12 +271,12 @@ Dazu kommt ein **Diagnose-Sensor** „Verbindung zu DKV“ (`binary_sensor`,
 Klasse „Verbindung“). Er ist „an“, solange die letzte Abfrage bei DKV geklappt
 hat, und „aus“, wenn nicht. Anders als Schalter und Sensoren wird er nie
 „nicht verfügbar“, denn ein Hinweis, der gerade im Fehlerfall verschwindet,
-hilft nicht. Attribute:
+hilft nicht. Seine Attribute:
 
-- `last_success`: Zeitpunkt der letzten gelungenen Abfrage
-- `last_error`: Art des letzten Fehlers (`blocked` = vom Schutzdienst
-  abgewiesen, `auth` = Anmeldung ungültig, `transient` = kurze Störung bei DKV,
-  `api` oder `unexpected`), nie eine Adresse, ein Token oder eine Kontonummer
+| Attribut | Bedeutung |
+| --- | --- |
+| `last_success` | Zeitpunkt der letzten gelungenen Abfrage |
+| `last_error` | Art des letzten Fehlers: `blocked` (vom Schutzdienst abgewiesen), `auth` (Anmeldung ungültig), `transient` (kurze Störung bei DKV), `api` oder `unexpected`. Nie eine Adresse, ein Token oder eine Kontonummer |
 
 Damit lassen sich Automationen und Dashboards bauen, ohne Texte zu lesen.
 

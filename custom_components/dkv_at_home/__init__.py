@@ -124,6 +124,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = DataUpdateCoordinator(
         hass,
         _LOGGER,
+        # Home Assistant wants the entry passed explicitly; relying on the
+        # context variable is deprecated and an error in newer versions.
+        config_entry=entry,
         name=DOMAIN,
         update_method=async_update_data,
         update_interval=timedelta(seconds=POLL_INTERVAL_SECONDS),
