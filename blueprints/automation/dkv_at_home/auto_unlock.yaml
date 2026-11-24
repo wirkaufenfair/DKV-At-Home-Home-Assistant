@@ -11,6 +11,23 @@ blueprint:
     Session, passiert nichts. Geht der Sensor auf „aus“, enden die Versuche.
 
 
+    Ist der DKV-Schalter „nicht verfügbar“ (DKV nicht erreichbar, zum Beispiel
+    wegen einer Sperre), wartet die Blaupause vor jedem Versuch darauf, dass er
+    wieder verfügbar wird, und zählt diese Zeit nicht als Versuch. Ist er nach
+    der eingestellten Wartezeit immer noch nicht da, laufen die Aktionen
+    „wenn es nicht klappt“. Ein Neustart von Home Assistant beendet einen
+    laufenden Lauf.
+
+
+    In den Aktionen „wenn es nicht klappt“ steht die Variable
+    `dkv_failure_reason` bereit: `blocked` (DKV weist die Anfragen ab, nur mit
+    dem optionalen Diagnose-Sensor), `unavailable` (Schalter nicht verfügbar)
+    oder `not_confirmed` (alle Versuche gemacht, die Wallbox hat nicht
+    bestätigt). Damit lässt sich die Meldung passend wählen, zum Beispiel
+    „Ladekarte an die Wallbox halten“ statt „in der DKV-App freischalten“, wenn
+    DKV gerade sperrt.
+
+
     **Wichtig bei gemischter Nutzung:** Die Freischaltung läuft über die Karte
     des Kontos, und beim Firmenwagen wird jede kWh erstattet. Laden an
     derselben Wallbox auch private Fahrzeuge, darf der Sensor nur „an“
@@ -88,6 +105,33 @@ blueprint:
           max: 300
           unit_of_measurement: s
           mode: box
+    availability_wait:
+      name: Wartezeit, wenn der DKV-Schalter nicht verfügbar ist
+      description: >
+        Ist der Schalter „nicht verfügbar“ (DKV nicht erreichbar), wartet die
+        Blaupause vor jedem Versuch so lange darauf, dass er wieder da ist.
+        Diese Zeit zählt nicht als Versuch. Danach laufen die Aktionen „wenn es
+        nicht klappt“. Die Voreinstellung ist länger als die längste Pause, mit
+        der die Integration nach einer Sperre wieder fragt (60 Minuten).
+        0 wartet nicht.
+      default: 4200
+      selector:
+        number:
+          min: 0
+          max: 21600
+          unit_of_measurement: s
+          mode: box
+    connection_sensor:
+      name: "Diagnose-Sensor „Verbindung zu DKV“ (optional)"
+      description: >
+        Optional, aus in der Voreinstellung. Der Diagnose-Sensor der
+        Integration. Damit kann die Variable `dkv_failure_reason` den Grund
+        `blocked` melden, wenn DKV die Anfragen abweist.
+      default: ""
+      selector:
+        entity:
+          domain: binary_sensor
+          integration: dkv_at_home
     vehicle_sensor:
       name: "Fahrzeugerkennung: Sensor mit dem Fahrzeugnamen (optional)"
       description: >
@@ -143,6 +187,8 @@ variables:
   max_attempts: !input max_attempts
   retry_delay: !input retry_delay
   confirm_wait: !input confirm_wait
+  availability_wait: !input availability_wait
+  connection_sensor: !input connection_sensor
   grace_period: !input grace_period
   vehicle_sensor: !input vehicle_sensor
   vehicle_name: !input vehicle_name
@@ -203,6 +249,30 @@ actions:
           then:
             - delay:
                 seconds: "{{ retry_delay | int }}"
+        # Ist der Schalter "nicht verfügbar" (DKV nicht erreichbar, zum Beispiel
+        # gesperrt), nützt ein Versuch nichts und würde nur Versuche verbrauchen.
+        # Hier wird stattdessen gewartet; die Zeit zählt nicht als Versuch. Ist
+        # der Schalter nach der Wartezeit immer noch nicht da, endet der Lauf
+        # mit den Aktionen "wenn es nicht klappt".
+        - if:
+            - condition: template
+              value_template: "{{ availability_wait | int > 0 }}"
+          then:
+            - wait_template: "{{ states(dkv_switch) not in ['unavailable', 'unknown'] }}"
+              timeout: "{{ availability_wait | int }}"
+              continue_on_timeout: true
+            - if:
+                - condition: template
+                  value_template: "{{ states(dkv_switch) in ['unavailable', 'unknown'] }}"
+              then:
+                - variables:
+                    dkv_failure_reason: >-
+                      {{ 'blocked' if connection_sensor != ''
+                         and state_attr(connection_sensor, 'last_error') == 'blocked'
+                         else 'unavailable' }}
+                - alias: Es hat nicht geklappt (Schalter nicht verfügbar)
+                  sequence: !input on_failure
+                - stop: DKV-Schalter nicht verfügbar
         # Nur einschalten, wenn noch keine Session läuft.
         - if:
             - condition: state
@@ -227,5 +297,11 @@ actions:
               state: "on"
           then:
             - stop: Wallbox freigeschaltet
+  # Warum es nicht geklappt hat, für die Aktionen unten (siehe Beschreibung).
+  - variables:
+      dkv_failure_reason: >-
+        {{ 'blocked' if connection_sensor != ''
+           and state_attr(connection_sensor, 'last_error') == 'blocked'
+           else 'not_confirmed' }}
   - alias: Es hat nicht geklappt
     sequence: !input on_failure

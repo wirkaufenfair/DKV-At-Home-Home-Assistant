@@ -20,6 +20,19 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - **README**: Hinweis, den DKV-Verbrauch nicht zusätzlich zu evcc ins
   Energie-Dashboard einzutragen (doppelt gezählt).
 
+- **Blaupause: wartet auf einen verfügbaren DKV-Schalter.** Neue Eingabe
+  „Wartezeit, wenn der DKV-Schalter nicht verfügbar ist“ (Voreinstellung 4200
+  Sekunden, länger als die längste Pause der Integration nach einer
+  Abweisung). Vor jedem Versuch wird gewartet, bis der Schalter wieder da ist,
+  und diese Zeit zählt nicht als Versuch. Vorher waren bei einer Abweisung
+  nach rund 20 Minuten alle zehn Versuche verbraucht, ohne dass einer DKV
+  erreicht hätte. Danach laufen die Aktionen „wenn es nicht klappt“.
+- **Blaupause: Variable `dkv_failure_reason`** in den Aktionen „wenn es nicht
+  klappt“ (`blocked`, `unavailable`, `not_confirmed`) und die optionale
+  Eingabe „Diagnose-Sensor ‚Verbindung zu DKV‘“, damit sich die Meldung nach
+  dem Grund richten kann. Ein Start bei Home Assistant-Start gibt es bewusst
+  nicht (er könnte nach einem Neustart eine neue Session öffnen).
+
 ### Fixed
 
 - **Anmeldung scheitert nicht mehr an der Abfrage der Kontonummer.** Die

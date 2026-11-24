@@ -15,6 +15,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
+from homeassistant.helpers import entity_registry as er
 from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
@@ -22,6 +23,8 @@ from pytest_homeassistant_custom_component.common import (
     async_fire_time_changed,
 )
 from test_integration import FakeCharger, make_entry, setup_entry, switch_id
+
+from custom_components.dkv_at_home.const import DOMAIN
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 BLUEPRINT = ROOT / "blueprints" / "automation" / "dkv_at_home" / "auto_unlock.yaml"
@@ -50,7 +53,9 @@ async def stop_automations(hass):
         await hass.async_block_till_done()
 
 
-async def setup_blueprint(hass, attempts=3, grace=0, detection=None):
+async def setup_blueprint(
+    hass, attempts=3, grace=0, detection=None, extra=None
+):
     """Create an automation from the blueprint, as the UI does."""
     assert await async_setup_component(
         hass,
@@ -69,7 +74,15 @@ async def setup_blueprint(hass, attempts=3, grace=0, detection=None):
                             "confirm_wait": 1,  # real seconds in the tests
                             "grace_period": grace,
                             **(detection or {}),
-                            "on_failure": [{"event": FAILED_EVENT}],
+                            **(extra or {}),
+                            "on_failure": [
+                                {
+                                    "event": FAILED_EVENT,
+                                    "event_data": {
+                                        "reason": "{{ dkv_failure_reason }}"
+                                    },
+                                }
+                            ],
                         },
                     },
                 }
@@ -165,6 +178,7 @@ async def test_gives_up_and_runs_the_failure_actions(hass, http):
     await until(hass, lambda: len(failed) == 1, pause_passes=True)
 
     assert charger.start_calls == 3
+    assert failed[0].data["reason"] == "not_confirmed"
 
 
 async def test_unplugging_the_car_ends_the_attempts(hass, http):
@@ -281,3 +295,90 @@ async def test_without_a_vehicle_sensor_the_detection_is_off(hass, http):
 
     hass.states.async_set(CAR, "on")
     await until(hass, lambda: charger.start_calls == 1, pause_passes=True)
+
+
+# ----------------------------------------------------------------------
+# An unavailable switch (DKV unreachable, for example blocked)
+# ----------------------------------------------------------------------
+
+
+def connection_id(hass):
+    return er.async_get(hass).async_get_entity_id(
+        "binary_sensor", DOMAIN, "dkv_at_home_100000000001_connection"
+    )
+
+
+async def test_an_unavailable_switch_does_not_use_up_the_attempts(hass, http):
+    """One attempt only, and the switch is gone for a while: it must still work."""
+    charger = FakeCharger(http)
+    charger.status_error = "blocked"  # DKV turns the requests away at the start
+    hass.states.async_set(CAR, "off")
+    await setup_entry(hass, make_entry())
+    assert hass.states.get(switch_id(hass)).state == "unavailable"
+    await setup_blueprint(hass, attempts=1, extra={"availability_wait": 900})
+
+    hass.states.async_set(CAR, "on")
+    await asyncio.sleep(0.3)
+    assert charger.start_calls == 0  # waiting, not trying on a dead switch
+
+    charger.status_error = None  # the block is over
+    for _ in range(600):
+        if charger.start_calls:
+            break
+        # the slowed poll of the integration (5 minutes) finds DKV again
+        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=6))
+        await asyncio.sleep(0.02)
+    await until(hass, lambda: hass.states.get(switch_id(hass)).state == "on")
+
+    assert charger.start_calls == 1  # the single attempt was still there
+
+
+async def test_an_unavailable_switch_ends_with_the_failure_actions(hass, http):
+    charger = FakeCharger(http)
+    charger.status_error = "blocked"
+    hass.states.async_set(CAR, "off")
+    await setup_entry(hass, make_entry())
+    await setup_blueprint(hass, attempts=3, extra={"availability_wait": 2})
+    failed = async_capture_events(hass, FAILED_EVENT)
+
+    hass.states.async_set(CAR, "on")
+    await until(hass, lambda: len(failed) == 1)
+
+    assert failed[0].data["reason"] == "unavailable"
+    assert charger.start_calls == 0  # nothing was tried on the dead switch
+
+
+async def test_with_the_diagnostic_sensor_the_reason_is_blocked(hass, http):
+    charger = FakeCharger(http)
+    charger.status_error = "blocked"
+    hass.states.async_set(CAR, "off")
+    await setup_entry(hass, make_entry())
+    await setup_blueprint(
+        hass,
+        attempts=3,
+        extra={"availability_wait": 2, "connection_sensor": connection_id(hass)},
+    )
+    failed = async_capture_events(hass, FAILED_EVENT)
+
+    hass.states.async_set(CAR, "on")
+    await until(hass, lambda: len(failed) == 1)
+
+    assert failed[0].data["reason"] == "blocked"
+
+
+async def test_without_waiting_an_unavailable_switch_uses_up_the_attempts(
+    hass, http
+):
+    """Wait time 0 keeps the old behaviour: no waiting, attempts are tried."""
+    charger = FakeCharger(http)
+    charger.status_error = "blocked"
+    hass.states.async_set(CAR, "off")
+    await setup_entry(hass, make_entry())
+    await setup_blueprint(hass, attempts=2, extra={"availability_wait": 0})
+    failed = async_capture_events(hass, FAILED_EVENT)
+
+    hass.states.async_set(CAR, "on")
+    await until(hass, lambda: len(failed) == 1, pause_passes=True)
+
+    assert failed[0].data["reason"] == "not_confirmed"
+    assert charger.start_calls == 0  # nothing to start: the switch was never off

@@ -134,6 +134,8 @@ Danach eine Automation aus der Blaupause anlegen. Die Eingaben:
 | Fahrzeugerkennung: Wartezeit | wie lange auf die Erkennung gewartet wird, in Sekunden (Voreinstellung 60) |
 | Wartezeit vor dem ersten Versuch | optional: Zeit in Sekunden, in der man noch eine andere Karte (zum Beispiel die Partnerkarte) vorhalten kann; 0 startet sofort (Voreinstellung 0) |
 | Wartezeit auf die Bestätigung | wie lange nach dem Einschalten auf „an“ gewartet wird, in Sekunden (Voreinstellung 30) |
+| Wartezeit, wenn der DKV-Schalter nicht verfügbar ist | wie lange vor jedem Versuch auf einen verfügbaren Schalter gewartet wird, in Sekunden. Diese Zeit zählt nicht als Versuch. 0 wartet nicht (Voreinstellung 4200) |
+| Diagnose-Sensor „Verbindung zu DKV“ (optional) | der Diagnose-Sensor der Integration, damit die Variable `dkv_failure_reason` den Grund `blocked` melden kann (Voreinstellung leer) |
 | Aktionen, wenn es nicht klappt | optional, zum Beispiel eine Meldung aufs Handy |
 
 So verhält sie sich:
@@ -180,6 +182,56 @@ Die Entity-IDs und der Name des Meldedienstes sind Beispiele und müssen
 angepasst werden. Mit dem festen `tag` ersetzt eine neue Meldung die alte, und
 eine eigene Automation kann sie beim nächsten Anschließen mit der Aktion
 `clear_notification` wieder löschen.
+
+### Wenn der DKV-Schalter nicht verfügbar ist
+
+Ist der Schalter „nicht verfügbar“ (DKV nicht erreichbar, zum Beispiel wegen
+einer Abweisung durch den Schutzdienst, siehe „Der Schalter ist ‚nicht
+verfügbar‘“), wartet die Blaupause vor jedem Versuch darauf, dass er wieder da
+ist. Diese Zeit zählt **nicht** als Versuch, die zehn Versuche sind also nicht
+schon nach 20 Minuten verbraucht. Die Voreinstellung (4200 Sekunden, 70
+Minuten) ist länger als die längste Pause, mit der die Integration nach einer
+Abweisung wieder fragt. Ist der Schalter danach immer noch nicht da, laufen die
+Aktionen „wenn es nicht klappt“.
+
+Ein Neustart von Home Assistant beendet einen laufenden Lauf, und die
+Blaupause startet danach nicht von selbst: Sonst könnte sie nach einem Neustart
+eine neue Session öffnen, obwohl die letzte regulär zu Ende war (Auto voll, aber
+noch angesteckt).
+
+In den Aktionen „wenn es nicht klappt“ steht die Variable
+`dkv_failure_reason` zur Verfügung:
+
+| Wert | Bedeutung |
+| --- | --- |
+| `blocked` | DKV weist die Anfragen ab (nur mit dem optionalen Diagnose-Sensor) |
+| `unavailable` | der Schalter war über die ganze Wartezeit nicht verfügbar |
+| `not_confirmed` | alle Versuche gemacht, die Wallbox hat nicht bestätigt |
+
+Damit lässt sich die Meldung passend wählen. Weist DKV gerade ab, hilft die
+DKV-App womöglich auch nicht, dann ist „Ladekarte an die Wallbox halten“ der
+bessere Hinweis. Ein Beispiel mit einer Auswahl nach dem Grund:
+
+```yaml
+on_failure:
+  - action: notify.mobile_app_mein_handy
+    data:
+      title: DKV-Freischalten fehlgeschlagen
+      message: >-
+        {% if dkv_failure_reason == 'not_confirmed' %}
+          Wallbox nicht freigeschaltet. Bitte in der DKV-App freischalten.
+        {% else %}
+          DKV ist gerade nicht erreichbar. Bitte die Ladekarte an die Wallbox halten.
+        {% endif %}
+      data:
+        tag: dkv_unlock_failed
+```
+
+Der `tag` ist Ihre Sache und steht in Ihren Aktionen: Mit einem festen Wert
+ersetzt jede neue Meldung die alte, und eine eigene Automation kann sie
+beim Anstecken, Abstecken oder Freischalten wieder löschen. Nächtliche
+Meldungen, bei denen niemand handeln kann, gehören ebenfalls in Ihre Aktionen,
+nicht in die Blaupause.
 
 ### Fahrzeugerkennung mit evcc (optional)
 
