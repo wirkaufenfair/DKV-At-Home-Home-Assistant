@@ -29,5 +29,11 @@
       "reauth_successful": "Erneute Anmeldung erfolgreich.",
       "unknown": "Unbekannter Fehler. Bitte erneut versuchen."
     }
+  },
+  "issues": {
+    "dkv_blocked": {
+      "title": "DKV weist die Anfragen ab",
+      "description": "Der Schutzdienst vor DKV (Akamai) weist die Anfragen dieses Home Assistant seit längerem mit HTTP 403 ab. Die Anmeldung ist davon nicht betroffen, die Integration versucht es weiter, inzwischen nur noch stündlich, und nimmt den Betrieb von selbst wieder auf, sobald DKV die Anfragen annimmt. Bis dahin ist der Schalter nicht verfügbar: Freischalten in der DKV-App oder mit der Karte. Im Log steht eine Referenznummer des Schutzdienstes (`Referenz 18.…`), die man dem DKV-Support nennen kann."
+    }
   }
 }

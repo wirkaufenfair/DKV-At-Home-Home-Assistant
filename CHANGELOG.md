@@ -5,7 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
-## [1.3.1] - 2026-11-24
+## [1.4.0] - 2026-11-24
+
+### Added
+
+- **Diagnose-Sensor „Verbindung zu DKV“** (`binary_sensor`, Klasse
+  „Verbindung“, Diagnose). „An“, solange die letzte Abfrage geklappt hat. Er
+  wird nie „nicht verfügbar“. Attribute `last_success` und `last_error` (nur
+  die Art: `blocked`, `auth`, `transient`, `api`, `unexpected`).
+- **Reparatur-Hinweis in Home Assistant**, wenn die Abweisung durch den
+  Schutzdienst vor DKV (HTTP 403) alle drei Stufen der verlangsamten Abfrage
+  überdauert („DKV weist die Anfragen ab“). Er verschwindet von selbst, sobald
+  eine Abfrage wieder klappt.
+- **README**: Hinweis, den DKV-Verbrauch nicht zusätzlich zu evcc ins
+  Energie-Dashboard einzutragen (doppelt gezählt).
 
 ### Fixed
 

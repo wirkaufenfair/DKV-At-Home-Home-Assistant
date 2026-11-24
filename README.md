@@ -12,6 +12,7 @@ einzubinden und einen Ladevorgang per Switch zu starten.
 - Anmeldung über den Login von DKV (OAuth mit PKCE), langlebiger Token
 - Entität: ein `switch` zum Starten und Stoppen des Ladevorgangs
 - Zwei Sensoren: Verbrauch und Erstattung, wie DKV sie führt
+- Diagnose-Sensor „Verbindung zu DKV“ mit Zeitpunkt und Art des letzten Fehlers
 - Blaupause für eine Automation, die die Wallbox beim Anschließen freischaltet
 - Diagnose-Download für Fehlerberichte (ohne Tokens und Kennungen)
 - Statusabfrage via Coordinator (Polling alle 30 Sekunden)
@@ -260,6 +261,25 @@ etwa 0,28 € je kWh). DKV sagt nicht, für welchen Zeitraum die Werte gelten.
 Deshalb tragen die Sensoren keinen Zeitraum im Namen. Meldet DKV keine Zahl,
 zeigt der Sensor „unbekannt“.
 
+**Nicht zusätzlich zu evcc ins Energie-Dashboard eintragen.** Läuft die Wallbox
+auch über evcc (zum Beispiel `sensor.evcc_…_charged_energy`), steht der Strom
+dort schon. Trägt man den DKV-Verbrauch zusätzlich als Geräteverbrauch ein,
+wird er doppelt gezählt. Der DKV-Wert taugt als Abrechnungs- und
+Plausibilitätswert, zum Beispiel für die Abweichung zu evcc.
+
+Dazu kommt ein **Diagnose-Sensor** „Verbindung zu DKV“ (`binary_sensor`,
+Klasse „Verbindung“). Er ist „an“, solange die letzte Abfrage bei DKV geklappt
+hat, und „aus“, wenn nicht. Anders als Schalter und Sensoren wird er nie
+„nicht verfügbar“, denn ein Hinweis, der gerade im Fehlerfall verschwindet,
+hilft nicht. Attribute:
+
+- `last_success`: Zeitpunkt der letzten gelungenen Abfrage
+- `last_error`: Art des letzten Fehlers (`blocked` = vom Schutzdienst
+  abgewiesen, `auth` = Anmeldung ungültig, `transient` = kurze Störung bei DKV,
+  `api` oder `unexpected`), nie eine Adresse, ein Token oder eine Kontonummer
+
+Damit lassen sich Automationen und Dashboards bauen, ohne Texte zu lesen.
+
 ## Wie die Integration arbeitet
 
 - Bei Updates wird zuerst das Access-Token per Refresh erneuert
@@ -382,7 +402,12 @@ ungültig, der Schutzdienst vor DKV weist die Anfragen ab oder DKV hat etwas
 geändert). Kurze DKV-Ausfälle ändern den Zustand nicht, erst ein harter Fehler
 macht den Schalter unavailable. Eine Abweisung durch den Schutzdienst (HTTP
 403) verlangt keine neue Anmeldung, die Integration versucht es weiter und
-nimmt den Betrieb wieder auf, sobald DKV die Anfragen annimmt.
+nimmt den Betrieb wieder auf, sobald DKV die Anfragen annimmt. Sie fragt dann
+nur noch nach 5, nach 15 und danach stündlich, statt alle 30 Sekunden, weil
+weiteres Anfragen eine Sperre verlängern kann. Hält die Abweisung durch alle
+drei Stufen an, zeigt Home Assistant unter *Einstellungen → System →
+Reparaturen* den Hinweis „DKV weist die Anfragen ab“. Der Diagnose-Sensor
+„Verbindung zu DKV“ zeigt in `last_error` den Grund.
 
 #### Switch startet nicht / keine Bestätigung
 
@@ -416,6 +441,7 @@ Home Assistant. Behandle Backups und Log-Ausgaben entsprechend sensibel.
 - Domain: `dkv_at_home`
 - Plattform: `switch`
 - Plattform: `sensor`
+- Plattform: `binary_sensor`
 - `iot_class`: `cloud_polling`
 - Nutzt `requests` (von Home Assistant mitgebracht, keine eigene Abhängigkeit)
 
