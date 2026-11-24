@@ -323,6 +323,13 @@ class DkvApiClient:
                 f"(HTTP {r.status_code}). Bitte später erneut versuchen."
             )
         _raise_if_blocked(r)
+        if r.status_code == 403:
+            # Not the shield's page: the server itself says "not allowed".
+            # Waiting does not help, a new login might.
+            raise DkvAuthError(
+                "Zugriff verweigert (HTTP 403). Bitte Integration neu "
+                "verbinden."
+            )
         r.raise_for_status()
         data = r.json()
         self._log_shape("charge-points", data)
@@ -360,6 +367,13 @@ class DkvApiClient:
                 f"(HTTP {r.status_code}). Bitte später erneut versuchen."
             )
         _raise_if_blocked(r)
+        if r.status_code == 403:
+            # Not the shield's page: the server itself says "not allowed".
+            # Waiting does not help, a new login might.
+            raise DkvAuthError(
+                "Zugriff verweigert (HTTP 403). Bitte Integration neu "
+                "verbinden."
+            )
         r.raise_for_status()
         data = r.json()
         self._log_shape("service-card", data)

@@ -149,6 +149,7 @@ ERROR_HEADLINES = {
     "invalid_input": "Ungültige Eingabe",
     "invalid_token": "Refresh-Token ist ungültig",
     "unknown": "Unbekannter Fehler",
+    "wrong_account": "anderen DKV-Konto",
 }
 
 

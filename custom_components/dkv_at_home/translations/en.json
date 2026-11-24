@@ -22,7 +22,8 @@
       "code_expired": "Code expired or already used – a new login link has been generated. Please click the new link FROM THE FORM and sign in again!",
       "invalid_input": "Invalid input. Please paste the full redirect URL (with ?code=…) or a refresh token (starts with 'eyJ').",
       "unknown": "Unknown error. Check the HA logs for details.",
-      "invalid_token": "The pasted refresh token is invalid or has expired. Please log in again and paste the redirect URL."
+      "invalid_token": "The pasted refresh token is invalid or has expired. Please log in again and paste the redirect URL.",
+      "wrong_account": "The login belongs to a different DKV account than the existing setup. Please sign in with the account that is set up here and use the new login link from the form."
     },
     "abort": {
       "already_configured": "DKV@Home is already configured.",
@@ -33,7 +34,7 @@
   "issues": {
     "dkv_blocked": {
       "title": "DKV is turning requests away",
-      "description": "The protection service in front of DKV (Akamai) has been turning away the requests of this Home Assistant with HTTP 403 for some time. The login is not affected: the integration keeps trying, now only once an hour, and resumes by itself as soon as DKV accepts the requests. Until then the switch is unavailable: unlock in the DKV app or with the card. The log holds a reference number of the protection service (`Referenz 18.…`) that can be given to DKV support."
+      "description": "The protection service in front of DKV (Akamai) has been turning away the requests of this Home Assistant with HTTP 403 for some time. The login is not affected: the integration keeps trying, now only once an hour, and resumes by itself as soon as DKV accepts the requests. Until then the switch is unavailable: unlock in the DKV app or with the DKV charge card at the wallbox. The log holds a reference number of the protection service (`Referenz 18.…`) that can be given to DKV support."
     }
   }
 }

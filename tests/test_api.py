@@ -389,6 +389,21 @@ class TestLogin:
             client.fetch_preferred_username()
         assert not isinstance(err.value, api_module.DkvBlockedError)
 
+    def test_forbidden_status_poll_is_an_auth_error(
+        self, http, client, api_module
+    ):
+        """Not the shield's page: no waiting, a new login is the way."""
+        http.add("GET", "charge-points", FakeResponse(403, text="forbidden"))
+        with pytest.raises(api_module.DkvAuthError):
+            client._get_charge_point()
+
+    def test_blocked_status_poll_is_a_blocked_error(
+        self, http, client, api_module
+    ):
+        http.add("GET", "charge-points", FakeResponse(403, text=BLOCKED_PAGE))
+        with pytest.raises(api_module.DkvBlockedError):
+            client._get_charge_point()
+
     def test_validate_refreshes_the_token(self, http, client):
         http.add("POST", "openid-connect/token", token_response("refresh-7"))
         client.validate()

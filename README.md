@@ -275,7 +275,7 @@ hilft nicht. Seine Attribute:
 
 | Attribut | Bedeutung |
 | --- | --- |
-| `last_success` | Zeitpunkt der letzten gelungenen Abfrage |
+| `last_success` | Zeitpunkt der letzten gelungenen Abfrage. Nur gesetzt, solange der Sensor „aus“ ist, sonst würde sich der Zustand alle 30 Sekunden ändern und die Datenbank füllen |
 | `last_error` | Art des letzten Fehlers: `blocked` (vom Schutzdienst abgewiesen), `auth` (Anmeldung ungültig), `transient` (kurze Störung bei DKV), `api` oder `unexpected`. Nie eine Adresse, ein Token oder eine Kontonummer |
 
 Damit lassen sich Automationen und Dashboards bauen, ohne Texte zu lesen.
@@ -380,6 +380,15 @@ steht dazu eine **Referenznummer** (`Referenz 18.…`).
 - Hält es an, bitte ein Issue mit der Diagnose-Datei und der Referenznummer
   eröffnen (siehe unten).
 
+#### „Anderes DKV-Konto“
+
+Bei der erneuten Anmeldung für eine bestehende Einrichtung wurde mit einem
+anderen DKV-Konto angemeldet. Die Integration tauscht das Konto einer
+bestehenden Einrichtung nicht still aus. Mit dem Konto anmelden, das hier
+eingerichtet ist, und den neuen Anmeldelink aus dem Formular benutzen. Soll
+wirklich ein anderes Konto verwendet werden, die Integration entfernen und neu
+hinzufügen.
+
 #### „Verbindung fehlgeschlagen“
 
 DKV war nicht erreichbar oder hat unerwartet geantwortet. Später erneut
@@ -404,7 +413,13 @@ macht den Schalter unavailable. Eine Abweisung durch den Schutzdienst (HTTP
 403) verlangt keine neue Anmeldung, die Integration versucht es weiter und
 nimmt den Betrieb wieder auf, sobald DKV die Anfragen annimmt. Sie fragt dann
 nur noch nach 5, nach 15 und danach stündlich, statt alle 30 Sekunden, weil
-weiteres Anfragen eine Sperre verlängern kann. Hält die Abweisung durch alle
+weiteres Anfragen eine Sperre verlängern kann. Die Stufe bleibt auch nach einem
+Neustart von Home Assistant erhalten, ein Neustart beginnt also nicht wieder
+im 30-Sekunden-Takt. Auch wenn schon der erste Abruf beim Start abgewiesen
+wird, wird die Integration eingerichtet (die Entitäten sind „nicht
+verfügbar“), statt ständig neu zu starten. Der normale Takt kommt erst nach
+zwei gelungenen Abfragen in Folge zurück, damit ein Schutzdienst, der einzelne
+Anfragen durchlässt, keinen Schwall bekommt. Hält die Abweisung durch alle
 drei Stufen an, zeigt Home Assistant unter *Einstellungen → System →
 Reparaturen* den Hinweis „DKV weist die Anfragen ab“. Der Diagnose-Sensor
 „Verbindung zu DKV“ zeigt in `last_error` den Grund.

@@ -19,6 +19,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
+from .entity import device_info
 
 
 async def async_setup_entry(
@@ -47,12 +48,7 @@ class DkvConnectionSensor(CoordinatorEntity, BinarySensorEntity):
         username = entry.data["preferred_username"]
         self._attr_unique_id = f"dkv_at_home_{username}_connection"
         # Same device as the switch (identifiers must match exactly).
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, username)},
-            "name": "DKV@Home Wallbox",
-            "manufacturer": "DKV@Home",
-            "model": "At-Home Charger",
-        }
+        self._attr_device_info = device_info(username)
 
     @property
     def available(self) -> bool:
@@ -61,16 +57,31 @@ class DkvConnectionSensor(CoordinatorEntity, BinarySensorEntity):
 
     @property
     def is_on(self) -> bool:
-        """True when the last poll of DKV worked."""
-        return bool(self.coordinator.last_update_success)
+        """True when the last poll of DKV worked without any error.
+
+        A short outage at DKV keeps the last data (the switch stays usable),
+        but it is still an error: the sensor shows it as "off" with the
+        reason instead of claiming everything is fine.
+        """
+        return bool(
+            self.coordinator.last_update_success
+            and self._status.get("last_error") is None
+        )
 
     @property
     def extra_state_attributes(self) -> dict:
-        """When the last poll worked and what went wrong since."""
+        """What went wrong, and when the last poll worked before that.
+
+        ``last_success`` is only set while the sensor is "off". While it is
+        "on" it would change at every poll and write a new state (and a
+        database row) every 30 seconds for no use.
+        """
         last_success = self._status.get("last_success")
         return {
             "last_success": (
-                last_success.isoformat() if last_success else None
+                last_success.isoformat()
+                if last_success and not self.is_on
+                else None
             ),
             # a class ("blocked", "auth", "transient", "api", "unexpected"),
             # never a URL, a token or an account number

@@ -314,10 +314,24 @@ class DkvMobilityConfigFlow(  # type: ignore[call-arg]
             if not errors and entry_data is not None:
                 if self._reauth_entry is None:
                     return self.async_abort(reason="unknown")
-                return self.async_update_reload_and_abort(
-                    self._reauth_entry,
-                    data_updates=entry_data,
-                )
+                if (
+                    self._known_username
+                    and entry_data["preferred_username"]
+                    != self._known_username
+                ):
+                    # The new login belongs to another account: never swap
+                    # the account of an existing entry silently.
+                    _LOGGER.error(
+                        "Die Anmeldung gehört zu einem anderen DKV-Konto "
+                        "als die bestehende Einrichtung"
+                    )
+                    self._reset_auth_url()
+                    errors = {"base": "wrong_account"}
+                else:
+                    return self.async_update_reload_and_abort(
+                        self._reauth_entry,
+                        data_updates=entry_data,
+                    )
 
         # A failed attempt may have discarded the link (expired code):
         # always show a valid one.

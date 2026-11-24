@@ -22,7 +22,8 @@
       "code_expired": "Code abgelaufen oder bereits verwendet – ein neuer Anmeldelink wurde generiert. Bitte den neuen Link AUS DEM FORMULAR klicken und sich neu anmelden!",
       "invalid_input": "Ungültige Eingabe. Bitte die vollständige Weiterleitungs-URL (mit ?code=…) oder den Refresh-Token (beginnt mit 'eyJ') einfügen.",
       "unknown": "Unbekannter Fehler. Bitte die HA-Logs prüfen.",
-      "invalid_token": "Der eingefügte Refresh-Token ist ungültig oder abgelaufen. Bitte neu anmelden und die Weiterleitungs-URL einfügen."
+      "invalid_token": "Der eingefügte Refresh-Token ist ungültig oder abgelaufen. Bitte neu anmelden und die Weiterleitungs-URL einfügen.",
+      "wrong_account": "Die Anmeldung gehört zu einem anderen DKV-Konto als die bestehende Einrichtung. Bitte mit dem Konto anmelden, das hier eingerichtet ist, und den neuen Anmeldelink aus dem Formular benutzen."
     },
     "abort": {
       "already_configured": "DKV@Home ist bereits konfiguriert.",
@@ -33,7 +34,7 @@
   "issues": {
     "dkv_blocked": {
       "title": "DKV weist die Anfragen ab",
-      "description": "Der Schutzdienst vor DKV (Akamai) weist die Anfragen dieses Home Assistant seit längerem mit HTTP 403 ab. Die Anmeldung ist davon nicht betroffen, die Integration versucht es weiter, inzwischen nur noch stündlich, und nimmt den Betrieb von selbst wieder auf, sobald DKV die Anfragen annimmt. Bis dahin ist der Schalter nicht verfügbar: Freischalten in der DKV-App oder mit der Karte. Im Log steht eine Referenznummer des Schutzdienstes (`Referenz 18.…`), die man dem DKV-Support nennen kann."
+      "description": "Der Schutzdienst vor DKV (Akamai) weist die Anfragen dieses Home Assistant seit längerem mit HTTP 403 ab. Die Anmeldung ist davon nicht betroffen, die Integration versucht es weiter, inzwischen nur noch stündlich, und nimmt den Betrieb von selbst wieder auf, sobald DKV die Anfragen annimmt. Bis dahin ist der Schalter nicht verfügbar: Freischalten in der DKV-App oder mit der DKV-Ladekarte an der Wallbox. Im Log steht eine Referenznummer des Schutzdienstes (`Referenz 18.…`), die man dem DKV-Support nennen kann."
     }
   }
 }

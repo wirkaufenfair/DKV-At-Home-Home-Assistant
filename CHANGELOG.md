@@ -35,8 +35,24 @@ and this project follows [Semantic Versioning](https://semver.org/).
   Anmeldung aus.
 - **Kein Dauerfeuer bei einer Abweisung.** Nach einem 403 fragt die
   Statusabfrage nur noch nach 5, 15 und dann alle 60 Minuten statt alle 30
-  Sekunden, weil weiteres Anfragen eine Sperre verlängern kann. Beim ersten
-  Erfolg gilt wieder der 30-Sekunden-Takt.
+  Sekunden, weil weiteres Anfragen eine Sperre verlängern kann. Die Stufe wird
+  gespeichert und überlebt einen Neustart von Home Assistant. Der normale
+  30-Sekunden-Takt kommt erst nach zwei gelungenen Abfragen in Folge zurück.
+- **Eine Abweisung beim Start** (erster Abruf) beendet die Einrichtung nicht
+  mehr mit „wird wiederholt“. Die Integration wird eingerichtet, die Entitäten
+  sind „nicht verfügbar“, und der Hinweis in den Reparaturen erscheint.
+- **Ein 403 ohne die Sperrseite des Schutzdienstes** bei der Statusabfrage
+  gilt als verweigerter Zugriff und verlangt eine erneute Anmeldung, statt
+  alle 30 Sekunden wiederholt zu werden.
+- **Erneute Anmeldung nur für dasselbe Konto.** Meldet man sich mit einem
+  anderen DKV-Konto an, bricht der Dialog mit „Anderes DKV-Konto“ ab, die
+  bestehende Einrichtung bleibt unverändert.
+- **Der Schalter löst beim Anlegen keine eigene zusätzliche Abfrage mehr aus**
+  (sie umging das Warten nach einem Neustart).
+- Der Diagnose-Sensor zeigt auch bei einer kurzen Störung bei DKV „aus“ mit
+  dem Grund, `last_success` ist nur gesetzt, solange er „aus“ ist (kein
+  Schreiben in die Datenbank bei jeder Abfrage). Das Gerät aller Entitäten wird
+  an einer Stelle definiert.
 
 ### Changed
 
