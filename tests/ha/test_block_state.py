@@ -58,7 +58,7 @@ async def test_a_restart_during_the_wait_does_not_ask_dkv(hass, http, hass_stora
     save_block(hass_storage, entry, polls=2, wait=timedelta(minutes=10))
 
     await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     assert entry.state is ConfigEntryState.LOADED
     assert http.calls_to("GET", "charge-points") == []  # nothing asked yet
@@ -68,7 +68,7 @@ async def test_a_restart_during_the_wait_does_not_ask_dkv(hass, http, hass_stora
 
     # when the wait is over, the poll comes and works
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=11))
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     assert len(http.calls_to("GET", "charge-points")) == 1
     assert hass.states.get(switch_id(hass)).state == "on"
     # still careful after one good answer
@@ -85,7 +85,7 @@ async def test_a_lasting_block_shows_the_notice_again_after_a_restart(
     save_block(hass_storage, entry, polls=3, wait=timedelta(minutes=30))
 
     await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     assert ir.async_get(hass).async_get_issue(DOMAIN, ISSUE) is not None
 
@@ -100,7 +100,7 @@ async def test_an_old_block_state_does_not_hold_back_the_start(
     save_block(hass_storage, entry, polls=2, wait=timedelta(minutes=-5))
 
     await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     assert len(http.calls_to("GET", "charge-points")) == 1
     assert hass.states.get(switch_id(hass)).state == "on"
@@ -122,14 +122,14 @@ async def test_unreadable_block_state_means_start_carefully(
     }
 
     await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     assert entry.state is ConfigEntryState.LOADED  # it still starts
     assert http.calls_to("GET", "charge-points") == []  # but does not ask yet
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     assert coordinator.update_interval <= timedelta(minutes=5)
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=6))
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     assert hass.states.get(switch_id(hass)).state == "on"
 
 
@@ -142,7 +142,7 @@ async def test_a_clock_that_jumped_back_does_not_make_the_wait_endless(
     save_block(hass_storage, entry, polls=3, wait=timedelta(hours=7))
 
     await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     assert coordinator.update_interval <= timedelta(hours=1)
@@ -160,7 +160,7 @@ async def test_entities_set_up_during_a_block_wake_up_without_a_reload(
 
     charger.status_error = None
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=6))
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     assert entry.state is ConfigEntryState.LOADED
     state = hass.states.get(switch_id(hass))
@@ -195,12 +195,12 @@ async def test_a_short_rest_does_not_become_the_rhythm_after_a_failed_poll(
     save_block(hass_storage, entry, polls=1, wait=timedelta(seconds=10))
 
     await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     assert coordinator.update_interval <= timedelta(seconds=10)
 
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=20))
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     assert len(http.calls_to("GET", "charge-points")) == 1  # the poll failed
     assert coordinator.update_interval == timedelta(minutes=5)

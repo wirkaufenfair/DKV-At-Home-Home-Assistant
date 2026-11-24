@@ -353,13 +353,13 @@ async def test_blocked_poll_keeps_the_login(hass, http):
 
     charger.status_error = None
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=6))
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     assert hass.states.get(entity_id).state == "on"
     # one good answer is not enough: the slow rhythm stays for one more poll
     assert coordinator.update_interval == timedelta(minutes=5)
 
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=12))
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     # the second one in a row brings the normal rhythm back
     assert coordinator.update_interval == timedelta(seconds=30)
 

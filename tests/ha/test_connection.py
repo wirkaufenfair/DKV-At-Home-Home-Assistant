@@ -26,7 +26,7 @@ def connection_id(hass):
 async def poll_after(hass, delta):
     """Let the poll run that is due ``delta`` from now."""
     async_fire_time_changed(hass, dt_util.utcnow() + delta)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
 
 async def test_connection_is_on_after_a_good_poll(hass, http):
