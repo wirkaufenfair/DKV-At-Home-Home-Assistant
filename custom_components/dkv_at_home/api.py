@@ -69,20 +69,33 @@ class DkvBlockedError(DkvApiError):
 _REFERENCE = re.compile(r"Reference\s*#\s*([\w.]+)")
 
 
-def _raise_if_blocked(response) -> None:
-    """Raise ``DkvBlockedError`` for the "Access Denied" page of the shield."""
+def _raise_if_blocked(response, *, any_403: bool = False) -> None:
+    """Raise ``DkvBlockedError`` for a 403 turned away by the shield.
+
+    The shield's "Access Denied" page is the sure sign. With ``any_403`` every
+    403 counts as a block, also one without that page (an empty or JSON
+    answer, a changed page, a challenge): treating it as a dead login would
+    stop the polling until someone logs in again, and that login runs against
+    the same shield. Waiting and asking on slowly is the safe reaction.
+    """
     if response.status_code != 403:
         return
     text = html.unescape(response.text or "")
-    if "Access Denied" not in text:
+    shield = "Access Denied" in text
+    if not shield and not any_403:
         return
-    match = _REFERENCE.search(text)
-    reference = f" (Referenz {match.group(1)})" if match else ""
+    if shield:
+        match = _REFERENCE.search(text)
+        reference = f" (Referenz {match.group(1)})" if match else ""
+        raise DkvBlockedError(
+            "DKV weist die Anfrage ab (HTTP 403, Zugriff verweigert durch "
+            f"den Schutzdienst vor dem DKV-Server){reference}. Das liegt "
+            "nicht am Code oder am Login, sondern an der Adresse oder der "
+            "Art der Anfrage."
+        )
     raise DkvBlockedError(
-        "DKV weist die Anfrage ab (HTTP 403, Zugriff verweigert durch den "
-        "Schutzdienst vor dem DKV-Server)"
-        f"{reference}. Das liegt nicht am Code oder am Login, sondern an der "
-        "Adresse oder der Art der Anfrage."
+        "DKV weist die Anfrage ab (HTTP 403, ohne Seite des Schutzdienstes). "
+        "Die Ursache ist unklar, die Integration fragt später erneut."
     )
 
 
@@ -322,14 +335,7 @@ class DkvApiClient:
                 "DKV-Backend derzeit nicht erreichbar "
                 f"(HTTP {r.status_code}). Bitte später erneut versuchen."
             )
-        _raise_if_blocked(r)
-        if r.status_code == 403:
-            # Not the shield's page: the server itself says "not allowed".
-            # Waiting does not help, a new login might.
-            raise DkvAuthError(
-                "Zugriff verweigert (HTTP 403). Bitte Integration neu "
-                "verbinden."
-            )
+        _raise_if_blocked(r, any_403=True)
         r.raise_for_status()
         data = r.json()
         self._log_shape("charge-points", data)
@@ -366,14 +372,7 @@ class DkvApiClient:
                 "DKV-Backend derzeit nicht erreichbar "
                 f"(HTTP {r.status_code}). Bitte später erneut versuchen."
             )
-        _raise_if_blocked(r)
-        if r.status_code == 403:
-            # Not the shield's page: the server itself says "not allowed".
-            # Waiting does not help, a new login might.
-            raise DkvAuthError(
-                "Zugriff verweigert (HTTP 403). Bitte Integration neu "
-                "verbinden."
-            )
+        _raise_if_blocked(r, any_403=True)
         r.raise_for_status()
         data = r.json()
         self._log_shape("service-card", data)

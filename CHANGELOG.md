@@ -41,9 +41,14 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - **Eine Abweisung beim Start** (erster Abruf) beendet die Einrichtung nicht
   mehr mit „wird wiederholt“. Die Integration wird eingerichtet, die Entitäten
   sind „nicht verfügbar“, und der Hinweis in den Reparaturen erscheint.
-- **Ein 403 ohne die Sperrseite des Schutzdienstes** bei der Statusabfrage
-  gilt als verweigerter Zugriff und verlangt eine erneute Anmeldung, statt
-  alle 30 Sekunden wiederholt zu werden.
+- **Jeder 403 bei der Statusabfrage gilt als Sperre**, auch einer ohne die
+  Sperrseite des Schutzdienstes (leere oder geänderte Antwort). Die Integration
+  wartet und fragt langsam weiter, statt eine erneute Anmeldung zu verlangen:
+  Die würde die Abfragen ganz anhalten, bis jemand sie durchführt, und läuft
+  selbst gegen denselben Schutzdienst.
+- Der gespeicherte Sperrzustand wird gegen Uhrsprünge begrenzt (nie länger als
+  die größte Stufe) und gilt bei unlesbarem Inhalt als „vorsichtig starten“
+  statt als „nicht gesperrt“.
 - **Erneute Anmeldung nur für dasselbe Konto.** Meldet man sich mit einem
   anderen DKV-Konto an, bricht der Dialog mit „Anderes DKV-Konto“ ab, die
   bestehende Einrichtung bleibt unverändert.

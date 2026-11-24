@@ -93,20 +93,46 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     saved = await store.async_load()
     saved = saved if isinstance(saved, dict) else {}
     saved_polls = saved.get("blocked_polls")
-    blocked_polls = (
-        saved_polls
-        if isinstance(saved_polls, int) and not isinstance(saved_polls, bool)
-        else 0
-    )
-    blocked_polls = max(0, blocked_polls)
     blocked_until = _parse_time(saved.get("blocked_until"))
+    blocked_polls = 0
+    if saved:
+        if (
+            isinstance(saved_polls, int)
+            and not isinstance(saved_polls, bool)
+            and saved_polls > 0
+            and blocked_until is not None
+        ):
+            blocked_polls = saved_polls
+        else:
+            # Something is there, but it is unreadable: "unknown" must never
+            # mean "not blocked", that is the behaviour that irritates the
+            # shield. Start carefully, with the first step.
+            _LOGGER.warning(
+                "Der gespeicherte Sperrzustand ist unlesbar, die Integration "
+                "startet vorsichtig mit der ersten Stufe"
+            )
+            blocked_polls = 1
+            blocked_until = dt_util.utcnow() + BLOCKED_POLL_STEPS[0]
     good_polls = 0
+    # True while the one-off rest of a wait after a restart is the interval.
+    startup_wait = False
     # What the connection sensor shows: when the last poll worked and what
     # went wrong since (a class like "blocked", never URLs or tokens).
     status: dict = {"last_success": None, "last_error": None}
 
     async def async_update_data() -> dict:
-        nonlocal blocked_polls, good_polls
+        nonlocal blocked_polls, good_polls, startup_wait
+        if startup_wait:
+            # The rest of the wait was only for this first poll. Whatever the
+            # poll brings (success, block, any other error), the next one is
+            # never scheduled with that rest: a restart ten seconds before the
+            # end of the wait must not turn into polling every ten seconds.
+            startup_wait = False
+            coordinator.update_interval = (
+                BLOCKED_POLL_STEPS[0]
+                if blocked_polls
+                else timedelta(seconds=POLL_INTERVAL_SECONDS)
+            )
         try:
             data = await hass.async_add_executor_job(client.fetch_status)
             status["last_success"] = dt_util.utcnow()
@@ -180,6 +206,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     remaining = blocked_until - dt_util.utcnow() if blocked_until else None
+    if remaining is not None:
+        # A clock that jumped back (empty RTC after a restart, NTP step) must
+        # not make the wait endless: never longer than the biggest step.
+        remaining = min(remaining, BLOCKED_POLL_STEPS[-1])
     if blocked_polls and remaining is not None and remaining > timedelta(0):
         # Restarted while the wait after the last block is still running:
         # do not ask DKV now. The entities exist, but are unavailable, and
@@ -192,6 +222,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         status["last_error"] = "blocked"
         coordinator.last_update_success = False
         coordinator.update_interval = remaining
+        startup_wait = True
         if blocked_polls >= BLOCKED_ISSUE_AFTER:
             _create_blocked_issue(hass)
     else:

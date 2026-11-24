@@ -12,6 +12,9 @@ from test_integration import FakeCharger, make_entry, setup_entry, switch_id
 
 from custom_components.dkv_at_home import block_store_key
 from custom_components.dkv_at_home.const import DOMAIN
+from custom_components.dkv_at_home.diagnostics import (
+    async_get_config_entry_diagnostics,
+)
 
 ISSUE = "dkv_blocked"
 
@@ -103,8 +106,10 @@ async def test_an_old_block_state_does_not_hold_back_the_start(
     assert hass.states.get(switch_id(hass)).state == "on"
 
 
-async def test_unreadable_block_state_is_ignored(hass, http, hass_storage):
-    """A damaged file must never keep the integration from starting."""
+async def test_unreadable_block_state_means_start_carefully(
+    hass, http, hass_storage
+):
+    """"Unknown" must never mean "not blocked": wait the first step."""
     FakeCharger(http, session="SESSION-1")
     entry = make_entry()
     entry.add_to_hass(hass)
@@ -119,5 +124,83 @@ async def test_unreadable_block_state_is_ignored(hass, http, hass_storage):
     await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    assert entry.state is ConfigEntryState.LOADED
+    assert entry.state is ConfigEntryState.LOADED  # it still starts
+    assert http.calls_to("GET", "charge-points") == []  # but does not ask yet
+    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+    assert coordinator.update_interval <= timedelta(minutes=5)
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=6))
+    await hass.async_block_till_done()
     assert hass.states.get(switch_id(hass)).state == "on"
+
+
+async def test_a_clock_that_jumped_back_does_not_make_the_wait_endless(
+    hass, http, hass_storage
+):
+    FakeCharger(http)
+    entry = make_entry()
+    entry.add_to_hass(hass)
+    save_block(hass_storage, entry, polls=3, wait=timedelta(hours=7))
+
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+    assert coordinator.update_interval <= timedelta(hours=1)
+
+
+async def test_entities_set_up_during_a_block_wake_up_without_a_reload(
+    hass, http, hass_storage
+):
+    """Not "set up, but dead for ever": the first good poll brings them back."""
+    charger = FakeCharger(http, session="SESSION-1")
+    charger.status_error = "blocked"
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    assert hass.states.get(switch_id(hass)).state == "unavailable"
+
+    charger.status_error = None
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=6))
+    await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.LOADED
+    state = hass.states.get(switch_id(hass))
+    assert state.state == "on"
+    assert state.attributes["charge_point_status"] == "CHARGING"
+
+
+async def test_nothing_reads_the_missing_data_of_a_block_at_the_start(
+    hass, http, hass_storage
+):
+    """Entities and diagnostics must cope with ``coordinator.data = None``."""
+    charger = FakeCharger(http)
+    charger.status_error = "blocked"
+    entry = make_entry()
+    await setup_entry(hass, entry)
+
+    assert hass.data[DOMAIN][entry.entry_id]["coordinator"].data is None
+    assert hass.states.get(switch_id(hass)).state == "unavailable"
+    result = await async_get_config_entry_diagnostics(hass, entry)
+    assert result["charge_point"] is None
+    assert result["coordinator"]["last_update_success"] is False
+
+
+async def test_a_short_rest_does_not_become_the_rhythm_after_a_failed_poll(
+    hass, http, hass_storage
+):
+    """A restart shortly before the end of the wait must not mean "every 10 s"."""
+    charger = FakeCharger(http)
+    charger.status_error = "empty"  # DKV answers, but not with a charge point
+    entry = make_entry()
+    entry.add_to_hass(hass)
+    save_block(hass_storage, entry, polls=1, wait=timedelta(seconds=10))
+
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+    assert coordinator.update_interval <= timedelta(seconds=10)
+
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=20))
+    await hass.async_block_till_done()
+
+    assert len(http.calls_to("GET", "charge-points")) == 1  # the poll failed
+    assert coordinator.update_interval == timedelta(minutes=5)

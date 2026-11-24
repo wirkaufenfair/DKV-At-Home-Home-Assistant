@@ -409,17 +409,21 @@ async def test_auth_failure_during_poll_starts_reauth(hass, http):
     assert [f["context"]["source"] for f in flows] == [config_entries.SOURCE_REAUTH]
 
 
-async def test_forbidden_without_the_shields_page_starts_reauth(hass, http):
-    """A 403 that is not the shield's page means "not allowed", not "wait"."""
+async def test_forbidden_without_the_shields_page_is_a_block_not_a_reauth(
+    hass, http
+):
+    """A re-login would stop the polling and run against the same shield."""
     charger = FakeCharger(http)
-    await setup_entry(hass, make_entry())
+    entry = make_entry()
+    await setup_entry(hass, entry)
 
     charger.status_error = "forbidden"
     await next_poll(hass)
 
     assert hass.states.get(switch_id(hass)).state == "unavailable"
-    flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
-    assert [f["context"]["source"] for f in flows] == [config_entries.SOURCE_REAUTH]
+    assert hass.config_entries.flow.async_progress_by_handler(DOMAIN) == []
+    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+    assert coordinator.update_interval == timedelta(minutes=5)
 
 
 async def test_reauth_with_another_account_is_refused(hass, http):

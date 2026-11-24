@@ -389,13 +389,16 @@ class TestLogin:
             client.fetch_preferred_username()
         assert not isinstance(err.value, api_module.DkvBlockedError)
 
-    def test_forbidden_status_poll_is_an_auth_error(
-        self, http, client, api_module
+    @pytest.mark.parametrize("answer", ["forbidden", "", "{}"])
+    def test_any_403_on_the_status_poll_is_a_block_never_a_dead_login(
+        self, http, client, api_module, answer
     ):
-        """Not the shield's page: no waiting, a new login is the way."""
-        http.add("GET", "charge-points", FakeResponse(403, text="forbidden"))
-        with pytest.raises(api_module.DkvAuthError):
+        """Without the shield's page too: a dead login would stop the polling."""
+        http.add("GET", "charge-points", FakeResponse(403, text=answer))
+        with pytest.raises(api_module.DkvBlockedError) as err:
             client._get_charge_point()
+        assert not isinstance(err.value, api_module.DkvAuthError)
+        assert "unklar" in str(err.value)
 
     def test_blocked_status_poll_is_a_blocked_error(
         self, http, client, api_module
