@@ -18,6 +18,17 @@ def make_jwt(exp: int | None, **claims) -> str:
     return f"{b64({'alg': 'none'})}.{b64(payload)}.sig"
 
 
+# The "Access Denied" page of the protection service in front of DKV (HTTP 403),
+# as logged from a live installation (reference numbers made up).
+BLOCKED_PAGE = (
+    "<HTML><HEAD>\n<TITLE>Access Denied</TITLE>\n</HEAD><BODY>\n"
+    "<H1>Access Denied</H1>\n \nYou do not have permission to access "
+    '"http&#58;&#47;&#47;my&#46;dkv&#45;mobility&#46;com&#47;x" on this server.<P>\n'
+    "Reference&#32;&#35;18&#46;e8e1002&#46;1795550574&#46;6c70b111\n<P>"
+    "https&#58;&#47;&#47;errors&#46;edgesuite&#46;net&#47;18</P>\n</BODY>\n</HTML>\n"
+)
+
+
 class FakeResponse:
     """Minimal stand-in for ``requests.Response``."""
 

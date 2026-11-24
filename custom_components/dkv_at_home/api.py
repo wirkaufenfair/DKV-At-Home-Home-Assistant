@@ -5,8 +5,10 @@
 import base64
 import functools
 import hashlib
+import html
 import json
 import logging
+import re
 import secrets
 import threading
 import time
@@ -52,6 +54,36 @@ class DkvTransientError(DkvApiError):
 
     These errors may resolve on their own without user intervention.
     """
+
+
+class DkvBlockedError(DkvApiError):
+    """Raised when the protection service in front of DKV turns us away.
+
+    DKV sits behind Akamai, which answers a request it does not accept with
+    HTTP 403 and an "Access Denied" page. That is neither a wrong code nor a
+    dead login: the session stays valid, the request just did not get through
+    (a blocked address, a bot rule). It must not trigger a new login.
+    """
+
+
+_REFERENCE = re.compile(r"Reference\s*#\s*([\w.]+)")
+
+
+def _raise_if_blocked(response) -> None:
+    """Raise ``DkvBlockedError`` for the "Access Denied" page of the shield."""
+    if response.status_code != 403:
+        return
+    text = html.unescape(response.text or "")
+    if "Access Denied" not in text:
+        return
+    match = _REFERENCE.search(text)
+    reference = f" (Referenz {match.group(1)})" if match else ""
+    raise DkvBlockedError(
+        "DKV weist die Anfrage ab (HTTP 403, Zugriff verweigert durch den "
+        "Schutzdienst vor dem DKV-Server)"
+        f"{reference}. Das liegt nicht am Code oder am Login, sondern an der "
+        "Adresse oder der Art der Anfrage."
+    )
 
 
 def describe_shape(value):
@@ -218,6 +250,7 @@ class DkvApiClient:
             timeout=30,
         )
         if r.status_code != 200:
+            _raise_if_blocked(r)
             if r.status_code == 400 and "invalid_grant" in r.text:
                 raise DkvAuthError(
                     "DKV-Anmeldung abgelaufen oder ungültig "
@@ -289,6 +322,7 @@ class DkvApiClient:
                 "DKV-Backend derzeit nicht erreichbar "
                 f"(HTTP {r.status_code}). Bitte später erneut versuchen."
             )
+        _raise_if_blocked(r)
         r.raise_for_status()
         data = r.json()
         self._log_shape("charge-points", data)
@@ -325,6 +359,7 @@ class DkvApiClient:
                 "DKV-Backend derzeit nicht erreichbar "
                 f"(HTTP {r.status_code}). Bitte später erneut versuchen."
             )
+        _raise_if_blocked(r)
         r.raise_for_status()
         data = r.json()
         self._log_shape("service-card", data)
@@ -425,6 +460,7 @@ class DkvApiClient:
             timeout=30,
         )
         if r.status_code != 200:
+            _raise_if_blocked(r)
             _LOGGER.error(
                 "Code-Austausch fehlgeschlagen: HTTP %s – %s",
                 r.status_code,
@@ -447,12 +483,21 @@ class DkvApiClient:
         if not self.access_token:
             raise DkvApiError("Kein Access Token vorhanden")
 
+        # The account number is already in the access token: no request
+        # needed (and none that DKV's protection could turn away).
+        claim = self._decode_jwt_claims(self.access_token).get(
+            "preferred_username"
+        )
+        if isinstance(claim, str) and claim:
+            return claim
+
         r = requests.get(
             USERINFO_URL,
             headers=self._headers(),
             timeout=30,
         )
         if r.status_code != 200:
+            _raise_if_blocked(r)
             raise DkvApiError(
                 "Userinfo konnte nicht geladen werden: "
                 f"HTTP {r.status_code} – {r.text}"

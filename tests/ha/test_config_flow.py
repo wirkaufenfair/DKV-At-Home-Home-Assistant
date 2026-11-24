@@ -12,7 +12,7 @@ from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
 import pytest
-from helpers import FakeResponse, make_jwt
+from helpers import BLOCKED_PAGE, FakeResponse, make_jwt
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -258,3 +258,38 @@ async def test_rejected_pasted_refresh_token_shows_error(hass, http):
     assert result["type"] is FlowResultType.FORM
     # not "cannot_connect": the connection worked, the token is dead
     assert result["errors"] == {"base": "invalid_token"}
+
+
+async def test_blocked_code_exchange_says_so_and_gives_a_new_link(hass, http):
+    """The shield in front of DKV turns the request away (HTTP 403)."""
+    http.add(
+        "POST", "openid-connect/token", FakeResponse(403, text=BLOCKED_PAGE)
+    )
+    result = await start_flow(hass)
+    old_url = result["description_placeholders"]["auth_url"]
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"token_input": redirect_url()}
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    # not "cannot_connect" and not "code_expired": DKV did not accept anything
+    assert result["errors"] == {"base": "blocked"}
+    new_url = result["description_placeholders"]["auth_url"]
+    assert challenge_of(new_url) != challenge_of(old_url)
+
+
+async def test_blocked_userinfo_without_a_stored_account_shows_error(
+    hass, http
+):
+    """A new setup has no account number to fall back on."""
+    http.add("POST", "openid-connect/token", tokens())
+    http.add("GET", "userinfo", FakeResponse(403, text=BLOCKED_PAGE))
+    result = await start_flow(hass)
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"token_input": redirect_url()}
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "blocked"}

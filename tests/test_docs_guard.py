@@ -143,6 +143,7 @@ def test_readme_names_the_field_label_of_the_dialog(step):
 
 # error key -> words the German text and the README troubleshooting share
 ERROR_HEADLINES = {
+    "blocked": "DKV weist die Anfrage ab",
     "cannot_connect": "Verbindung fehlgeschlagen",
     "code_expired": "Code abgelaufen",
     "invalid_input": "Ungültige Eingabe",

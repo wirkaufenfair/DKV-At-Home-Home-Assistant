@@ -18,6 +18,7 @@
     },
     "error": {
       "cannot_connect": "Connection failed. Please check your internet connection and try again.",
+      "blocked": "DKV turned the request away (HTTP 403, access denied). This is not about the code or your login: the protection service in front of DKV does not accept the request from this Home Assistant. Please do not retry several times in a row; try again later with a new login link. The reference number is in the log.",
       "code_expired": "Code expired or already used – a new login link has been generated. Please click the new link FROM THE FORM and sign in again!",
       "invalid_input": "Invalid input. Please paste the full redirect URL (with ?code=…) or a refresh token (starts with 'eyJ').",
       "unknown": "Unknown error. Check the HA logs for details.",

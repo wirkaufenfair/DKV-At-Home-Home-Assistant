@@ -7,7 +7,7 @@ import time
 from urllib.parse import parse_qs, urlparse
 
 import pytest
-from helpers import FakeResponse, make_jwt
+from helpers import BLOCKED_PAGE, FakeResponse, make_jwt
 
 CP_IDLE = {
     "evseUid": "EVSE-1",
@@ -326,6 +326,68 @@ class TestLogin:
         http.add("GET", "userinfo", FakeResponse(401, text="expired"))
         with pytest.raises(api_module.DkvApiError, match="HTTP 401"):
             client.fetch_preferred_username()
+
+    def test_preferred_username_comes_from_the_access_token(
+        self, http, api_module
+    ):
+        """The account number is in the token: no userinfo request at all."""
+        token = make_jwt(
+            int(time.time()) + 3600, preferred_username="100000000001"
+        )
+        client = api_module.DkvApiClient(
+            "refresh-0", "user", access_token=token
+        )
+        assert client.fetch_preferred_username() == "100000000001"
+        assert http.calls == []
+
+    def test_blank_claim_falls_back_to_userinfo(self, http, api_module):
+        token = make_jwt(int(time.time()) + 3600, preferred_username="")
+        client = api_module.DkvApiClient(
+            "refresh-0", "user", access_token=token
+        )
+        http.add(
+            "GET",
+            "userinfo",
+            FakeResponse(200, {"preferred_username": "100000000002"}),
+        )
+        assert client.fetch_preferred_username() == "100000000002"
+
+    def test_blocked_userinfo_is_a_blocked_error(
+        self, http, client, api_module
+    ):
+        http.add("GET", "userinfo", FakeResponse(403, text=BLOCKED_PAGE))
+        with pytest.raises(
+            api_module.DkvBlockedError,
+            match=r"18\.e8e1002\.1795550574\.6c70b111",
+        ) as err:
+            client.fetch_preferred_username()
+        # a short sentence for the log and the dialog, not a page of HTML
+        assert "<HTML" not in str(err.value)
+
+    def test_blocked_code_exchange_is_a_blocked_error(self, http, api_module):
+        http.add(
+            "POST", "openid-connect/token", FakeResponse(403, text=BLOCKED_PAGE)
+        )
+        c = api_module.DkvApiClient("", "")
+        with pytest.raises(api_module.DkvBlockedError):
+            c.exchange_code(code="x", redirect_uri="r", code_verifier="v")
+
+    def test_blocked_refresh_is_not_a_dead_login(
+        self, http, client, api_module
+    ):
+        """A block is not invalid_grant: it must not ask for a new login."""
+        http.add(
+            "POST", "openid-connect/token", FakeResponse(403, text=BLOCKED_PAGE)
+        )
+        with pytest.raises(api_module.DkvBlockedError) as err:
+            client._refresh()
+        assert not isinstance(err.value, api_module.DkvAuthError)
+
+    def test_other_403_is_no_block(self, http, client, api_module):
+        http.add("GET", "userinfo", FakeResponse(403, text="forbidden"))
+        with pytest.raises(api_module.DkvApiError, match="HTTP 403") as err:
+            client.fetch_preferred_username()
+        assert not isinstance(err.value, api_module.DkvBlockedError)
 
     def test_validate_refreshes_the_token(self, http, client):
         http.add("POST", "openid-connect/token", token_response("refresh-7"))

@@ -345,6 +345,21 @@ abgelehnt.
 Es ist etwas Unerwartetes passiert. Die Home-Assistant-Logs prüfen und ein
 Issue mit der Diagnose-Datei eröffnen (siehe unten).
 
+#### „DKV weist die Anfrage ab“
+
+DKV sitzt hinter einem Schutzdienst (Akamai). Er hat die Anfrage von Ihrem
+Home Assistant mit „HTTP 403, Zugriff verweigert“ abgelehnt, noch bevor DKV sie
+gesehen hat. Das liegt weder an einem falschen Code noch an Ihrem Login. Im Log
+steht dazu eine **Referenznummer** (`Referenz 18.…`).
+
+- Nicht mehrfach hintereinander probieren, das kann die Sperre verlängern.
+- Später mit dem **neuen** Anmeldelink aus dem Dialog erneut versuchen.
+- Bei einer erneuten Anmeldung für ein bestehendes Konto nutzt die Integration
+  die gespeicherte Kontonummer weiter, auch wenn genau diese Abfrage abgewiesen
+  wird.
+- Hält es an, bitte ein Issue mit der Diagnose-Datei und der Referenznummer
+  eröffnen (siehe unten).
+
 #### „Verbindung fehlgeschlagen“
 
 DKV war nicht erreichbar oder hat unerwartet geantwortet. Später erneut
@@ -363,8 +378,11 @@ verwendet, entwerten sich beide.
 #### Der Schalter ist „nicht verfügbar“
 
 Die Statusabfrage bei DKV schlägt fehl (Server nicht erreichbar, Login
-ungültig oder DKV hat etwas geändert). Kurze DKV-Ausfälle ändern den Zustand
-nicht, erst ein harter Fehler macht den Schalter unavailable.
+ungültig, der Schutzdienst vor DKV weist die Anfragen ab oder DKV hat etwas
+geändert). Kurze DKV-Ausfälle ändern den Zustand nicht, erst ein harter Fehler
+macht den Schalter unavailable. Eine Abweisung durch den Schutzdienst (HTTP
+403) verlangt keine neue Anmeldung, die Integration versucht es weiter und
+nimmt den Betrieb wieder auf, sobald DKV die Anfragen annimmt.
 
 #### Switch startet nicht / keine Bestätigung
 

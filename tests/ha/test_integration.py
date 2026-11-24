@@ -5,6 +5,7 @@ from datetime import timedelta
 
 import pytest
 from helpers import (
+    BLOCKED_PAGE,
     FakeResponse,
     charge_point_answer,
     make_jwt,
@@ -66,6 +67,8 @@ class FakeCharger:
     def _charge_point(self):
         if self.status_error == "transient":
             return FakeResponse(503)
+        if self.status_error == "blocked":
+            return FakeResponse(403, text=BLOCKED_PAGE)
         if self.status_error == "empty":
             return FakeResponse(200, [])
         if self.status_error == "auth":
@@ -288,9 +291,70 @@ async def test_reauth_with_new_login_reloads_entry(hass, http):
     assert entry.state is ConfigEntryState.LOADED
 
 
+async def test_reauth_keeps_the_stored_account_when_userinfo_is_blocked(
+    hass, http
+):
+    """The login must not fail on a call the stored account number replaces."""
+    http.add(
+        "POST",
+        "openid-connect/token",
+        FakeResponse(400, text='{"error":"invalid_grant"}'),
+    )
+    entry = make_entry(access_token=None)
+    await setup_entry(hass, entry)
+    flow = hass.config_entries.flow.async_progress_by_handler(DOMAIN)[0]
+
+    http.reset_routes()
+    FakeCharger(http)
+    rotating_token_route(http, refresh="refresh-after-login")
+    http.add("GET", "userinfo", FakeResponse(403, text=BLOCKED_PAGE))
+
+    result = await hass.config_entries.flow.async_configure(
+        flow["flow_id"],
+        {
+            "token_input": (
+                "com.dkv-mobility.app://oauth2redirect?state=s&code=new-code"
+            )
+        },
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reauth_successful"
+    assert entry.data["preferred_username"] == USER
+    assert entry.data["refresh_token"] == "refresh-after-login"
+    assert entry.state is ConfigEntryState.LOADED
+
+
 # ----------------------------------------------------------------------
 # Status poll errors (the phone alert relies on this behaviour)
 # ----------------------------------------------------------------------
+
+
+async def test_blocked_poll_keeps_the_login(hass, http):
+    """A block by the shield makes the switch unavailable, not a re-login."""
+    charger = FakeCharger(http, session="SESSION-1")
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    entity_id = switch_id(hass)
+
+    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+
+    charger.status_error = "blocked"
+    await next_poll(hass)
+
+    assert hass.states.get(entity_id).state == "unavailable"
+    flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
+    assert flows == []  # no "log in again" for a request that was not accepted
+    # asking on every 30 seconds would keep the block alive: slow down
+    assert coordinator.update_interval == timedelta(minutes=5)
+
+    charger.status_error = None
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=6))
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state == "on"
+    # the first success brings the normal rhythm back
+    assert coordinator.update_interval == timedelta(seconds=30)
 
 
 async def test_short_outage_keeps_last_state(hass, http):

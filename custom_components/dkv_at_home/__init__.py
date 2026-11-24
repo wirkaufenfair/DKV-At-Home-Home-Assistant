@@ -14,12 +14,27 @@ from homeassistant.helpers.update_coordinator import (  # type: ignore[import]
     UpdateFailed,
 )
 
-from .api import DkvApiClient, DkvApiError, DkvAuthError, DkvTransientError
+from .api import (
+    DkvApiClient,
+    DkvApiError,
+    DkvAuthError,
+    DkvBlockedError,
+    DkvTransientError,
+)
 from .const import DOMAIN, POLL_INTERVAL_SECONDS
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["switch", "sensor"]
+
+# After a block by the shield in front of DKV (HTTP 403) the status poll
+# slows down step by step instead of asking every 30 seconds: asking on
+# keeps such a block alive. The first success brings the normal rhythm back.
+BLOCKED_POLL_STEPS = (
+    timedelta(minutes=5),
+    timedelta(minutes=15),
+    timedelta(hours=1),
+)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -40,9 +55,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             },
         )
 
+    blocked_polls = 0
+
     async def async_update_data() -> dict:
+        nonlocal blocked_polls
         try:
-            return await hass.async_add_executor_job(client.fetch_status)
+            data = await hass.async_add_executor_job(client.fetch_status)
+            if blocked_polls:
+                blocked_polls = 0
+                coordinator.update_interval = timedelta(
+                    seconds=POLL_INTERVAL_SECONDS
+                )
+            return data
         except DkvAuthError as err:
             raise ConfigEntryAuthFailed(str(err)) from err
         except DkvTransientError as err:
@@ -53,6 +77,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
             if coordinator.data is not None:
                 return coordinator.data
+            raise UpdateFailed(str(err)) from err
+        except DkvBlockedError as err:
+            step = min(blocked_polls, len(BLOCKED_POLL_STEPS) - 1)
+            blocked_polls += 1
+            coordinator.update_interval = BLOCKED_POLL_STEPS[step]
             raise UpdateFailed(str(err)) from err
         except DkvApiError as err:
             raise UpdateFailed(str(err)) from err

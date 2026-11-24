@@ -5,7 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.3.1] - 2026-11-24
+
+### Fixed
+
+- **Anmeldung scheitert nicht mehr an der Abfrage der Kontonummer.** Die
+  Kontonummer wird zuerst aus dem Zugriffstoken gelesen, ohne Anfrage. Nur wenn
+  sie dort fehlt, fragt die Integration `/userinfo`. Bei einer erneuten
+  Anmeldung für ein bestehendes Konto gilt zusätzlich: Weist DKV genau diese
+  Abfrage ab, bleibt die gespeicherte Kontonummer.
+- **Abweisung durch den Schutzdienst vor DKV (HTTP 403, „Access Denied“) wird
+  erkannt.** Statt einer Seite voller HTML steht im Log ein Satz mit der
+  Referenznummer des Schutzdienstes, und der Dialog zeigt eine eigene
+  Fehlermeldung („DKV weist die Anfrage ab“) mit einem neuen Anmeldelink. Eine
+  Abweisung gilt nicht als abgelaufene Anmeldung und löst keine erneute
+  Anmeldung aus.
+- **Kein Dauerfeuer bei einer Abweisung.** Nach einem 403 fragt die
+  Statusabfrage nur noch nach 5, 15 und dann alle 60 Minuten statt alle 30
+  Sekunden, weil weiteres Anfragen eine Sperre verlängern kann. Beim ersten
+  Erfolg gilt wieder der 30-Sekunden-Takt.
 
 ### Changed
 

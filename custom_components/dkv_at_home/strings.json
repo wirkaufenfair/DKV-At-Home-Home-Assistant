@@ -18,6 +18,7 @@
     },
     "error": {
       "cannot_connect": "Verbindung fehlgeschlagen. Bitte prüfe, ob du mit dem Internet verbunden bist und versuche es erneut.",
+      "blocked": "DKV weist die Anfrage ab (HTTP 403, Zugriff verweigert). Das liegt nicht am Code oder an deinem Login, sondern daran, dass der Schutzdienst vor DKV die Anfrage von diesem Home Assistant nicht annimmt. Bitte nicht mehrfach hintereinander probieren, sondern später mit einem neuen Anmeldelink erneut versuchen. Die Referenznummer steht im Log.",
       "code_expired": "Code abgelaufen oder bereits verwendet – ein neuer Anmeldelink wurde generiert. Bitte den neuen Link AUS DEM FORMULAR klicken und sich neu anmelden!",
       "invalid_input": "Ungültige Eingabe. Bitte die vollständige Weiterleitungs-URL (mit ?code=…) oder den Refresh-Token (beginnt mit 'eyJ') einfügen.",
       "unknown": "Unbekannter Fehler. Bitte die HA-Logs prüfen.",
